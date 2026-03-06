@@ -7,7 +7,6 @@ use App\Models\Space;
 use App\Services\AI\CostTracker;
 use App\Services\AI\ImageManager;
 use App\Services\AI\ImageProviders\FalImageProvider;
-use App\Services\AI\ImageProviders\ImageProviderInterface;
 use App\Services\AI\ImageProviders\ImageResult;
 use App\Services\AI\ImageProviders\OpenAIImageProvider;
 use App\Services\AI\ImageProviders\ReplicateImageProvider;
@@ -118,23 +117,25 @@ class ImageManagerTest extends TestCase
     {
         $space = Space::factory()->create();
 
-        $makeUnavailable = function (string $name): ImageProviderInterface {
-            $mock = $this->createMock(ImageProviderInterface::class);
-            $mock->method('name')->willReturn($name);
-            $mock->method('isAvailable')->willReturn(false);
+        $openai = $this->createMock(OpenAIImageProvider::class);
+        $openai->method('name')->willReturn('openai');
+        $openai->method('isAvailable')->willReturn(false);
 
-            return $mock;
-        };
+        $together = $this->createMock(TogetherImageProvider::class);
+        $together->method('name')->willReturn('together');
+        $together->method('isAvailable')->willReturn(false);
+
+        $fal = $this->createMock(FalImageProvider::class);
+        $fal->method('name')->willReturn('fal');
+        $fal->method('isAvailable')->willReturn(false);
+
+        $replicate = $this->createMock(ReplicateImageProvider::class);
+        $replicate->method('name')->willReturn('replicate');
+        $replicate->method('isAvailable')->willReturn(false);
 
         $costTracker = $this->createMock(CostTracker::class);
 
-        $manager = new ImageManager(
-            $makeUnavailable('openai'),
-            $makeUnavailable('together'),
-            $makeUnavailable('fal'),
-            $makeUnavailable('replicate'),
-            $costTracker,
-        );
+        $manager = new ImageManager($openai, $together, $fal, $replicate, $costTracker);
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('No image provider is available');
@@ -168,23 +169,25 @@ class ImageManagerTest extends TestCase
 
     public function test_has_available_provider_returns_false_when_none_available(): void
     {
-        $makeUnavailable = function (string $name): ImageProviderInterface {
-            $mock = $this->createMock(ImageProviderInterface::class);
-            $mock->method('name')->willReturn($name);
-            $mock->method('isAvailable')->willReturn(false);
+        $openai = $this->createMock(OpenAIImageProvider::class);
+        $openai->method('name')->willReturn('openai');
+        $openai->method('isAvailable')->willReturn(false);
 
-            return $mock;
-        };
+        $together = $this->createMock(TogetherImageProvider::class);
+        $together->method('name')->willReturn('together');
+        $together->method('isAvailable')->willReturn(false);
+
+        $fal = $this->createMock(FalImageProvider::class);
+        $fal->method('name')->willReturn('fal');
+        $fal->method('isAvailable')->willReturn(false);
+
+        $replicate = $this->createMock(ReplicateImageProvider::class);
+        $replicate->method('name')->willReturn('replicate');
+        $replicate->method('isAvailable')->willReturn(false);
 
         $costTracker = $this->createMock(CostTracker::class);
 
-        $manager = new ImageManager(
-            $makeUnavailable('openai'),
-            $makeUnavailable('together'),
-            $makeUnavailable('fal'),
-            $makeUnavailable('replicate'),
-            $costTracker,
-        );
+        $manager = new ImageManager($openai, $together, $fal, $replicate, $costTracker);
 
         $this->assertFalse($manager->hasAvailableProvider());
     }
