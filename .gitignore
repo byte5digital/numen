@@ -34,6 +34,13 @@ npm-debug.log
 yarn-error.log
 storage/logs/*.log
 
+# Laravel runtime (never commit these)
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitkeep
+/storage/framework/views/*.php
+/storage/framework/cache/data/*
+!/storage/framework/cache/data/.gitkeep
+
 # OS
 .DS_Store
 Thumbs.db
