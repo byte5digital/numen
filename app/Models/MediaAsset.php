@@ -20,7 +20,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property array|null $variants
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
- *
  * @property-read Space $space
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Content> $contents
  * @property-read \Illuminate\Database\Eloquent\Relations\Pivot $pivot

@@ -23,9 +23,9 @@ class BlogController extends Controller
 
         $contents = $query->paginate(10)->through(fn ($c) => [
             'slug' => $c->slug,
-            'title' => $c->currentVersion?->title ?? 'Untitled',
+            'title' => $c->currentVersion->title ?? 'Untitled',
             'excerpt' => $c->currentVersion?->excerpt,
-            'type' => $c->contentType?->slug,
+            'type' => $c->contentType->slug,
             'quality_score' => $c->currentVersion?->quality_score,
             'seo_score' => $c->currentVersion?->seo_score,
             'published_at' => $c->published_at?->diffForHumans(),
@@ -81,12 +81,12 @@ class BlogController extends Controller
                 'excerpt' => $version?->excerpt,
                 'body' => $version?->body,
                 'body_format' => $version?->body_format,
-                'type' => $content->contentType?->slug,
+                'type' => $content->contentType->slug,
                 'locale' => $content->locale,
                 'taxonomy' => $content->taxonomy,
                 'seo' => $version?->seo_data,
-                'published_at' => $content->published_at?->format('M d, Y'),
-                'updated_at' => $content->updated_at?->toIso8601String(),
+                'published_at' => $content->published_at->format('M d, Y'),
+                'updated_at' => $content->updated_at->toIso8601String(),
                 'hero_image_url' => $content->heroImage ? '/storage/'.$content->heroImage->path : null,
                 'meta' => [
                     'version' => $version?->version_number,

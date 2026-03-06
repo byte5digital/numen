@@ -26,7 +26,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $seo_score
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
- *
  * @property-read Content $content
  * @property-read PipelineRun|null $pipelineRun
  * @property-read \Illuminate\Database\Eloquent\Collection<int, ContentBlock> $blocks
@@ -62,7 +61,7 @@ class ContentVersion extends Model
         return $this->belongsTo(PipelineRun::class);
     }
 
-    /** @return HasMany<ContentBlock, ContentVersion> */
+    /** @return HasMany<ContentBlock, $this> */
     public function blocks(): HasMany
     {
         return $this->hasMany(ContentBlock::class)->orderBy('sort_order');

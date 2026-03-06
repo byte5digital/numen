@@ -136,8 +136,9 @@ class Setting extends Model
         $allRows = static::all();
         $rows = $allRows->groupBy('group');
 
-        return $rows->map(function ($items) {
-            /** @var \Illuminate\Database\Eloquent\Collection<int, static> $items */
+        // @phpstan-ignore-next-line argument.type
+        return $rows->map(function (\Illuminate\Database\Eloquent\Collection $items) {
+            // @phpstan-ignore-next-line return.type
             return $items->mapWithKeys(function ($setting) {
                 /** @var static $setting */
                 $value = $setting->encrypted

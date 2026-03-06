@@ -202,13 +202,13 @@ class RunAgentStage implements ShouldQueue
         if ($isUpdate && $this->run->content_id) {
             $content = $this->run->content;
             $latestVersion = $content->versions()->orderByDesc('version_number')->first();
-            $nextVersionNumber = ($latestVersion?->version_number ?? 0) + 1;
+            $nextVersionNumber = ($latestVersion->version_number ?? 0) + 1;
 
             $version = \App\Models\ContentVersion::create([
                 'content_id' => $content->id,
                 'version_number' => $nextVersionNumber,
-                'title' => $data['title'] ?? $latestVersion?->title ?? $brief['title'],
-                'excerpt' => $data['excerpt'] ?? $latestVersion?->excerpt ?? '',
+                'title' => $data['title'] ?? $latestVersion->title ?? $brief['title'],
+                'excerpt' => $data['excerpt'] ?? $latestVersion->excerpt ?? '',
                 'body' => $data['body'] ?? $result->text,
                 'body_format' => 'markdown',
                 'author_type' => 'ai_agent',

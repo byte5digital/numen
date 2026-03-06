@@ -45,10 +45,10 @@ class GenerateContentImage implements ShouldQueue
 
         try {
             $version = $this->content->currentVersion;
-            $title = $version?->title ?? 'Untitled';
-            $excerpt = $version?->excerpt ?? '';
+            $title = $version->title ?? 'Untitled';
+            $excerpt = $version->excerpt ?? '';
             $tags = $this->content->taxonomy['tags'] ?? [];
-            $contentType = $this->content->contentType?->slug ?? 'blog_post';
+            $contentType = $this->content->contentType->slug ?? 'blog_post';
 
             $prompt = $promptBuilder->build($title, $excerpt, $tags, $contentType);
 
@@ -59,7 +59,7 @@ class GenerateContentImage implements ShouldQueue
             $this->content->update(['hero_image_id' => $asset->id]);
 
             // Log cost (find pipeline run if exists)
-            $pipelineRunId = $this->content->pipelineRuns()?->latest()?->value('id');
+            $pipelineRunId = $this->content->pipelineRuns()->latest()->value('id');
             $costUsd = $asset->ai_metadata['cost_usd'] ?? 0.08;
 
             AIGenerationLog::create([

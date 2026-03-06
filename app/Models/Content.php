@@ -28,7 +28,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  * @property \Carbon\Carbon|null $deleted_at
- *
  * @property-read Space $space
  * @property-read ContentType $contentType
  * @property-read ContentVersion|null $currentVersion
@@ -92,7 +91,7 @@ class Content extends Model
         return $this->belongsTo(ContentVersion::class, 'current_version_id');
     }
 
-    /** @return HasMany<ContentVersion, Content> */
+    /** @return HasMany<ContentVersion, $this> */
     public function versions(): HasMany
     {
         return $this->hasMany(ContentVersion::class)->orderByDesc('version_number');

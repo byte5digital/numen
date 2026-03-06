@@ -31,7 +31,7 @@ class PipelineAdminController extends Controller
 
                     return [
                         'id' => $run->id,
-                        'brief_title' => $run->brief?->title ?? 'Unknown',
+                        'brief_title' => $run->brief->title ?? 'Unknown',
                         'status' => $run->status,
                         'current_stage' => $run->current_stage,
                         'current_stage_type' => $currentStageType,

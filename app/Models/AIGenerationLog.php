@@ -33,7 +33,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property mixed $total_input
  * @property mixed $total_output
  * @property mixed $count
- *
  * @property-read PipelineRun|null $pipelineRun
  * @property-read Persona|null $persona
  */

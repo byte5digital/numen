@@ -27,7 +27,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property \Carbon\Carbon|null $due_at
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
- *
  * @property-read Space $space
  * @property-read ContentPipeline|null $pipeline
  * @property-read Persona|null $persona

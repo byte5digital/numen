@@ -27,7 +27,7 @@ class ContentResource extends JsonResource
         return [
             'id' => $this->id,
             'slug' => $this->slug,
-            'type' => $this->contentType?->slug,
+            'type' => $this->contentType->slug,
             'locale' => $this->locale,
             'status' => $this->status,
 
@@ -50,11 +50,11 @@ class ContentResource extends JsonResource
                 : null,
 
             // Media
-            'media' => $this->whenLoaded('mediaAssets', fn () => $this->mediaAssets->map(fn ($asset) => [
+            'media' => $this->whenLoaded('mediaAssets', fn () => $this->mediaAssets->map(fn (\App\Models\MediaAsset $asset) => [
                 'id' => $asset->id,
                 'url' => $asset->path, // TODO: Generate full URL
                 'mime_type' => $asset->mime_type,
-                'role' => $asset->pivot->role,
+                'role' => $asset->pivot->getAttribute('role'),
                 'alt_text' => $asset->ai_metadata['alt_text'] ?? null,
             ])
             ),

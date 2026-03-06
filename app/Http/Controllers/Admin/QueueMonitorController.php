@@ -48,7 +48,7 @@ class QueueMonitorController extends Controller
             ->get()
             ->map(fn ($run) => [
                 'id' => $run->id,
-                'brief_title' => $run->brief?->title ?? 'Unknown',
+                'brief_title' => $run->brief->title ?? 'Unknown',
                 'status' => $run->status,
                 'current_stage' => $run->current_stage,
                 'started_at' => $run->created_at->diffForHumans(),

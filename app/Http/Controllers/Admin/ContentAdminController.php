@@ -21,7 +21,7 @@ class ContentAdminController extends Controller
             ->through(fn ($c) => [
                 'id' => $c->id,
                 'slug' => $c->slug,
-                'title' => $c->currentVersion?->title ?? 'Untitled',
+                'title' => $c->currentVersion->title ?? 'Untitled',
                 'type' => $c->contentType->slug,
                 'status' => $c->status,
                 'locale' => $c->locale,
@@ -228,7 +228,7 @@ class ContentAdminController extends Controller
         $brief = ContentBrief::create([
             'space_id' => $content->space_id,
             'content_id' => $content->id,
-            'title' => 'Update: '.($version?->title ?? $content->slug),
+            'title' => 'Update: '.($version->title ?? $content->slug),
             'description' => $validated['prompt'],
             'content_type_slug' => $content->contentType->slug,
             'target_locale' => $content->locale,

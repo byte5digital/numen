@@ -72,10 +72,10 @@ class GenerateImage implements ShouldQueue
             }
 
             $version = $content->currentVersion;
-            $title = $version?->title ?? 'Untitled';
-            $excerpt = $version?->excerpt ?? '';
+            $title = $version->title ?? 'Untitled';
+            $excerpt = $version->excerpt ?? '';
             $tags = $content->taxonomy['tags'] ?? [];
-            $contentType = $content->contentType?->slug ?? 'blog_post';
+            $contentType = $content->contentType->slug ?? 'blog_post';
             $spaceId = $content->space_id;
 
             // Stage config

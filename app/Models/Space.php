@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property array|null $api_config
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
- *
  * @property-read \Illuminate\Database\Eloquent\Collection<int, ContentType> $contentTypes
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Content> $contents
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Persona> $personas

@@ -65,7 +65,7 @@ class DashboardController extends Controller
             ->get()
             ->map(fn ($c) => [
                 'id' => $c->id,
-                'title' => $c->currentVersion?->title ?? 'Untitled',
+                'title' => $c->currentVersion->title ?? 'Untitled',
                 'type' => $c->contentType->slug,
                 'locale' => $c->locale,
                 'status' => $c->status,

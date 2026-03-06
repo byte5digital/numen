@@ -60,9 +60,9 @@ class HomeController extends Controller
             ->get()
             ->map(fn ($c) => [
                 'slug' => $c->slug,
-                'title' => $c->currentVersion?->title ?? 'Untitled',
+                'title' => $c->currentVersion->title ?? 'Untitled',
                 'excerpt' => $c->currentVersion?->excerpt,
-                'type' => $c->contentType?->slug,
+                'type' => $c->contentType->slug,
                 'seo_score' => $c->currentVersion?->seo_score,
                 'hero_image_url' => $c->heroImage ? '/storage/'.$c->heroImage->path : null,
             ])
