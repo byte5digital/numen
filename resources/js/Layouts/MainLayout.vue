@@ -19,6 +19,7 @@ const navigation = [
     { name: 'Pages', href: '/admin/pages', icon: '🗂️' },
     { name: 'Analytics', href: '/admin/analytics', icon: '📈' },
     { name: 'Queue', href: '/admin/queue', icon: '⚙️' },
+    { name: 'Users', href: '/admin/users', icon: '👥' },
     { name: 'Settings', href: '/admin/settings', icon: '⚙️' },
 ];
 </script>
@@ -59,7 +60,10 @@ const navigation = [
             <div class="absolute bottom-0 left-0 right-0 px-6 py-4 border-t border-gray-800">
                 <div v-if="user" class="flex items-center justify-between mb-2">
                     <span class="text-xs text-gray-400">{{ user.name }}</span>
-                    <button @click="logout" class="text-xs text-gray-600 hover:text-red-400 transition">Logout</button>
+                    <div class="flex items-center gap-3">
+                        <Link href="/admin/profile/password" class="text-xs text-gray-600 hover:text-indigo-400 transition">Password</Link>
+                        <button @click="logout" class="text-xs text-gray-600 hover:text-red-400 transition">Logout</button>
+                    </div>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></div>

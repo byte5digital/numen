@@ -7,8 +7,10 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PageAdminController;
 use App\Http\Controllers\Admin\PersonaAdminController;
 use App\Http\Controllers\Admin\PipelineAdminController;
+use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\QueueMonitorController;
 use App\Http\Controllers\Admin\SettingsAdminController;
+use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Public\BlogController;
 use App\Http\Controllers\Public\HomeController;
@@ -96,6 +98,18 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/queue', [QueueMonitorController::class, 'index'])->name('admin.queue');
     Route::post('/queue/retry/{id}', [QueueMonitorController::class, 'retryFailed'])->name('admin.queue.retry');
     Route::post('/queue/flush', [QueueMonitorController::class, 'flushFailed'])->name('admin.queue.flush');
+
+    // Users
+    Route::get('/users', [UserAdminController::class, 'index'])->name('admin.users.index');
+    Route::get('/users/create', [UserAdminController::class, 'create'])->name('admin.users.create');
+    Route::post('/users', [UserAdminController::class, 'store'])->name('admin.users.store');
+    Route::get('/users/{user}/edit', [UserAdminController::class, 'edit'])->name('admin.users.edit');
+    Route::put('/users/{user}', [UserAdminController::class, 'update'])->name('admin.users.update');
+    Route::delete('/users/{user}', [UserAdminController::class, 'destroy'])->name('admin.users.destroy');
+
+    // Profile / Password
+    Route::get('/profile/password', [ProfileController::class, 'editPassword'])->name('admin.profile.password');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('admin.profile.password.update');
 
     // Pages
     Route::get('/pages', [PageAdminController::class, 'index'])->name('admin.pages');
