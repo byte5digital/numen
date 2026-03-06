@@ -116,8 +116,27 @@ class QueueMonitorController extends Controller
 
     private function isWorkerRunning(): bool
     {
+        // Method 1: Check via process list (works on traditional servers)
         $output = shell_exec('ps aux | grep "[q]ueue:work" 2>/dev/null') ?? '';
+        if (trim($output) !== '') {
+            return true;
+        }
 
-        return trim($output) !== '';
+        // Method 2: Check if jobs are being processed (works on Laravel Cloud)
+        // If a job was processed in the last 5 minutes, worker is running
+        $recentJob = \Illuminate\Support\Facades\DB::table('jobs')
+            ->where('reserved_at', '>', now()->subMinutes(5)->timestamp)
+            ->exists();
+
+        if ($recentJob) {
+            return true;
+        }
+
+        // Method 3: Check failed_jobs for recent activity
+        $recentFailed = \Illuminate\Support\Facades\DB::table('failed_jobs')
+            ->where('failed_at', '>', now()->subMinutes(5))
+            ->exists();
+
+        return $recentFailed;
     }
 }

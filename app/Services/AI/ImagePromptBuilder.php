@@ -5,21 +5,47 @@ namespace App\Services\AI;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Generates optimized DALL-E 3 prompts from content metadata.
- * Uses Anthropic Haiku for cheap/fast prompt crafting.
+ * Generates optimized image generation prompts from content metadata.
+ * Uses a configurable LLM (defaults to Anthropic Haiku) for cheap/fast prompt crafting.
+ *
+ * The persona's model_config can override which LLM to use:
+ *   prompt_provider + prompt_model → passed to LLMManager for provider routing
  */
 class ImagePromptBuilder
 {
-    public function build(string $title, ?string $excerpt = null, array $tags = [], string $contentType = 'blog_post'): string
-    {
+    /**
+     * Build an image generation prompt from content metadata.
+     *
+     * @param  string  $title         Content title
+     * @param  string|null  $excerpt  Short excerpt (optional)
+     * @param  string[]  $tags        Content tags
+     * @param  string  $contentType   Content type slug (e.g. "blog_post")
+     * @param  array  $personaConfig  Persona model_config — may contain prompt_model, prompt_provider
+     */
+    public function build(
+        string $title,
+        ?string $excerpt = null,
+        array $tags = [],
+        string $contentType = 'blog_post',
+        array $personaConfig = [],
+    ): string {
         $llm = app(LLMManager::class);
 
         $tagList = implode(', ', $tags);
 
+        // Resolve which LLM model to use for prompt generation
+        $promptModel = $personaConfig['prompt_model']
+            ?? config('numen.models.classification', 'claude-haiku-4-5-20251001');
+
+        $promptProvider = $personaConfig['prompt_provider'] ?? null;
+
+        // Build fully-qualified model string for LLMManager ("provider:model" or just "model")
+        $modelStr = $promptProvider ? "{$promptProvider}:{$promptModel}" : $promptModel;
+
         $messages = [
             [
                 'role' => 'user',
-                'content' => "Generate a single DALL-E 3 image prompt for a hero banner image.\n\n".
+                'content' => "Generate a single image generation prompt for a hero banner image.\n\n".
                     "Content title: {$title}\n".
                     "Content type: {$contentType}\n".
                     ($excerpt ? "Excerpt: {$excerpt}\n" : '').
@@ -36,8 +62,8 @@ class ImagePromptBuilder
 
         try {
             $response = $llm->complete([
-                'model' => config('numen.models.classification', 'claude-haiku-4-5-20251001'),
-                'system' => 'You are an expert at crafting DALL-E 3 image generation prompts. You create vivid, detailed prompts that produce stunning professional imagery. Always output just the prompt — no wrapping, no explanation.',
+                'model' => $modelStr,
+                'system' => 'You are an expert at crafting image generation prompts. You create vivid, detailed prompts that produce stunning professional imagery. Always output just the prompt — no wrapping, no explanation.',
                 'messages' => $messages,
                 'max_tokens' => 300,
                 'temperature' => 0.8,
@@ -54,6 +80,7 @@ class ImagePromptBuilder
         } catch (\Throwable $e) {
             Log::warning('ImagePromptBuilder: LLM call failed, using fallback', [
                 'error' => $e->getMessage(),
+                'model' => $modelStr,
             ]);
 
             return $this->fallbackPrompt($title, $contentType);

@@ -73,6 +73,44 @@ return [
         'classification' => env('AI_MODEL_CLASSIFICATION', 'claude-haiku-4-5-20251001'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Image Generation Providers
+    |--------------------------------------------------------------------------
+    | Multi-provider image generation. Each provider can be selected per-persona
+    | via model_config.generator_provider + model_config.generator_model.
+    | Falls back to default_image_provider when no persona config is set.
+    */
+    'image_providers' => [
+
+        'openai' => [
+            'api_key' => env('OPENAI_API_KEY'),
+            'base_url' => env('OPENAI_IMAGE_BASE_URL', 'https://api.openai.com/v1'),
+            'default_model' => env('IMAGE_MODEL_OPENAI', 'gpt-image-1'),
+        ],
+
+        'together' => [
+            'api_key' => env('TOGETHER_API_KEY'),
+            'base_url' => env('TOGETHER_BASE_URL', 'https://api.together.xyz/v1'),
+            'default_model' => env('IMAGE_MODEL_TOGETHER', 'black-forest-labs/FLUX.1-schnell'),
+        ],
+
+        'fal' => [
+            'api_key' => env('FAL_API_KEY'),
+            'base_url' => env('FAL_BASE_URL', 'https://fal.run'),
+            'default_model' => env('IMAGE_MODEL_FAL', 'fal-ai/flux/schnell'),
+        ],
+
+        'replicate' => [
+            'api_key' => env('REPLICATE_API_KEY'),
+            'base_url' => env('REPLICATE_BASE_URL', 'https://api.replicate.com/v1'),
+            'default_model' => env('IMAGE_MODEL_REPLICATE', 'black-forest-labs/flux-2-max'),
+        ],
+
+    ],
+
+    'default_image_provider' => env('DEFAULT_IMAGE_PROVIDER', 'openai'),
+
     'cost_limits' => [
         'daily_usd' => env('AI_COST_DAILY_LIMIT', 50.00),
         'per_content_usd' => env('AI_COST_PER_CONTENT_LIMIT', 2.00),

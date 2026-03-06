@@ -3,9 +3,10 @@
 namespace App\Jobs;
 
 use App\Models\AIGenerationLog;
+use App\Models\Persona;
 use App\Models\PipelineRun;
 use App\Pipelines\PipelineExecutor;
-use App\Services\AI\ImageGenerator;
+use App\Services\AI\ImageManager;
 use App\Services\AI\ImagePromptBuilder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -13,6 +14,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class GenerateImage implements ShouldQueue
 {
@@ -20,7 +22,7 @@ class GenerateImage implements ShouldQueue
 
     public int $tries = 3;
 
-    public int $timeout = 180;
+    public int $timeout = 300; // Replicate/fal can take a while for large models
 
     public int $maxExceptions = 2;
 
@@ -36,16 +38,19 @@ class GenerateImage implements ShouldQueue
         return [15, 60, 180];
     }
 
-    public function handle(ImagePromptBuilder $promptBuilder, ImageGenerator $imageGenerator, PipelineExecutor $executor): void
-    {
+    public function handle(
+        ImagePromptBuilder $promptBuilder,
+        ImageManager $imageManager,
+        PipelineExecutor $executor,
+    ): void {
         Log::info('GenerateImage: starting', [
             'run_id' => $this->run->id,
             'stage' => $this->stage['name'],
         ]);
 
-        // Gracefully skip if no OpenAI API key is configured
-        if (empty(config('numen.providers.openai.api_key'))) {
-            Log::warning('GenerateImage: OPENAI_API_KEY not configured — skipping ai_illustrate stage', [
+        // Gracefully skip if no image provider is available
+        if (! $imageManager->hasAvailableProvider()) {
+            Log::warning('GenerateImage: no image provider configured — skipping ai_illustrate stage', [
                 'run_id' => $this->run->id,
                 'stage' => $this->stage['name'],
             ]);
@@ -53,7 +58,7 @@ class GenerateImage implements ShouldQueue
                 'stage' => $this->stage['name'],
                 'success' => true,
                 'skipped' => true,
-                'summary' => 'Skipped: OPENAI_API_KEY not configured',
+                'summary' => 'Skipped: no image provider API key configured (OPENAI_API_KEY, TOGETHER_API_KEY, FAL_API_KEY, or REPLICATE_API_KEY)',
             ]);
 
             return;
@@ -78,36 +83,45 @@ class GenerateImage implements ShouldQueue
             $contentType = $content->contentType->slug ?? 'blog_post';
             $spaceId = $content->space_id;
 
-            // Stage config
-            $size = $this->stage['config']['size'] ?? '1792x1024';
-            $style = $this->stage['config']['style'] ?? 'vivid';
+            // Resolve persona config — prefer stage agent_role, fall back to space's illustrator persona
+            $personaConfig = $this->resolvePersonaConfig($spaceId);
 
-            // Step 1: Build an optimized prompt
+            // Stage config overrides (size/style/quality can be set per-stage or come from persona)
+            $size = $this->stage['config']['size'] ?? $personaConfig['size'] ?? '1792x1024';
+            $style = $this->stage['config']['style'] ?? $personaConfig['style'] ?? 'vivid';
+            $quality = $this->stage['config']['quality'] ?? $personaConfig['quality'] ?? 'standard';
+
+            // Step 1: Build an optimized prompt using persona's prompt LLM
             $promptStart = microtime(true);
-            $prompt = $promptBuilder->build($title, $excerpt, $tags, $contentType);
+            $prompt = $promptBuilder->build($title, $excerpt, $tags, $contentType, $personaConfig);
             $promptLatency = (int) ((microtime(true) - $promptStart) * 1000);
 
             Log::info('GenerateImage: prompt built', [
-                'prompt_preview' => \Illuminate\Support\Str::limit($prompt, 120),
+                'prompt_preview' => Str::limit($prompt, 120),
+                'prompt_latency_ms' => $promptLatency,
             ]);
 
-            // Step 2: Generate and save the image
+            // Step 2: Generate and save the image via the resolved provider
             $imageStart = microtime(true);
-            $asset = $imageGenerator->generate($prompt, $spaceId, $size, $style);
+            $asset = $imageManager->generate($prompt, $spaceId, $personaConfig, $size, $style, $quality);
             $imageLatency = (int) ((microtime(true) - $imageStart) * 1000);
 
             // Step 3: Attach to content as hero image
             $content->update(['hero_image_id' => $asset->id]);
 
-            // Step 4: Log the image generation cost
-            $costUsd = $asset->ai_metadata['cost_usd'] ?? 0.08;
+            // Step 4: Log the image generation
+            $costUsd = $asset->ai_metadata['cost_usd'] ?? 0.0;
+            $usedModel = $asset->ai_metadata['model'] ?? 'unknown';
+            $usedProvider = $asset->ai_metadata['provider'] ?? 'unknown';
+
             AIGenerationLog::create([
                 'pipeline_run_id' => $this->run->id,
-                'model' => 'dall-e-3',
+                'model' => $usedModel,
                 'purpose' => 'image_generation',
                 'messages' => [['role' => 'user', 'content' => $prompt]],
                 'response' => json_encode([
                     'asset_id' => $asset->id,
+                    'provider' => $usedProvider,
                     'size' => $size,
                     'style' => $style,
                     'revised_prompt' => $asset->ai_metadata['revised_prompt'] ?? null,
@@ -119,10 +133,11 @@ class GenerateImage implements ShouldQueue
                 'stop_reason' => 'complete',
                 'metadata' => [
                     'type' => 'image',
-                    'model' => 'dall-e-3',
+                    'model' => $usedModel,
+                    'provider' => $usedProvider,
                     'size' => $size,
                     'style' => $style,
-                    'prompt_latency' => $promptLatency,
+                    'prompt_latency_ms' => $promptLatency,
                     'asset_path' => $asset->path,
                 ],
             ]);
@@ -130,15 +145,18 @@ class GenerateImage implements ShouldQueue
             Log::info('GenerateImage: hero image attached', [
                 'content_id' => $content->id,
                 'asset_id' => $asset->id,
+                'provider' => $usedProvider,
+                'model' => $usedModel,
             ]);
 
-            // Advance pipeline
             $executor->advance($this->run, [
                 'stage' => $this->stage['name'],
                 'success' => true,
                 'asset_id' => $asset->id,
+                'provider' => $usedProvider,
+                'model' => $usedModel,
                 'prompt' => $prompt,
-                'summary' => "Generated hero image ({$size}) for \"{$title}\"",
+                'summary' => "Generated hero image ({$size}) for \"{$title}\" via {$usedProvider}/{$usedModel}",
             ]);
 
         } catch (\Throwable $e) {
@@ -153,5 +171,34 @@ class GenerateImage implements ShouldQueue
 
             throw $e;
         }
+    }
+
+    /**
+     * Load the illustrator persona's model_config for this space.
+     * Returns an empty array if no persona is found — ImageManager and
+     * ImagePromptBuilder both have sensible defaults.
+     *
+     * @return array<string, mixed>
+     */
+    private function resolvePersonaConfig(string $spaceId): array
+    {
+        // Prefer agent_role from stage config (explicit persona slug)
+        $agentRole = $this->stage['agent_role'] ?? 'illustrator';
+
+        $persona = Persona::where('space_id', $spaceId)
+            ->where('role', $agentRole)
+            ->where('is_active', true)
+            ->first();
+
+        if (! $persona) {
+            Log::debug('GenerateImage: no persona found for role, using defaults', [
+                'role' => $agentRole,
+                'space_id' => $spaceId,
+            ]);
+
+            return [];
+        }
+
+        return $persona->model_config ?? [];
     }
 }
