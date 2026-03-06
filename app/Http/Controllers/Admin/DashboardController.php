@@ -66,7 +66,7 @@ class DashboardController extends Controller
             ->map(fn ($c) => [
                 'id' => $c->id,
                 'title' => $c->currentVersion?->title ?? 'Untitled',
-                'type' => $c->contentType?->slug,
+                'type' => $c->contentType->slug,
                 'locale' => $c->locale,
                 'status' => $c->status,
             ]);
@@ -77,7 +77,7 @@ class DashboardController extends Controller
             ->get()
             ->map(fn ($r) => [
                 'id' => $r->id,
-                'brief_title' => $r->brief?->title ?? 'Unknown',
+                'brief_title' => $r->brief?->title ?? 'Unknown', // @phpstan-ignore nullsafe.neverNull
                 'current_stage' => $r->current_stage,
                 'status' => $r->status,
             ]);

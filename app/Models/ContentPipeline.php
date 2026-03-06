@@ -8,6 +8,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property string $id
+ * @property string $space_id
+ * @property string $name
+ * @property array $stages
+ * @property array|null $trigger_config
+ * @property bool $is_active
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @property-read Space $space
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, PipelineRun> $runs
+ */
 class ContentPipeline extends Model
 {
     use HasFactory, HasUlids;

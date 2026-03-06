@@ -7,6 +7,24 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+/**
+ * @property string $id
+ * @property string $space_id
+ * @property string $filename
+ * @property string $disk
+ * @property string $path
+ * @property string $mime_type
+ * @property int $size_bytes
+ * @property string $source
+ * @property array|null $ai_metadata
+ * @property array|null $variants
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @property-read Space $space
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Content> $contents
+ * @property-read \Illuminate\Database\Eloquent\Relations\Pivot $pivot
+ */
 class MediaAsset extends Model
 {
     use HasUlids;

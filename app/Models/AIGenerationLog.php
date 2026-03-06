@@ -6,6 +6,37 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string|null $pipeline_run_id
+ * @property string|null $persona_id
+ * @property string $model
+ * @property string $purpose
+ * @property array $messages
+ * @property string $response
+ * @property int $input_tokens
+ * @property int $output_tokens
+ * @property int $cache_read_tokens
+ * @property string $cost_usd
+ * @property int $latency_ms
+ * @property string|null $stop_reason
+ * @property array|null $metadata
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * Virtual/aggregate properties (from selectRaw queries):
+ * @property mixed $cost
+ * @property mixed $date
+ * @property mixed $calls
+ * @property mixed $total_cost
+ * @property mixed $total_calls
+ * @property mixed $total_input
+ * @property mixed $total_output
+ * @property mixed $count
+ *
+ * @property-read PipelineRun|null $pipelineRun
+ * @property-read Persona|null $persona
+ */
 class AIGenerationLog extends Model
 {
     use HasUlids;

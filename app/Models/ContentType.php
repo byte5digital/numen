@@ -7,6 +7,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property string $id
+ * @property string $space_id
+ * @property string $name
+ * @property string $slug
+ * @property array $schema
+ * @property array|null $generation_config
+ * @property array|null $seo_config
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @property-read Space $space
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Content> $contents
+ */
 class ContentType extends Model
 {
     use HasUlids;

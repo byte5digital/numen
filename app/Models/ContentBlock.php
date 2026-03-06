@@ -6,6 +6,18 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $content_version_id
+ * @property string $type
+ * @property int $sort_order
+ * @property array|null $data
+ * @property string|null $wysiwyg_override
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @property-read ContentVersion $version
+ */
 class ContentBlock extends Model
 {
     use HasUlids;
@@ -69,6 +81,6 @@ class ContentBlock extends Model
         }
         $definition = ComponentDefinition::where('type', $type)->first();
 
-        return $definition?->schema ?? [];
+        return $definition !== null ? ($definition->schema ?? []) : [];
     }
 }

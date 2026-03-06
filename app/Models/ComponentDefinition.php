@@ -5,6 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property string $id
+ * @property string $type
+ * @property string $label
+ * @property string|null $description
+ * @property array $schema
+ * @property string|null $vue_template
+ * @property bool $is_builtin
+ * @property string $created_by
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ */
 class ComponentDefinition extends Model
 {
     use HasUlids;

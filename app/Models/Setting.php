@@ -120,7 +120,7 @@ class Setting extends Model
 
             // Only override config if the DB value is non-empty.
             // This prevents saved empty strings from blanking out .env values.
-            if ($value !== '' && $value !== null) {
+            if ($value !== '') {
                 config([$configKey => $value]);
             }
         }
@@ -137,7 +137,9 @@ class Setting extends Model
         $rows = $allRows->groupBy('group');
 
         return $rows->map(function ($items) {
+            /** @var \Illuminate\Database\Eloquent\Collection<int, static> $items */
             return $items->mapWithKeys(function ($setting) {
+                /** @var static $setting */
                 $value = $setting->encrypted
                     ? (empty($setting->value) ? '' : '••••••••')  // Masked
                     : $setting->value;
