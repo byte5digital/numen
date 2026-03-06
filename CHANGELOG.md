@@ -11,9 +11,20 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Larastan level 5 static analysis — CI job added (`d77decb`, `5b4ddd6`). Fixes in progress (tracked by Chisel).
+
+### Fixed
+- Cast `content_refresh_days` to `int` for PHP 8.4 strict typing compatibility (`b143a22`)
+
+### Changed
+- CI: removed PHP 8.3 from test matrix — Numen requires PHP ^8.4 (`555f156`)
+- Docs: removed API key from Quick Start example (`b28dad0`)
+- Docs: updated Quick Start install steps (`1bc68de`)
+- Chore: `.gitignore` cleanup (`942d70f`)
+
 ### Planned for 0.2.0
 - Remove legacy `numen.anthropic` config block (duplicates `numen.providers.anthropic`)
-- GitHub Actions CI: PHPUnit, Pint, Larastan
 - `AgentContract` interface extracted from `Agent` abstract class
 
 ---
