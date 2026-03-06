@@ -22,12 +22,14 @@ Numen: you submit a brief → pipeline runs in the background → content appear
 
 ```
 Brief
-  └─► Content Creator (claude-sonnet-4-6)   — writes the article
-        └─► SEO Expert (claude-haiku-4-5)   — optimizes metadata & keywords
-              └─► Editorial Director (claude-opus-4-6) — quality gate (score ≥ 80 → publish)
+  └─► Content Creator (claude-sonnet-4-6)     — writes the article
+        └─► AI Illustrator (dall-e-3)         — generates hero image from content
+              └─► SEO Expert (claude-haiku-4-5)   — optimizes metadata & keywords
+                    └─► Editorial Director (claude-opus-4-6) — quality gate (score ≥ 80 → publish)
+                          └─► Auto-Publish              — goes live automatically
 ```
 
-Each stage is a queued job. The pipeline is event-driven. You can plug in a human review gate anywhere.
+Each stage is a queued job. The pipeline is event-driven. Stages are defined in DB — add, remove, or reorder without deploying code. You can plug in a `human_gate` stage anywhere to pause for manual review.
 
 ---
 
@@ -50,20 +52,22 @@ Each stage is a queued job. The pipeline is event-driven. You can plug in a huma
 │                    ┌───────▼──────┐   ┌─────────▼────────┐ │
 │                    │  Queue Jobs  │   │  Provider Layer  │ │
 │                    │  (Redis)     │   │  Anthropic       │ │
-│                    └──────────────┘   │  OpenAI          │ │
+│                    └──────────────┘   │  OpenAI (+ DALL-E│ │
 │                                       │  Azure OpenAI    │ │
-│  ┌──────────────────────────────┐     └──────────────────┘ │
-│  │  SQLite (dev) / MySQL (prod) │                           │
-│  └──────────────────────────────┘                           │
+│  ┌──────────────┐  ┌───────────────┐  └──────────────────┘ │
+│  │  SQLite/MySQL│  │  Media Assets │                        │
+│  │  (content DB)│  │  (AI images)  │                        │
+│  └──────────────┘  └───────────────┘                        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 **Key design decisions:**
 
 - **Provider abstraction** — swap Anthropic ↔ OpenAI ↔ Azure without touching pipeline code. Fallback chain auto-retries on rate limits.
-- **Pipeline-as-config** — stages defined in DB, not hardcoded. Add/remove stages without deploying code.
+- **AI image generation** — DALL-E 3 integration generates hero images automatically. An `ImagePromptBuilder` (powered by Haiku) crafts optimized prompts from content metadata; images are downloaded, stored as `MediaAsset` records, and attached to content.
+- **Pipeline-as-config** — stages defined in DB, not hardcoded. Add/remove/reorder stages without deploying code. Supports `human_gate` stages for manual review checkpoints.
 - **Block-based content** — every piece of content is a collection of typed `ContentBlock` records. Flexible for headless delivery.
-- **Full provenance** — every AI call logged (`AIGenerationLog`) with model, tokens, cost, and which pipeline stage triggered it.
+- **Full provenance** — every AI call logged (`AIGenerationLog`) with model, tokens, cost, and which pipeline stage triggered it. Image generation costs tracked per asset.
 
 ---
 

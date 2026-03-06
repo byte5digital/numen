@@ -89,7 +89,7 @@ class Content extends Model
         $this->update([
             'status'       => 'published',
             'published_at' => now(),
-            'refresh_at'   => now()->addDays(config('numen.pipeline.content_refresh_days', 30)),
+            'refresh_at'   => now()->addDays((int) config('numen.pipeline.content_refresh_days', 30)),
         ]);
     }
 }
