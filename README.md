@@ -237,15 +237,17 @@ Each pipeline stage uses the right model for the job — balance cost vs. capabi
 | Stage | Default Model | Role | Est. Cost/Article |
 |---|---|---|---|
 | Content Generation | `claude-sonnet-4-6` | Full article writing | ~$0.05–0.15 |
+| Image Prompt | `claude-haiku-4-5` | Crafts DALL-E prompts from metadata | ~$0.001–0.005 |
+| Image Generation | `dall-e-3` | Hero image (1792×1024, vivid) | ~$0.08 |
 | SEO Optimization | `claude-haiku-4-5` | Meta, keywords, slug | ~$0.005–0.02 |
 | Editorial Review | `claude-opus-4-6` | Quality scoring & feedback | ~$0.10–0.30 |
 | Planning / Strategy | `claude-opus-4-6` | Brief analysis, outlines | ~$0.05–0.15 |
 | Classification | `claude-haiku-4-5` | Tagging, categorization | ~$0.001–0.005 |
 | Premium Generation | `claude-opus-4-6` | High-stakes content | ~$0.20–0.50 |
 
-**All model assignments are configurable via env vars** — see Configuration below. You can route any role to OpenAI or Azure with `AI_MODEL_GENERATION=openai:gpt-4o`.
+**All model assignments are configurable via env vars** — see Configuration below. You can route any role to OpenAI or Azure with `AI_MODEL_GENERATION=openai:gpt-4o`. Image generation requires `OPENAI_API_KEY` (DALL-E 3); the stage gracefully skips if not configured.
 
-Rough running cost: **~$25/month for 100 articles** with the default setup.
+Rough running cost: **~$35/month for 100 articles with images** with the default setup.
 
 ---
 

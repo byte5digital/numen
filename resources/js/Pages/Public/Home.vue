@@ -9,12 +9,12 @@ const features = [
     {
         icon: '📝',
         title: 'Brief-Driven',
-        desc: 'Describe what you need. The pipeline handles the rest — generation, SEO, quality review, publishing.',
+        desc: 'Describe what you need. The pipeline handles the rest — generation, illustration, SEO, quality review, publishing.',
     },
     {
-        icon: '🤖',
-        title: 'Agent Pipeline',
-        desc: 'Three-stage AI pipeline: Creator writes, SEO Expert optimizes, Editorial Director reviews. Configurable per stage.',
+        icon: '🎨',
+        title: 'AI Image Generation',
+        desc: 'DALL-E 3 generates hero images automatically. An AI prompt builder crafts optimized prompts from your content metadata.',
     },
     {
         icon: '🔌',
@@ -29,12 +29,12 @@ const features = [
     {
         icon: '📊',
         title: 'Full Provenance',
-        desc: 'Every AI call logged — model, tokens, cost, stage. Know exactly what happened and what it cost.',
+        desc: 'Every AI call logged — model, tokens, cost, stage. Image generation costs tracked per asset.',
     },
     {
         icon: '⚙️',
         title: 'Pipeline as Config',
-        desc: 'Stages defined in DB, not code. Add review gates, custom agents, or human checkpoints without deploying.',
+        desc: 'Stages defined in DB, not code. Add review gates, human checkpoints, or custom agents without deploying.',
     },
 ];
 
@@ -101,43 +101,61 @@ const stack = [
             <h2 class="text-center text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight mb-4">How it works</h2>
             <p class="text-center text-slate-500 mb-14 max-w-xl mx-auto">Traditional CMS: open editor → write → publish. Numen: submit a brief → pipeline runs → content appears.</p>
 
-            <div class="flex flex-col md:flex-row items-stretch justify-center gap-4">
-                <!-- Stage 1 -->
-                <div class="flex-1 bg-gradient-to-b from-indigo-50 to-white border border-indigo-100 rounded-2xl p-6 text-center">
-                    <div class="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center mx-auto mb-4">
-                        <span class="text-xl">✍️</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- Stage 1: Generate -->
+                <div class="bg-gradient-to-b from-indigo-50 to-white border border-indigo-100 rounded-2xl p-5 text-center">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center mx-auto mb-3">
+                        <span class="text-lg">✍️</span>
                     </div>
-                    <h3 class="font-bold text-slate-900 mb-1">Content Creator</h3>
-                    <p class="text-xs text-indigo-500 font-medium mb-2">claude-sonnet-4-6</p>
-                    <p class="text-sm text-slate-500">Writes the article from your brief</p>
+                    <h3 class="font-bold text-slate-900 text-sm mb-1">Content Creator</h3>
+                    <p class="text-xs text-indigo-500 font-medium mb-1">claude-sonnet-4-6</p>
+                    <p class="text-xs text-slate-500">Writes the article</p>
                 </div>
 
-                <div class="hidden md:flex items-center text-slate-300 text-2xl">→</div>
-                <div class="md:hidden flex justify-center text-slate-300 text-2xl">↓</div>
-
-                <!-- Stage 2 -->
-                <div class="flex-1 bg-gradient-to-b from-emerald-50 to-white border border-emerald-100 rounded-2xl p-6 text-center">
-                    <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-4">
-                        <span class="text-xl">🔍</span>
+                <!-- Stage 2: Illustrate -->
+                <div class="bg-gradient-to-b from-pink-50 to-white border border-pink-100 rounded-2xl p-5 text-center">
+                    <div class="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center mx-auto mb-3">
+                        <span class="text-lg">🎨</span>
                     </div>
-                    <h3 class="font-bold text-slate-900 mb-1">SEO Expert</h3>
-                    <p class="text-xs text-emerald-500 font-medium mb-2">claude-haiku-4-5</p>
-                    <p class="text-sm text-slate-500">Optimizes metadata & keywords</p>
+                    <h3 class="font-bold text-slate-900 text-sm mb-1">AI Illustrator</h3>
+                    <p class="text-xs text-pink-500 font-medium mb-1">dall-e-3</p>
+                    <p class="text-xs text-slate-500">Generates hero image</p>
                 </div>
 
-                <div class="hidden md:flex items-center text-slate-300 text-2xl">→</div>
-                <div class="md:hidden flex justify-center text-slate-300 text-2xl">↓</div>
-
-                <!-- Stage 3 -->
-                <div class="flex-1 bg-gradient-to-b from-amber-50 to-white border border-amber-100 rounded-2xl p-6 text-center">
-                    <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center mx-auto mb-4">
-                        <span class="text-xl">⚖️</span>
+                <!-- Stage 3: SEO -->
+                <div class="bg-gradient-to-b from-emerald-50 to-white border border-emerald-100 rounded-2xl p-5 text-center">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-3">
+                        <span class="text-lg">🔍</span>
                     </div>
-                    <h3 class="font-bold text-slate-900 mb-1">Editorial Director</h3>
-                    <p class="text-xs text-amber-500 font-medium mb-2">claude-opus-4-6</p>
-                    <p class="text-sm text-slate-500">Quality gate — score ≥ 80 → publish</p>
+                    <h3 class="font-bold text-slate-900 text-sm mb-1">SEO Expert</h3>
+                    <p class="text-xs text-emerald-500 font-medium mb-1">claude-haiku-4-5</p>
+                    <p class="text-xs text-slate-500">Optimizes metadata</p>
+                </div>
+
+                <!-- Stage 4: Review -->
+                <div class="bg-gradient-to-b from-amber-50 to-white border border-amber-100 rounded-2xl p-5 text-center">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center mx-auto mb-3">
+                        <span class="text-lg">⚖️</span>
+                    </div>
+                    <h3 class="font-bold text-slate-900 text-sm mb-1">Editorial Director</h3>
+                    <p class="text-xs text-amber-500 font-medium mb-1">claude-opus-4-6</p>
+                    <p class="text-xs text-slate-500">Quality gate (≥ 80)</p>
+                </div>
+
+                <!-- Stage 5: Publish -->
+                <div class="bg-gradient-to-b from-violet-50 to-white border border-violet-100 rounded-2xl p-5 text-center">
+                    <div class="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center mx-auto mb-3">
+                        <span class="text-lg">🚀</span>
+                    </div>
+                    <h3 class="font-bold text-slate-900 text-sm mb-1">Auto-Publish</h3>
+                    <p class="text-xs text-violet-500 font-medium mb-1">event-driven</p>
+                    <p class="text-xs text-slate-500">Goes live via API</p>
                 </div>
             </div>
+
+            <p class="text-center text-sm text-slate-400 mt-6">
+                Every stage is a queued job. Add <code class="text-slate-500">human_gate</code> stages anywhere to pause for manual review.
+            </p>
         </div>
     </section>
 
