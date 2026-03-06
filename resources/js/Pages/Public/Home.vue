@@ -175,9 +175,6 @@ const stack = [
 <span class="text-emerald-400">$</span> cp .env.example .env
 <span class="text-emerald-400">$</span> php artisan key:generate
 
-<span class="text-slate-500"># Add your API key to .env</span>
-<span class="text-emerald-400">ANTHROPIC_API_KEY=</span><span class="text-amber-300">sk-ant-your-key-here</span>
-
 <span class="text-slate-500"># Database & seed</span>
 <span class="text-emerald-400">$</span> touch database/database.sqlite
 <span class="text-emerald-400">$</span> php artisan migrate
