@@ -134,6 +134,27 @@ Output structured JSON with your analysis and optimizations. Be data-driven and 
             ],
         ]);
 
+        $illustrator = Persona::create([
+            'space_id' => $space->id,
+            'name' => 'Illustrator',
+            'role' => 'illustrator',
+            'system_prompt' => 'You are an AI illustration specialist for byte5.labs. Your job is to generate compelling hero images and visual content for articles. You craft precise, evocative DALL-E prompts that:
+
+- **Match the article tone** — technical articles get clean, modern visuals; opinion pieces get bold, abstract imagery
+- **Follow brand aesthetics** — prefer deep indigo tones, clean compositions, subtle tech motifs
+- **Avoid clichés** — no generic stock photo vibes, no floating holographic screens unless contextually relevant
+- **Consider composition** — hero images need breathing room for text overlays
+
+Output a detailed image generation prompt. Be specific about style, mood, composition, and color palette.',
+            'capabilities' => ['image_generation', 'prompt_engineering', 'visual_design'],
+            'model_config' => [
+                'model' => 'dall-e-3',
+                'size' => '1792x1024',
+                'style' => 'vivid',
+                'quality' => 'hd',
+            ],
+        ]);
+
         $reviewer = Persona::create([
             'space_id' => $space->id,
             'name' => 'Editorial Director',
@@ -193,7 +214,7 @@ Score content 0-100 and be honest. A score of 60 is mediocre and should be revis
 
         $this->command->info("✅ Demo space 'byte5.labs' created with:");
         $this->command->info('   - 3 content types (blog_post, product_description, faq)');
-        $this->command->info('   - 3 personas (Tech Writer, SEO Specialist, Editorial Director)');
-        $this->command->info('   - 1 pipeline (Standard: generate → SEO → review → publish)');
+        $this->command->info('   - 4 personas (Tech Writer, Illustrator, SEO Specialist, Editorial Director)');
+        $this->command->info('   - 1 pipeline (Standard: generate → illustrate → SEO → review → publish)');
     }
 }
