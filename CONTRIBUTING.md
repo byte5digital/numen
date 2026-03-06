@@ -92,19 +92,22 @@ For a specific test file:
 php artisan test tests/Feature/ContentApiTest.php
 ```
 
-### Code Style
+### Code Style & Static Analysis
 
-We use [Laravel Pint](https://laravel.com/docs/pint) for code formatting. It's already in `composer.json`.
+We use [Laravel Pint](https://laravel.com/docs/pint) for code formatting and [Larastan](https://github.com/larastan/larastan) (PHPStan level 5) for static analysis. Both are already in `composer.json`.
 
 ```bash
 # Check for style issues
 ./vendor/bin/pint --test
 
-# Fix all issues
+# Fix all style issues
 ./vendor/bin/pint
+
+# Run static analysis
+./vendor/bin/phpstan analyse
 ```
 
-Pint runs against the `laravel` preset. Don't submit PRs with Pint failures — CI will catch them.
+Pint runs against the `laravel` preset. **Both Pint and Larastan must pass** before submitting a PR — CI enforces both and will fail if either reports errors.
 
 ---
 
@@ -144,12 +147,17 @@ A few guidelines:
 
 ### 3. Before You Push
 
+Both Pint (code style) **and** Larastan (static analysis) must pass before opening a PR. CI enforces both.
+
 ```bash
 # Run tests
 php artisan test
 
 # Fix code style
 ./vendor/bin/pint
+
+# Run static analysis (Larastan level 5)
+./vendor/bin/phpstan analyse
 
 # Make sure nothing is obviously broken
 php artisan route:list
