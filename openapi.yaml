@@ -1,0 +1,1205 @@
+openapi: 3.1.0
+info:
+  title: Numen AI-First Headless CMS API
+  version: 1.0.0
+  description: |
+    REST API for the Numen AI-First Headless CMS by byte5.
+
+    ## Authentication
+    Authenticated endpoints require a Bearer token issued via Sanctum.
+    Include it as: `Authorization: Bearer <token>`
+
+    ## Rate Limiting
+    Rate limit headers are included in all throttled responses:
+    - `X-RateLimit-Limit` — maximum requests per window
+    - `X-RateLimit-Remaining` — requests remaining in current window
+    - `Retry-After` — seconds until window resets (only on 429)
+
+    | Endpoint group            | Limit         |
+    |---------------------------|---------------|
+    | Content delivery (GET)    | 60 req/min    |
+    | Pages (GET)               | 60 req/min    |
+    | Component types (GET)     | 30 req/min    |
+    | Briefs POST               | 10 req/min    |
+
+servers:
+  - url: /api/v1
+    description: Current API version
+
+components:
+  securitySchemes:
+    sanctumToken:
+      type: http
+      scheme: bearer
+      description: Sanctum personal access token
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Page not found
+      required: [error]
+
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: The given data was invalid.
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            title: ["The title field is required."]
+
+    PaginationLinks:
+      type: object
+      properties:
+        first:
+          type: string
+          example: /api/v1/content?page=1
+        last:
+          type: string
+          example: /api/v1/content?page=5
+        prev:
+          type: string
+          nullable: true
+        next:
+          type: string
+          nullable: true
+
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+          example: 1
+        from:
+          type: integer
+          example: 1
+        last_page:
+          type: integer
+          example: 5
+        per_page:
+          type: integer
+          example: 20
+        to:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 87
+
+    ContentItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+          example: my-blog-post
+        status:
+          type: string
+          enum: [draft, published, archived]
+          example: published
+        locale:
+          type: string
+          example: en
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        title:
+          type: string
+          example: My Blog Post
+        excerpt:
+          type: string
+          nullable: true
+          example: A short summary of the article.
+        body:
+          type: object
+          description: Structured content body (JSON)
+          nullable: true
+        seo_score:
+          type: number
+          format: float
+          nullable: true
+          example: 82.5
+        content_type:
+          type: object
+          nullable: true
+          properties:
+            slug:
+              type: string
+              example: blog_post
+            label:
+              type: string
+              example: Blog Post
+        media_assets:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              url:
+                type: string
+              alt:
+                type: string
+                nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PageComponent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          example: hero_banner
+        sort_order:
+          type: integer
+          example: 1
+        data:
+          type: object
+          description: Component-specific field data
+          example:
+            heading: Welcome to Numen
+            subheading: AI-powered content at your fingertips
+        wysiwyg_override:
+          type: string
+          nullable: true
+          description: Raw HTML override for WYSIWYG editing
+        ai_generated:
+          type: boolean
+          example: true
+
+    PageSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+          example: homepage
+        title:
+          type: string
+          example: Home
+        meta:
+          type: object
+          nullable: true
+          example:
+            description: Welcome to our site
+            og_image: /images/og.png
+        updated_at:
+          type: string
+          format: date-time
+
+    PageDetail:
+      allOf:
+        - $ref: '#/components/schemas/PageSummary'
+        - type: object
+          properties:
+            components:
+              type: array
+              items:
+                $ref: '#/components/schemas/PageComponent'
+
+    ComponentDefinition:
+      type: object
+      properties:
+        type:
+          type: string
+          example: hero_banner
+        label:
+          type: string
+          example: Hero Banner
+        description:
+          type: string
+          nullable: true
+          example: Full-width hero section with heading and CTA
+        schema:
+          type: object
+          description: Field definitions — keys are field names, values are field types
+          example:
+            heading: string
+            subheading: string
+            cta_label: string
+            cta_url: string
+            image_url: string
+        vue_template:
+          type: string
+          nullable: true
+          description: Raw HTML/Vue template with {{ field }} interpolations
+        is_builtin:
+          type: boolean
+          example: false
+        created_by:
+          type: string
+          enum: [system, human, ai_agent]
+          example: ai_agent
+
+    Brief:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        space_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: Q1 Product Launch Blog Post
+        description:
+          type: string
+          nullable: true
+        content_type_slug:
+          type: string
+          example: blog_post
+        target_keywords:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: [headless CMS, AI content]
+        requirements:
+          type: array
+          items:
+            type: string
+          nullable: true
+        reference_urls:
+          type: array
+          items:
+            type: string
+          nullable: true
+        target_locale:
+          type: string
+          example: en
+          nullable: true
+        persona_id:
+          type: string
+          format: uuid
+          nullable: true
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+          example: normal
+          nullable: true
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+          example: pending
+        source:
+          type: string
+          example: manual
+        pipeline_run:
+          type: object
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PipelineRun:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, running, paused_for_review, completed, failed]
+          example: running
+        current_stage:
+          type: string
+          example: seo_optimization
+        brief:
+          type: object
+          nullable: true
+        content:
+          type: object
+          nullable: true
+        generation_logs:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              model:
+                type: string
+                example: claude-sonnet-4-6
+              purpose:
+                type: string
+                example: content_generation
+              input_tokens:
+                type: integer
+              output_tokens:
+                type: integer
+              cost_usd:
+                type: number
+                format: float
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Persona:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Tech Enthusiast
+        description:
+          type: string
+          nullable: true
+        tone:
+          type: string
+          nullable: true
+          example: Informative and enthusiastic
+        is_active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+
+    AnalyticsCostRow:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2026-03-06"
+        model:
+          type: string
+          example: claude-sonnet-4-6
+        purpose:
+          type: string
+          example: content_generation
+        calls:
+          type: integer
+          example: 42
+        total_input_tokens:
+          type: integer
+          example: 125000
+        total_output_tokens:
+          type: integer
+          example: 48000
+        total_cost:
+          type: number
+          format: float
+          example: 0.87
+
+paths:
+  # ─── Content Delivery (Public, 60 req/min) ────────────────────────────────
+
+  /content:
+    get:
+      operationId: listContent
+      summary: List published content
+      description: Returns paginated published content. No authentication required.
+      tags: [Content]
+      parameters:
+        - name: locale
+          in: query
+          schema:
+            type: string
+            example: en
+          description: Filter by locale
+        - name: type
+          in: query
+          schema:
+            type: string
+            example: blog_post
+          description: Filter by content type slug
+        - name: tag
+          in: query
+          schema:
+            type: string
+            example: ai,cms
+          description: Comma-separated tags to filter by (AND logic)
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: -published_at
+            enum: [published_at, -published_at, created_at, -created_at, updated_at, -updated_at, title, -title]
+          description: Sort column. Prefix with `-` for descending order.
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Paginated list of published content
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Requests allowed per minute
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: Requests remaining in current window
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentItem'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+              example:
+                data:
+                  - id: "018e1234-5678-7abc-def0-123456789abc"
+                    slug: my-blog-post
+                    status: published
+                    locale: en
+                    published_at: "2026-03-01T10:00:00Z"
+                    title: My Blog Post
+                    excerpt: A short summary.
+                    seo_score: 82.5
+                    content_type:
+                      slug: blog_post
+                      label: Blog Post
+                    media_assets: []
+                meta:
+                  current_page: 1
+                  last_page: 5
+                  per_page: 20
+                  total: 87
+        '429':
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+
+  /content/{slug}:
+    get:
+      operationId: getContent
+      summary: Get content by slug
+      description: Returns a single published content item. No authentication required.
+      tags: [Content]
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            example: my-blog-post
+        - name: locale
+          in: query
+          schema:
+            type: string
+            default: en
+      responses:
+        '200':
+          description: Content item
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ContentItem'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+
+  /content/type/{type}:
+    get:
+      operationId: listContentByType
+      summary: List content by type
+      description: Returns paginated published content filtered by content type slug. No authentication required.
+      tags: [Content]
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+            example: blog_post
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Paginated list of content of the given type
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentItem'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '429':
+          description: Rate limit exceeded
+
+  # ─── Pages (Public, 60 req/min) ───────────────────────────────────────────
+
+  /pages:
+    get:
+      operationId: listPages
+      summary: List published pages
+      description: Returns all published pages (summary view, no components). No authentication required.
+      tags: [Pages]
+      responses:
+        '200':
+          description: List of published pages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PageSummary'
+              example:
+                data:
+                  - id: "018e1234-5678-7abc-def0-000000000001"
+                    slug: homepage
+                    title: Home
+                    meta:
+                      description: Welcome to Numen
+                    updated_at: "2026-03-01T09:00:00Z"
+        '429':
+          description: Rate limit exceeded
+
+  /pages/{slug}:
+    get:
+      operationId: getPage
+      summary: Get page by slug
+      description: |
+        Returns a page with all its components. Dynamic data is injected at request time:
+        - `stats_row` components receive live database statistics
+        - `content_list` components receive recent published content
+
+        No authentication required.
+      tags: [Pages]
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            example: homepage
+      responses:
+        '200':
+          description: Page with components
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PageDetail'
+              example:
+                data:
+                  slug: homepage
+                  title: Home
+                  meta:
+                    description: Welcome to Numen
+                  components:
+                    - id: "018e1234-0001-0001-0001-000000000001"
+                      type: hero_banner
+                      sort_order: 1
+                      data:
+                        heading: AI-Powered Content
+                        subheading: Built for developers
+                      wysiwyg_override: null
+                      ai_generated: true
+        '404':
+          description: Page not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+
+  # ─── Component Types (Public GET 30 req/min, Auth POST/PUT) ───────────────
+
+  /component-types:
+    get:
+      operationId: listComponentTypes
+      summary: List all component types
+      description: Returns all available component types — builtin and custom. No authentication required.
+      tags: [Component Types]
+      responses:
+        '200':
+          description: List of component type definitions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ComponentDefinition'
+              example:
+                data:
+                  - type: hero_banner
+                    label: Hero Banner
+                    description: Full-width hero with heading and CTA
+                    schema:
+                      heading: string
+                      subheading: string
+                      cta_label: string
+                      cta_url: string
+                    vue_template: null
+                    is_builtin: true
+                    created_by: system
+        '429':
+          description: Rate limit exceeded
+
+    post:
+      operationId: createComponentType
+      summary: Register a new component type
+      description: |
+        Allows AI agents or admins to register a brand-new component type at runtime.
+        The type becomes immediately available for use in pages and content blocks.
+
+        **Authentication required.**
+      tags: [Component Types]
+      security:
+        - sanctumToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, label, schema]
+              properties:
+                type:
+                  type: string
+                  pattern: '^[a-z][a-z0-9_]*$'
+                  example: pricing_table
+                  description: Unique snake_case identifier
+                label:
+                  type: string
+                  maxLength: 120
+                  example: Pricing Table
+                description:
+                  type: string
+                  nullable: true
+                  example: A table comparing pricing tiers
+                schema:
+                  type: object
+                  description: Field definitions — keys are field names, values are field type strings
+                  example:
+                    title: string
+                    tiers: array
+                vue_template:
+                  type: string
+                  nullable: true
+                  description: Vue/HTML template with {{ field }} interpolations
+                created_by:
+                  type: string
+                  enum: [human, ai_agent]
+                  default: ai_agent
+      responses:
+        '201':
+          description: Component type created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ComponentDefinition'
+        '401':
+          description: Unauthenticated
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /component-types/{type}:
+    get:
+      operationId: getComponentType
+      summary: Get a single component type
+      description: Returns the definition for a specific component type (builtin or custom). No authentication required.
+      tags: [Component Types]
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+            example: hero_banner
+      responses:
+        '200':
+          description: Component type definition
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ComponentDefinition'
+        '404':
+          description: Component type not found
+        '429':
+          description: Rate limit exceeded
+
+    put:
+      operationId: updateComponentType
+      summary: Update a custom component type
+      description: |
+        Update the label, description, schema, or template of an existing custom component type.
+        Builtin types cannot be modified.
+
+        **Authentication required.**
+      tags: [Component Types]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+            example: pricing_table
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+                  maxLength: 120
+                description:
+                  type: string
+                  nullable: true
+                schema:
+                  type: object
+                vue_template:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Updated component type
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ComponentDefinition'
+        '401':
+          description: Unauthenticated
+        '404':
+          description: Component type not found
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  # ─── Briefs (Auth, 10 req/min on POST) ────────────────────────────────────
+
+  /briefs:
+    post:
+      operationId: createBrief
+      summary: Create a content brief and start pipeline
+      description: |
+        Submit a content brief to trigger AI content generation via the configured pipeline.
+        A pipeline run is started immediately and content will be available once the pipeline completes.
+
+        **Authentication required. Rate limited to 10 requests/minute (cost-abuse prevention).**
+      tags: [Briefs]
+      security:
+        - sanctumToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [space_id, title, content_type_slug]
+              properties:
+                space_id:
+                  type: string
+                  format: uuid
+                title:
+                  type: string
+                  maxLength: 500
+                  example: Q1 Product Launch Blog Post
+                description:
+                  type: string
+                  maxLength: 5000
+                  nullable: true
+                content_type_slug:
+                  type: string
+                  example: blog_post
+                target_keywords:
+                  type: array
+                  items:
+                    type: string
+                    maxLength: 200
+                  nullable: true
+                  example: [headless CMS, AI content generation]
+                requirements:
+                  type: array
+                  items:
+                    type: string
+                    maxLength: 1000
+                  nullable: true
+                  example: ["Include a call-to-action", "Target 1500 words"]
+                reference_urls:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+                target_locale:
+                  type: string
+                  maxLength: 10
+                  nullable: true
+                  example: en
+                persona_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                priority:
+                  type: string
+                  enum: [low, normal, high, urgent]
+                  nullable: true
+                  default: normal
+                pipeline_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: Use a specific pipeline; defaults to the space's active pipeline
+      responses:
+        '201':
+          description: Brief created and pipeline started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      brief_id:
+                        type: string
+                        format: uuid
+                      pipeline_run_id:
+                        type: string
+                        format: uuid
+                      status:
+                        type: string
+                        example: processing
+                      message:
+                        type: string
+                        example: Content brief created and pipeline started.
+              example:
+                data:
+                  brief_id: "018e1234-5678-7abc-def0-aaaaaaaaaaaa"
+                  pipeline_run_id: "018e1234-5678-7abc-def0-bbbbbbbbbbbb"
+                  status: processing
+                  message: Content brief created and pipeline started.
+        '401':
+          description: Unauthenticated
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '429':
+          description: Rate limit exceeded
+
+    get:
+      operationId: listBriefs
+      summary: List content briefs
+      description: Returns paginated list of briefs with optional filters. **Authentication required.**
+      tags: [Briefs]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by space
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, processing, completed, failed]
+      responses:
+        '200':
+          description: Paginated list of briefs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Brief'
+                      links:
+                        $ref: '#/components/schemas/PaginationLinks'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          description: Unauthenticated
+
+  /briefs/{id}:
+    get:
+      operationId: getBrief
+      summary: Get brief details
+      description: Returns a brief with its pipeline run status and generated content. **Authentication required.**
+      tags: [Briefs]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Brief detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Brief'
+        '401':
+          description: Unauthenticated
+        '404':
+          description: Brief not found
+
+  # ─── Pipeline Runs (Auth) ──────────────────────────────────────────────────
+
+  /pipeline-runs/{id}:
+    get:
+      operationId: getPipelineRun
+      summary: Get pipeline run status
+      description: Returns the full status of a pipeline run including generation logs. **Authentication required.**
+      tags: [Pipeline Runs]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Pipeline run detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PipelineRun'
+        '401':
+          description: Unauthenticated
+        '404':
+          description: Pipeline run not found
+
+  /pipeline-runs/{id}/approve:
+    post:
+      operationId: approvePipelineRun
+      summary: Approve a pipeline run awaiting review
+      description: |
+        Advances a pipeline run that is in `paused_for_review` status.
+        Returns 422 if the run is not awaiting review.
+
+        **Authentication required.**
+      tags: [Pipeline Runs]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Run approved and advanced
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        example: approved
+        '401':
+          description: Unauthenticated
+        '404':
+          description: Pipeline run not found
+        '422':
+          description: Run is not awaiting review
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Run is not awaiting review
+
+  # ─── Personas (Auth) ──────────────────────────────────────────────────────
+
+  /personas:
+    get:
+      operationId: listPersonas
+      summary: List active personas
+      description: Returns all active personas available for content generation. **Authentication required.**
+      tags: [Personas]
+      security:
+        - sanctumToken: []
+      responses:
+        '200':
+          description: List of active personas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Persona'
+              example:
+                data:
+                  - id: "018e1234-5678-7abc-def0-cccccccccccc"
+                    name: Tech Enthusiast
+                    description: Writes for technically-minded developers
+                    tone: Informative and enthusiastic
+                    is_active: true
+                    created_at: "2026-01-15T08:00:00Z"
+        '401':
+          description: Unauthenticated
+
+  # ─── Analytics (Auth) ─────────────────────────────────────────────────────
+
+  /analytics/costs:
+    get:
+      operationId: getAnalyticsCosts
+      summary: Get AI generation cost analytics
+      description: |
+        Returns aggregated AI generation cost data grouped by date, model, and purpose.
+        Limited to the last 100 rows ordered by date descending.
+
+        **Authentication required.**
+      tags: [Analytics]
+      security:
+        - sanctumToken: []
+      responses:
+        '200':
+          description: Cost analytics data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AnalyticsCostRow'
+              example:
+                data:
+                  - date: "2026-03-06"
+                    model: claude-sonnet-4-6
+                    purpose: content_generation
+                    calls: 42
+                    total_input_tokens: 125000
+                    total_output_tokens: 48000
+                    total_cost: 0.87
+        '401':
+          description: Unauthenticated
+
+tags:
+  - name: Content
+    description: Public content delivery endpoints (60 req/min)
+  - name: Pages
+    description: Public headless page delivery endpoints (60 req/min)
+  - name: Component Types
+    description: Component type registry — public reads (30 req/min), authenticated writes
+  - name: Briefs
+    description: Content brief management and AI pipeline triggers (authenticated)
+  - name: Pipeline Runs
+    description: Pipeline execution status and human-in-the-loop approvals (authenticated)
+  - name: Personas
+    description: Audience personas for AI content generation (authenticated)
+  - name: Analytics
+    description: AI generation cost and usage analytics (authenticated)

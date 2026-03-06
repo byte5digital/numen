@@ -1,0 +1,64 @@
+name: Code Quality
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  pint:
+    name: Laravel Pint (code style)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, xml, dom, curl
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-8.4-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-8.4-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Run Pint (dry-run)
+        run: php vendor/bin/pint --test
+
+  larastan:
+    name: Larastan (static analysis)
+    runs-on: ubuntu-latest
+    # Only runs if a phpstan config file exists in the repo
+    if: ${{ hashFiles('phpstan.neon', 'phpstan.neon.dist', '.phpstan.neon') != '' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, xml, dom, curl
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-8.4-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-8.4-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Run Larastan
+        run: php vendor/bin/phpstan analyse --no-progress

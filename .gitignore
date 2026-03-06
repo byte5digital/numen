@@ -1,0 +1,42 @@
+# Laravel
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+.env
+.env.backup
+.env.production
+.env.local
+
+# Database
+/database/database.sqlite
+/database/*.sqlite-journal
+
+# IDE / Editor
+/.fleet
+/.idea
+/.vscode
+.phpactor.json
+
+# Testing
+.phpunit.result.cache
+.phpunit.cache
+
+# Composer
+auth.json
+Homestead.json
+Homestead.yaml
+
+# Debug / Logs
+npm-debug.log
+yarn-error.log
+storage/logs/*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+/public/build

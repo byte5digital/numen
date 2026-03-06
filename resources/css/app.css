@@ -1,0 +1,33 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+    --color-numen: #6366F1;
+    --color-numen-light: #818CF8;
+    --color-numen-dark: #4338CA;
+    --color-numen-deep: #1E1B4B;
+    --color-numen-accent: #F59E0B;
+    --color-numen-surface: #F8FAFC;
+    --color-numen-text: #0F172A;
+    --color-numen-muted: #64748B;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: #FFFFFF;
+    color: var(--color-numen-text);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-weight: 700;
+}
+
+/* Prose overrides for light theme */
+.prose-numen {
+    --tw-prose-body: var(--color-numen-text);
+    --tw-prose-headings: var(--color-numen-text);
+    --tw-prose-links: var(--color-numen);
+    --tw-prose-bold: var(--color-numen-text);
+    --tw-prose-code: var(--color-numen);
+}
