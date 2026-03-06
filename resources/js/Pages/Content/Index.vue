@@ -6,7 +6,7 @@ const props = defineProps({
 });
 
 function deleteContent(id) {
-    if (confirm('Archive this content?')) {
+    if (confirm('Permanently delete this content? This will remove all versions, blocks, pipeline runs, and media associations. This cannot be undone.')) {
         router.delete(`/admin/content/${id}`);
     }
 }

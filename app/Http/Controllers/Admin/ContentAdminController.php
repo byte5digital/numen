@@ -178,14 +178,27 @@ class ContentAdminController extends Controller
     {
         $content = Content::findOrFail($id);
 
-        // Delete versions, blocks, and the content itself
+        // Delete pipeline runs and their generation logs
+        foreach ($content->pipelineRuns as $run) {
+            $run->generationLogs()->delete();
+            $run->versions()->update(['pipeline_run_id' => null]);
+            $run->delete();
+        }
+
+        // Delete versions and their blocks
         foreach ($content->versions as $version) {
             $version->blocks()->delete();
         }
         $content->versions()->delete();
+
+        // Detach media assets (pivot table)
+        $content->mediaAssets()->detach();
+
+        // Clear hero image reference, then delete
+        $content->update(['hero_image_id' => null]);
         $content->delete();
 
-        return redirect()->route('admin.content')->with('success', 'Content deleted.');
+        return redirect()->route('admin.content')->with('success', 'Content permanently deleted.');
     }
 
     public function generateImage(string $id)

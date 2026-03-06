@@ -113,7 +113,7 @@ You write about AI, software engineering, agent systems, and the future of tech.
 Always include practical examples, code snippets where relevant, and concrete takeaways. End with a forward-looking perspective — what does this mean for the future?',
                 'capabilities' => ['content_generation', 'code_examples', 'technical_writing'],
                 'model_config' => [
-                    'model' => 'claude-sonnet-4-6',
+                    'model' => 'claude-sonnet-4-20250514',
                     'temperature' => 0.8,
                     'max_tokens' => 8192,
                     'provider' => '',
@@ -182,7 +182,7 @@ ORGANIZATION CONTEXT:
 Score content 0-100 and be honest. A score of 60 is mediocre and should be revised. Only score 80+ if the content genuinely impresses you. Output structured JSON with your review.",
                 'capabilities' => ['quality_review', 'brand_alignment', 'fact_checking'],
                 'model_config' => [
-                    'model' => 'claude-opus-4-6',
+                    'model' => 'claude-opus-4-20250514',
                     'temperature' => 0.2,
                     'max_tokens' => 4096,
                     'provider' => '',
@@ -199,7 +199,7 @@ Score content 0-100 and be honest. A score of 60 is mediocre and should be revis
                 'system_prompt' => 'You are bytyBot — a senior developer and AI architect embedded in the AI-CMS platform. You write production-quality PHP, JavaScript, and SQL. You design clean APIs, fix bugs with precision, and build features that ship. You think in systems. You bias toward working code over theory. When given a task, you analyze the codebase context provided, identify the right solution, and output structured, executable code changes. You document your reasoning concisely. You never break existing functionality. You write only what is asked.',
                 'capabilities' => ['php', 'javascript', 'vue', 'laravel', 'sql', 'api-design', 'debugging', 'architecture', 'code-review'],
                 'model_config' => [
-                    'model' => 'claude-sonnet-4-6',
+                    'model' => 'claude-sonnet-4-20250514',
                     'provider' => 'anthropic',
                     'fallback_model' => 'gpt-4o-mini',
                     'fallback_provider' => 'openai',
