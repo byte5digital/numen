@@ -8,9 +8,9 @@ interface ImageProviderInterface
      * Generate an image from a text prompt.
      *
      * @param  string  $prompt  The image generation prompt
-     * @param  string  $size    Image dimensions (e.g. "1792x1024")
-     * @param  string  $style   Style hint (e.g. "vivid", "natural") — provider-dependent
-     * @param  string  $quality Quality setting (e.g. "standard", "hd") — provider-dependent
+     * @param  string  $size  Image dimensions (e.g. "1792x1024")
+     * @param  string  $style  Style hint (e.g. "vivid", "natural") — provider-dependent
+     * @param  string  $quality  Quality setting (e.g. "standard", "hd") — provider-dependent
      * @return ImageResult Raw result with image bytes and metadata
      */
     public function generate(string $prompt, string $size, string $style, string $quality): ImageResult;

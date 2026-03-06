@@ -7,6 +7,7 @@ use App\Models\Space;
 use App\Services\AI\CostTracker;
 use App\Services\AI\ImageManager;
 use App\Services\AI\ImageProviders\FalImageProvider;
+use App\Services\AI\ImageProviders\ImageProviderInterface;
 use App\Services\AI\ImageProviders\ImageResult;
 use App\Services\AI\ImageProviders\OpenAIImageProvider;
 use App\Services\AI\ImageProviders\ReplicateImageProvider;
@@ -117,8 +118,8 @@ class ImageManagerTest extends TestCase
     {
         $space = Space::factory()->create();
 
-        $makeUnavailable = function (string $name): object {
-            $mock = $this->createMock(OpenAIImageProvider::class);
+        $makeUnavailable = function (string $name): ImageProviderInterface {
+            $mock = $this->createMock(ImageProviderInterface::class);
             $mock->method('name')->willReturn($name);
             $mock->method('isAvailable')->willReturn(false);
 
@@ -167,8 +168,8 @@ class ImageManagerTest extends TestCase
 
     public function test_has_available_provider_returns_false_when_none_available(): void
     {
-        $makeUnavailable = function (string $name): object {
-            $mock = $this->createMock(OpenAIImageProvider::class);
+        $makeUnavailable = function (string $name): ImageProviderInterface {
+            $mock = $this->createMock(ImageProviderInterface::class);
             $mock->method('name')->willReturn($name);
             $mock->method('isAvailable')->willReturn(false);
 

@@ -3,11 +3,7 @@
 namespace App\Services\AI;
 
 use App\Models\MediaAsset;
-use App\Services\AI\ImageProviders\FalImageProvider;
 use App\Services\AI\ImageProviders\ImageProviderInterface;
-use App\Services\AI\ImageProviders\OpenAIImageProvider;
-use App\Services\AI\ImageProviders\ReplicateImageProvider;
-use App\Services\AI\ImageProviders\TogetherImageProvider;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -29,10 +25,10 @@ class ImageManager
     private array $providers;
 
     public function __construct(
-        OpenAIImageProvider $openai,
-        TogetherImageProvider $together,
-        FalImageProvider $fal,
-        ReplicateImageProvider $replicate,
+        ImageProviderInterface $openai,
+        ImageProviderInterface $together,
+        ImageProviderInterface $fal,
+        ImageProviderInterface $replicate,
         private readonly CostTracker $costTracker,
     ) {
         $this->providers = [
@@ -46,12 +42,12 @@ class ImageManager
     /**
      * Generate an image, persist it to storage, and return a MediaAsset.
      *
-     * @param  string  $prompt        Image generation prompt (already built by ImagePromptBuilder)
-     * @param  string  $spaceId       Owning space ULID
-     * @param  array   $personaConfig Persona model_config array (may be empty)
-     * @param  string  $size          Image dimensions, e.g. "1792x1024"
-     * @param  string  $style         Style hint, e.g. "vivid" (passed to provider)
-     * @param  string  $quality       Quality setting, e.g. "standard" or "hd"
+     * @param  string  $prompt  Image generation prompt (already built by ImagePromptBuilder)
+     * @param  string  $spaceId  Owning space ULID
+     * @param  array  $personaConfig  Persona model_config array (may be empty)
+     * @param  string  $size  Image dimensions, e.g. "1792x1024"
+     * @param  string  $style  Style hint, e.g. "vivid" (passed to provider)
+     * @param  string  $quality  Quality setting, e.g. "standard" or "hd"
      */
     public function generate(
         string $prompt,

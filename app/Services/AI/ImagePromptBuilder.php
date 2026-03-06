@@ -16,10 +16,10 @@ class ImagePromptBuilder
     /**
      * Build an image generation prompt from content metadata.
      *
-     * @param  string  $title         Content title
+     * @param  string  $title  Content title
      * @param  string|null  $excerpt  Short excerpt (optional)
-     * @param  string[]  $tags        Content tags
-     * @param  string  $contentType   Content type slug (e.g. "blog_post")
+     * @param  string[]  $tags  Content tags
+     * @param  string  $contentType  Content type slug (e.g. "blog_post")
      * @param  array  $personaConfig  Persona model_config — may contain prompt_model, prompt_provider
      */
     public function build(

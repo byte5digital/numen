@@ -5,6 +5,11 @@ namespace App\Providers;
 use App\Agents\AgentFactory;
 use App\Models\Setting;
 use App\Services\AI\CostTracker;
+use App\Services\AI\ImageManager;
+use App\Services\AI\ImageProviders\FalImageProvider;
+use App\Services\AI\ImageProviders\OpenAIImageProvider;
+use App\Services\AI\ImageProviders\ReplicateImageProvider;
+use App\Services\AI\ImageProviders\TogetherImageProvider;
 use App\Services\AI\LLMManager;
 use App\Services\AI\Providers\AnthropicProvider;
 use App\Services\AI\Providers\AzureOpenAIProvider;
@@ -29,6 +34,20 @@ class AppServiceProvider extends ServiceProvider
             $app->make(AnthropicProvider::class),
             $app->make(OpenAIProvider::class),
             $app->make(AzureOpenAIProvider::class),
+            $app->make(CostTracker::class),
+        ));
+
+        // ── Multi-provider Image Generation layer ──────────────────────────
+        $this->app->singleton(OpenAIImageProvider::class);
+        $this->app->singleton(TogetherImageProvider::class);
+        $this->app->singleton(FalImageProvider::class);
+        $this->app->singleton(ReplicateImageProvider::class);
+
+        $this->app->singleton(ImageManager::class, fn ($app) => new ImageManager(
+            $app->make(OpenAIImageProvider::class),
+            $app->make(TogetherImageProvider::class),
+            $app->make(FalImageProvider::class),
+            $app->make(ReplicateImageProvider::class),
             $app->make(CostTracker::class),
         ));
 
