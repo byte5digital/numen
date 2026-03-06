@@ -165,19 +165,33 @@ const stack = [
             <p class="text-center text-slate-500 mb-10 max-w-xl mx-auto">Up and running in under two minutes.</p>
 
             <div class="bg-slate-900 rounded-2xl p-6 sm:p-8 overflow-x-auto shadow-2xl shadow-slate-900/20">
-                <pre class="text-sm leading-relaxed"><code class="text-slate-300"><span class="text-emerald-400">$</span> git clone https://github.com/byte5digital/numen.git
+                <pre class="text-sm leading-relaxed"><code class="text-slate-300"><span class="text-slate-500"># Clone & install</span>
+<span class="text-emerald-400">$</span> git clone https://github.com/byte5digital/numen.git
 <span class="text-emerald-400">$</span> cd numen
 <span class="text-emerald-400">$</span> composer install
-<span class="text-emerald-400">$</span> cp .env.example .env && php artisan key:generate
-<span class="text-emerald-400">$</span> php artisan migrate --seed
+<span class="text-emerald-400">$</span> npm install
+
+<span class="text-slate-500"># Configure</span>
+<span class="text-emerald-400">$</span> cp .env.example .env
+<span class="text-emerald-400">$</span> php artisan key:generate
 
 <span class="text-slate-500"># Add your API key to .env</span>
-<span class="text-emerald-400">ANTHROPIC_API_KEY=</span><span class="text-amber-300">sk-ant-...</span>
+<span class="text-emerald-400">ANTHROPIC_API_KEY=</span><span class="text-amber-300">sk-ant-your-key-here</span>
 
-<span class="text-emerald-400">$</span> php artisan serve
-<span class="text-slate-500"># → Admin at localhost:8000/login</span>
-<span class="text-slate-500"># → API at localhost:8000/api/v1/content</span></code></pre>
+<span class="text-slate-500"># Database & seed</span>
+<span class="text-emerald-400">$</span> touch database/database.sqlite
+<span class="text-emerald-400">$</span> php artisan migrate
+<span class="text-emerald-400">$</span> php artisan db:seed --class=DemoSeeder
+
+<span class="text-slate-500"># Start (three terminals)</span>
+<span class="text-emerald-400">$</span> php artisan serve          <span class="text-slate-500"># → http://localhost:8000</span>
+<span class="text-emerald-400">$</span> php artisan queue:work     <span class="text-slate-500"># processes pipeline jobs</span>
+<span class="text-emerald-400">$</span> npm run dev                <span class="text-slate-500"># Vite hot-reload</span></code></pre>
             </div>
+
+            <p class="text-center text-sm text-slate-400 mt-4">
+                Requires PHP 8.4, Composer, Node.js 18+. Redis optional — works with <code class="text-slate-500">QUEUE_CONNECTION=database</code> too.
+            </p>
         </div>
     </section>
 
