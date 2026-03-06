@@ -2,10 +2,19 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 
+/**
+ * @property string $key
+ * @property string|null $value
+ * @property bool $encrypted
+ * @property string $group
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ */
 class Setting extends Model
 {
     protected $primaryKey = 'key';
@@ -81,6 +90,7 @@ class Setting extends Model
     public static function loadIntoConfig(): void
     {
         try {
+            /** @var Collection<int, static> $rows */
             $rows = Cache::remember('settings:all', now()->addMinutes(5), fn () => static::all());
         } catch (\Exception $e) {
             // Table may not exist yet (before migration)
@@ -122,7 +132,9 @@ class Setting extends Model
      */
     public static function allGrouped(): array
     {
-        $rows = static::all()->groupBy('group');
+        /** @var Collection<int, static> $allRows */
+        $allRows = static::all();
+        $rows = $allRows->groupBy('group');
 
         return $rows->map(function ($items) {
             return $items->mapWithKeys(function ($setting) {
@@ -137,12 +149,12 @@ class Setting extends Model
 
     // ── Private helpers ──────────────────────────────────────────────────────
 
-    private static function shouldEncrypt(string $key): bool
+    protected static function shouldEncrypt(string $key): bool
     {
         return str_contains($key, 'api_key') || str_contains($key, 'secret');
     }
 
-    private static function decryptSafe(?string $value): ?string
+    protected static function decryptSafe(?string $value): ?string
     {
         if (empty($value)) {
             return null;

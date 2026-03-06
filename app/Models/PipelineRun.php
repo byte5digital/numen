@@ -7,6 +7,26 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property string $id
+ * @property string $pipeline_id
+ * @property string|null $content_id
+ * @property string|null $content_brief_id
+ * @property string $status
+ * @property string|null $current_stage
+ * @property array|null $stage_results
+ * @property array|null $context
+ * @property \Carbon\Carbon|null $started_at
+ * @property \Carbon\Carbon|null $completed_at
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @property-read ContentPipeline $pipeline
+ * @property-read Content|null $content
+ * @property-read ContentBrief|null $brief
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, AIGenerationLog> $generationLogs
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ContentVersion> $versions
+ */
 class PipelineRun extends Model
 {
     use HasUlids;

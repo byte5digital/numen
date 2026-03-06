@@ -8,6 +8,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property string $id
+ * @property string $space_id
+ * @property string $slug
+ * @property string $title
+ * @property string $status
+ * @property array|null $meta
+ * @property \Carbon\Carbon|null $published_at
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @property-read Space $space
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, PageComponent> $components
+ */
 class Page extends Model
 {
     use HasFactory, HasUlids;

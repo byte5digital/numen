@@ -7,6 +7,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $space_id
+ * @property string $name
+ * @property string $role
+ * @property string $system_prompt
+ * @property array $capabilities
+ * @property array $model_config
+ * @property array|null $voice_guidelines
+ * @property array|null $constraints
+ * @property bool $is_active
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @property-read Space $space
+ */
 class Persona extends Model
 {
     use HasFactory, HasUlids;

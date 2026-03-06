@@ -7,6 +7,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property string $id
+ * @property string $name
+ * @property string $slug
+ * @property array|null $settings
+ * @property array|null $api_config
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ContentType> $contentTypes
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Content> $contents
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Persona> $personas
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ContentPipeline> $pipelines
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ContentBrief> $briefs
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ApiKey> $apiKeys
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Webhook> $webhooks
+ */
 class Space extends Model
 {
     use HasFactory, HasUlids;

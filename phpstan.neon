@@ -4,9 +4,6 @@ includes:
 parameters:
     paths:
         - app/
-    level: 1
-    ignoreErrors:
-        # Models referenced in migrations but not yet created
-        - '#Class App\\Models\\(ApiKey|Webhook) not found#'
+    level: 5
     excludePaths:
         - app/Http/Middleware/HandleInertiaRequests.php
