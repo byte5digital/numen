@@ -234,13 +234,16 @@ PROMPT ENGINEERING RULES:
 OUTPUT: A single, detailed DALL-E prompt (150-300 words), self-contained and ready for the API.',
                 'capabilities' => ['image_prompts', 'visual_direction', 'brand_consistency'],
                 'model_config' => [
-                    'primary_model' => 'dall-e-3',
-                    'primary_provider' => 'openai',
+                    // LLM used to craft the image prompt
+                    'prompt_model' => 'claude-haiku-4-5-20251001',
+                    'prompt_provider' => 'anthropic',
+                    // Image generation model (ImageManager routes to the correct provider)
+                    'generator_model' => 'gpt-image-1',
+                    'generator_provider' => 'openai',
+                    // Image parameters
                     'size' => '1792x1024',
                     'style' => 'vivid',
                     'quality' => 'standard',
-                    'temperature' => 0.8,
-                    'max_tokens' => 500,
                 ],
             ]
         );

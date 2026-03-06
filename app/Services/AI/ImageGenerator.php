@@ -9,10 +9,15 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
+ * @deprecated Use ImageManager instead. ImageManager supports multiple providers
+ *             (OpenAI, Together AI, fal.ai, Replicate) and reads provider config
+ *             from the Visual Director persona's model_config.
+ *
+ *             This class remains for backward compatibility and will be removed
+ *             in a future release. All new code should inject ImageManager.
+ *
  * Generates images via OpenAI DALL-E 3 API.
  * Downloads the temporary URL immediately and saves to local storage.
- *
- * IMPORTANT: Uses lazy config reading — no constructor caching of API keys.
  */
 class ImageGenerator
 {

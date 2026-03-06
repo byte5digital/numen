@@ -116,27 +116,40 @@ class QueueMonitorController extends Controller
 
     private function isWorkerRunning(): bool
     {
-        // Method 1: Check via process list (works on traditional servers)
+        // Method 1: Check queue size — if jobs table has pending jobs that are being processed
+        // A reserved_at timestamp means a worker picked it up
+        try {
+            $pendingJobs = \Illuminate\Support\Facades\DB::table('jobs')->count();
+            $reservedJobs = \Illuminate\Support\Facades\DB::table('jobs')
+                ->whereNotNull('reserved_at')
+                ->exists();
+
+            // If there are reserved jobs, a worker is actively processing
+            if ($reservedJobs) {
+                return true;
+            }
+
+            // If there are NO pending jobs and NO failed jobs recently,
+            // the worker might be idle (which is still "running")
+            // Check if the queue is simply empty = worker is idle = running
+            if ($pendingJobs === 0) {
+                // No jobs to process — assume worker is running but idle
+                // unless there's evidence it crashed (recent failures with no processing)
+                $recentFailures = \Illuminate\Support\Facades\DB::table('failed_jobs')
+                    ->where('failed_at', '>', now()->subMinutes(10))
+                    ->count();
+
+                // If there are recent failures but nothing is being processed,
+                // the worker likely crashed
+                return $recentFailures === 0;
+            }
+        } catch (\Throwable) {
+            // Jobs table might not exist yet
+        }
+
+        // Method 2: Check via process list (works on traditional servers)
         $output = shell_exec('ps aux | grep "[q]ueue:work" 2>/dev/null') ?? '';
-        if (trim($output) !== '') {
-            return true;
-        }
 
-        // Method 2: Check if jobs are being processed (works on Laravel Cloud)
-        // If a job was processed in the last 5 minutes, worker is running
-        $recentJob = \Illuminate\Support\Facades\DB::table('jobs')
-            ->where('reserved_at', '>', now()->subMinutes(5)->timestamp)
-            ->exists();
-
-        if ($recentJob) {
-            return true;
-        }
-
-        // Method 3: Check failed_jobs for recent activity
-        $recentFailed = \Illuminate\Support\Facades\DB::table('failed_jobs')
-            ->where('failed_at', '>', now()->subMinutes(5))
-            ->exists();
-
-        return $recentFailed;
+        return trim($output) !== '';
     }
 }
