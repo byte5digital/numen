@@ -13,10 +13,10 @@ class ContentPipelineFactory extends Factory
     public function definition(): array
     {
         return [
-            'space_id'  => Space::factory(),
-            'name'      => $this->faker->words(3, true) . ' Pipeline',
+            'space_id' => Space::factory(),
+            'name' => $this->faker->words(3, true).' Pipeline',
             'is_active' => true,
-            'stages'    => [
+            'stages' => [
                 ['name' => 'generate', 'type' => 'ai_generate', 'persona_role' => 'creator'],
                 ['name' => 'seo',      'type' => 'ai_transform', 'persona_role' => 'seo_expert'],
                 ['name' => 'publish',  'type' => 'auto_publish'],

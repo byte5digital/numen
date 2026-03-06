@@ -20,7 +20,7 @@ interface LLMProvider
      *   temperature float
      *   _purpose    string  — internal label for logging
      *
-     * @throws \App\Services\AI\Exceptions\ProviderRateLimitException  on 429
+     * @throws \App\Services\AI\Exceptions\ProviderRateLimitException on 429
      * @throws \App\Services\AI\Exceptions\ProviderUnavailableException on 500/503
      * @throws \RuntimeException on other errors
      */

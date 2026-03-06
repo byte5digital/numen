@@ -1,8 +1,8 @@
 <?php
 
-use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
+use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\PageController;
 use Illuminate\Support\Facades\Route;
 
@@ -52,6 +52,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/pipeline-runs/{id}', function (string $id) {
             $run = \App\Models\PipelineRun::with(['content.currentVersion', 'brief', 'generationLogs'])
                 ->findOrFail($id);
+
             return response()->json(['data' => $run]);
         });
 
@@ -61,10 +62,11 @@ Route::prefix('v1')->group(function () {
                 return response()->json(['error' => 'Run is not awaiting review'], 422);
             }
             app(\App\Pipelines\PipelineExecutor::class)->advance($run, [
-                'stage'   => $run->current_stage,
+                'stage' => $run->current_stage,
                 'success' => true,
                 'summary' => 'Approved by human reviewer',
             ]);
+
             return response()->json(['data' => ['status' => 'approved']]);
         });
 

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AIGenerationLog;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class AnalyticsController extends Controller
@@ -23,8 +22,8 @@ class AnalyticsController extends Controller
             ->orderByDesc('total_cost')
             ->get()
             ->map(fn ($r) => [
-                'model'      => $r->model,
-                'calls'      => $r->calls,
+                'model' => $r->model,
+                'calls' => $r->calls,
                 'total_cost' => (float) $r->total_cost,
             ]);
 
@@ -34,8 +33,8 @@ class AnalyticsController extends Controller
             ->orderByDesc('total_cost')
             ->get()
             ->map(fn ($r) => [
-                'purpose'    => $r->purpose,
-                'calls'      => $r->calls,
+                'purpose' => $r->purpose,
+                'calls' => $r->calls,
                 'total_cost' => (float) $r->total_cost,
             ]);
 
@@ -52,18 +51,18 @@ class AnalyticsController extends Controller
             ->first();
 
         return Inertia::render('Analytics/Index', [
-            'dailyCosts'       => $dailyCosts,
-            'modelBreakdown'   => $modelBreakdown,
+            'dailyCosts' => $dailyCosts,
+            'modelBreakdown' => $modelBreakdown,
             'purposeBreakdown' => $purposeBreakdown,
-            'totalCost'        => (float) ($totals->total_cost ?? 0),
-            'totalCalls'       => (int) ($totals->total_calls ?? 0),
-            'totalTokens'      => [
-                'input'  => (int) ($totals->total_input ?? 0),
+            'totalCost' => (float) ($totals->total_cost ?? 0),
+            'totalCalls' => (int) ($totals->total_calls ?? 0),
+            'totalTokens' => [
+                'input' => (int) ($totals->total_input ?? 0),
                 'output' => (int) ($totals->total_output ?? 0),
             ],
             'imageTotals' => [
                 'count' => (int) ($imageTotals->count ?? 0),
-                'cost'  => (float) ($imageTotals->cost ?? 0),
+                'cost' => (float) ($imageTotals->cost ?? 0),
             ],
         ]);
     }

@@ -26,11 +26,11 @@ class Persona extends Model
     ];
 
     protected $casts = [
-        'capabilities'     => 'array',
-        'model_config'     => 'array',
+        'capabilities' => 'array',
+        'model_config' => 'array',
         'voice_guidelines' => 'array',
-        'constraints'      => 'array',
-        'is_active'        => 'boolean',
+        'constraints' => 'array',
+        'is_active' => 'boolean',
     ];
 
     public function space(): BelongsTo
@@ -56,7 +56,8 @@ class Persona extends Model
     public function getFullModel(): string
     {
         $provider = $this->getProvider();
-        $model    = $this->getModel();
+        $model = $this->getModel();
+
         return $provider ? "{$provider}:{$model}" : $model;
     }
 
@@ -67,8 +68,11 @@ class Persona extends Model
     public function getFallbackFullModel(): ?string
     {
         $model = $this->model_config['fallback_model'] ?? null;
-        if (!$model) return null;
+        if (! $model) {
+            return null;
+        }
         $provider = $this->model_config['fallback_provider'] ?? null;
+
         return $provider ? "{$provider}:{$model}" : $model;
     }
 

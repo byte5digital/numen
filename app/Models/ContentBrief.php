@@ -20,10 +20,10 @@ class ContentBrief extends Model
     ];
 
     protected $casts = [
-        'requirements'    => 'array',
-        'reference_urls'  => 'array',
+        'requirements' => 'array',
+        'reference_urls' => 'array',
         'target_keywords' => 'array',
-        'due_at'          => 'datetime',
+        'due_at' => 'datetime',
     ];
 
     public function space(): BelongsTo

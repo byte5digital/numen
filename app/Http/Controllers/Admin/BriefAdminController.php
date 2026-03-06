@@ -31,8 +31,8 @@ class BriefAdminController extends Controller
 
         return Inertia::render('Briefs/Create', [
             'contentTypes' => ContentType::where('space_id', $space?->id)->get(['name', 'slug']),
-            'personas'     => Persona::where('space_id', $space?->id)->where('is_active', true)->get(['id', 'name', 'role']),
-            'spaceId'      => $space?->id,
+            'personas' => Persona::where('space_id', $space?->id)->where('is_active', true)->get(['id', 'name', 'role']),
+            'spaceId' => $space?->id,
         ]);
     }
 
@@ -87,14 +87,14 @@ class BriefAdminController extends Controller
     public function store(Request $request, PipelineExecutor $executor)
     {
         $validated = $request->validate([
-            'space_id'          => 'required|exists:spaces,id',
-            'title'             => 'required|string|max:500',
-            'description'       => 'nullable|string',
+            'space_id' => 'required|exists:spaces,id',
+            'title' => 'required|string|max:500',
+            'description' => 'nullable|string',
             'content_type_slug' => 'required|string',
-            'target_keywords'   => 'nullable|array',
-            'target_locale'     => 'nullable|string|max:10',
-            'persona_id'        => 'nullable|string',
-            'priority'          => 'nullable|in:low,normal,high,urgent',
+            'target_keywords' => 'nullable|array',
+            'target_locale' => 'nullable|string|max:10',
+            'persona_id' => 'nullable|string',
+            'priority' => 'nullable|in:low,normal,high,urgent',
         ]);
 
         $brief = ContentBrief::create(array_merge($validated, [

@@ -22,9 +22,9 @@ class PageComponent extends Model
     ];
 
     protected $casts = [
-        'data'          => 'array',
-        'ai_generated'  => 'boolean',
-        'locked'        => 'boolean',
+        'data' => 'array',
+        'ai_generated' => 'boolean',
+        'locked' => 'boolean',
     ];
 
     public function page(): BelongsTo
@@ -39,13 +39,13 @@ class PageComponent extends Model
     {
         return match ($type) {
             'hero' => [
-                'badge'               => 'string',
-                'headline'            => 'string',
-                'subline'             => 'text',
-                'cta_primary_label'   => 'string',
-                'cta_primary_href'    => 'string',
+                'badge' => 'string',
+                'headline' => 'string',
+                'subline' => 'text',
+                'cta_primary_label' => 'string',
+                'cta_primary_href' => 'string',
                 'cta_secondary_label' => 'string',
-                'cta_secondary_href'  => 'string',
+                'cta_secondary_href' => 'string',
             ],
             'stats_row' => [
                 'stats' => 'array:value,label,color',
@@ -56,27 +56,27 @@ class PageComponent extends Model
             ],
             'pipeline_steps' => [
                 'headline' => 'string',
-                'subline'  => 'string',
-                'steps'    => 'array:name,description,color',
+                'subline' => 'string',
+                'steps' => 'array:name,description,color',
             ],
             'content_list' => [
-                'headline'    => 'string',
-                'subline'     => 'string',
-                'limit'       => 'number',
+                'headline' => 'string',
+                'subline' => 'string',
+                'limit' => 'number',
                 'view_all_href' => 'string',
             ],
             'cta_block' => [
-                'headline'            => 'string',
-                'body'                => 'text',
-                'cta_primary_label'   => 'string',
-                'cta_primary_href'    => 'string',
+                'headline' => 'string',
+                'body' => 'text',
+                'cta_primary_label' => 'string',
+                'cta_primary_href' => 'string',
                 'cta_secondary_label' => 'string',
-                'cta_secondary_href'  => 'string',
+                'cta_secondary_href' => 'string',
             ],
             'tech_stack' => [
                 'headline' => 'string',
-                'subline'  => 'string',
-                'items'    => 'array:icon,label',
+                'subline' => 'string',
+                'items' => 'array:icon,label',
             ],
             'rich_text' => [
                 'content' => 'wysiwyg',

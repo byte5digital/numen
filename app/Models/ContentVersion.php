@@ -22,10 +22,10 @@ class ContentVersion extends Model
 
     protected $casts = [
         'structured_fields' => 'array',
-        'seo_data'          => 'array',
-        'ai_metadata'       => 'array',
-        'quality_score'     => 'decimal:2',
-        'seo_score'         => 'decimal:2',
+        'seo_data' => 'array',
+        'ai_metadata' => 'array',
+        'quality_score' => 'decimal:2',
+        'seo_score' => 'decimal:2',
     ];
 
     public function content(): BelongsTo

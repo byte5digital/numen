@@ -12,7 +12,7 @@ class CostTrackerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->tracker = new CostTracker();
+        $this->tracker = new CostTracker;
     }
 
     public function test_opus_cost_calculation(): void

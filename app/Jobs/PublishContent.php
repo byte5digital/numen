@@ -26,9 +26,10 @@ class PublishContent implements ShouldQueue
     {
         $content = $this->run->content;
 
-        if (!$content) {
-            Log::error("PublishContent: No content found for pipeline run", ['run_id' => $this->run->id]);
+        if (! $content) {
+            Log::error('PublishContent: No content found for pipeline run', ['run_id' => $this->run->id]);
             $this->run->markFailed('No content to publish');
+
             return;
         }
 
@@ -37,13 +38,14 @@ class PublishContent implements ShouldQueue
         $threshold = config('numen.pipeline.auto_publish_threshold', 80);
 
         if ($qualityScore < $threshold) {
-            Log::info("Content quality below threshold, pausing for review", [
+            Log::info('Content quality below threshold, pausing for review', [
                 'content_id' => $content->id,
-                'score'      => $qualityScore,
-                'threshold'  => $threshold,
+                'score' => $qualityScore,
+                'threshold' => $threshold,
             ]);
             $this->run->update(['status' => 'paused_for_review']);
             $this->run->brief?->update(['status' => 'in_review']);
+
             return;
         }
 
@@ -52,14 +54,14 @@ class PublishContent implements ShouldQueue
         event(new ContentPublished($content));
 
         $executor->advance($this->run, [
-            'stage'   => 'auto_publish',
+            'stage' => 'auto_publish',
             'success' => true,
             'summary' => "Published content: {$content->currentVersion?->title}",
         ]);
 
-        Log::info("Content published", [
+        Log::info('Content published', [
             'content_id' => $content->id,
-            'slug'       => $content->slug,
+            'slug' => $content->slug,
         ]);
     }
 }

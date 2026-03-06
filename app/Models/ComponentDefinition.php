@@ -20,7 +20,7 @@ class ComponentDefinition extends Model
     ];
 
     protected $casts = [
-        'schema'     => 'array',
+        'schema' => 'array',
         'is_builtin' => 'boolean',
     ];
 
@@ -32,6 +32,7 @@ class ComponentDefinition extends Model
     {
         $fields = collect($this->schema)->map(function ($fieldType, $key) {
             $label = ucwords(str_replace('_', ' ', $key));
+
             return "<div><strong>{$label}:</strong> {{ data.{$key} }}</div>";
         })->join("\n        ");
 

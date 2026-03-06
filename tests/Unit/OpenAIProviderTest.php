@@ -15,17 +15,18 @@ class OpenAIProviderTest extends TestCase
     use RefreshDatabase;
 
     private OpenAIProvider $provider;
+
     private CostTracker $costTracker;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        config(['numen.providers.openai.api_key'  => 'sk-test-openai-key-123']);
+        config(['numen.providers.openai.api_key' => 'sk-test-openai-key-123']);
         config(['numen.providers.openai.base_url' => 'https://api.openai.com/v1']);
 
         $this->costTracker = $this->createMock(CostTracker::class);
-        $this->provider    = new OpenAIProvider($this->costTracker);
+        $this->provider = new OpenAIProvider($this->costTracker);
     }
 
     // --- Request building ---
@@ -39,7 +40,7 @@ class OpenAIProviderTest extends TestCase
         $this->costTracker->method('calculateCost')->willReturn(0.001);
 
         $this->provider->complete([
-            'model'    => 'gpt-4o',
+            'model' => 'gpt-4o',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
 
@@ -57,13 +58,14 @@ class OpenAIProviderTest extends TestCase
         $this->costTracker->method('calculateCost')->willReturn(0.001);
 
         $this->provider->complete([
-            'model'    => 'gpt-4o',
-            'system'   => 'You are an expert writer.',
+            'model' => 'gpt-4o',
+            'system' => 'You are an expert writer.',
             'messages' => [['role' => 'user', 'content' => 'Write something']],
         ]);
 
         Http::assertSent(function ($request) {
             $messages = $request->data()['messages'];
+
             return $messages[0]['role'] === 'system'
                 && $messages[0]['content'] === 'You are an expert writer.'
                 && $messages[1]['role'] === 'user';
@@ -79,16 +81,17 @@ class OpenAIProviderTest extends TestCase
         $this->costTracker->method('calculateCost')->willReturn(0.001);
 
         $this->provider->complete([
-            'model'      => 'gpt-4o',
-            'messages'   => [['role' => 'user', 'content' => 'Hello']],
+            'model' => 'gpt-4o',
+            'messages' => [['role' => 'user', 'content' => 'Hello']],
             'max_tokens' => 2048,
         ]);
 
         Http::assertSent(function ($request) {
             $data = $request->data();
+
             return isset($data['max_completion_tokens'])
                 && $data['max_completion_tokens'] === 2048
-                && !isset($data['max_tokens']);
+                && ! isset($data['max_tokens']);
         });
     }
 
@@ -101,16 +104,17 @@ class OpenAIProviderTest extends TestCase
         $this->costTracker->method('calculateCost')->willReturn(0.001);
 
         $this->provider->complete([
-            'model'      => 'gpt-3.5-turbo',
-            'messages'   => [['role' => 'user', 'content' => 'Hello']],
+            'model' => 'gpt-3.5-turbo',
+            'messages' => [['role' => 'user', 'content' => 'Hello']],
             'max_tokens' => 2048,
         ]);
 
         Http::assertSent(function ($request) {
             $data = $request->data();
+
             return isset($data['max_tokens'])
                 && $data['max_tokens'] === 2048
-                && !isset($data['max_completion_tokens']);
+                && ! isset($data['max_completion_tokens']);
         });
     }
 
@@ -125,13 +129,14 @@ class OpenAIProviderTest extends TestCase
         $this->costTracker->method('calculateCost')->willReturn(0.001);
 
         $this->provider->complete([
-            'model'    => 'gpt-4o',
-            'system'   => '',
+            'model' => 'gpt-4o',
+            'system' => '',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
 
         Http::assertSent(function ($request) {
             $messages = $request->data()['messages'];
+
             return count($messages) === 1 && $messages[0]['role'] === 'user';
         });
     }
@@ -147,7 +152,7 @@ class OpenAIProviderTest extends TestCase
         $this->costTracker->method('calculateCost')->willReturn(0.001);
 
         $response = $this->provider->complete([
-            'model'    => 'gpt-4o',
+            'model' => 'gpt-4o',
             'messages' => [['role' => 'user', 'content' => 'What is the answer?']],
         ]);
 
@@ -165,7 +170,7 @@ class OpenAIProviderTest extends TestCase
         $this->costTracker->method('calculateCost')->willReturn(0.001);
 
         $response = $this->provider->complete([
-            'model'    => 'gpt-4o',
+            'model' => 'gpt-4o',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
 
@@ -182,7 +187,7 @@ class OpenAIProviderTest extends TestCase
         $this->costTracker->method('calculateCost')->willReturn(0.001);
 
         $response = $this->provider->complete([
-            'model'    => 'gpt-4o',
+            'model' => 'gpt-4o',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
 
@@ -202,7 +207,7 @@ class OpenAIProviderTest extends TestCase
         $this->expectException(ProviderRateLimitException::class);
 
         $this->provider->complete([
-            'model'    => 'gpt-4o',
+            'model' => 'gpt-4o',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
     }
@@ -218,7 +223,7 @@ class OpenAIProviderTest extends TestCase
         $this->expectException(ProviderRateLimitException::class);
 
         $this->provider->complete([
-            'model'    => 'gpt-4o',
+            'model' => 'gpt-4o',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
     }
@@ -232,7 +237,7 @@ class OpenAIProviderTest extends TestCase
         $this->expectException(ProviderUnavailableException::class);
 
         $this->provider->complete([
-            'model'    => 'gpt-4o',
+            'model' => 'gpt-4o',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
     }
@@ -246,7 +251,7 @@ class OpenAIProviderTest extends TestCase
         $this->expectException(ProviderUnavailableException::class);
 
         $this->provider->complete([
-            'model'    => 'gpt-4o',
+            'model' => 'gpt-4o',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
     }
@@ -283,20 +288,20 @@ class OpenAIProviderTest extends TestCase
         string $finishReason = 'stop',
     ): array {
         return [
-            'id'      => 'chatcmpl-test123',
-            'object'  => 'chat.completion',
-            'model'   => 'gpt-4o',
+            'id' => 'chatcmpl-test123',
+            'object' => 'chat.completion',
+            'model' => 'gpt-4o',
             'choices' => [
                 [
-                    'index'         => 0,
-                    'message'       => ['role' => 'assistant', 'content' => $content],
+                    'index' => 0,
+                    'message' => ['role' => 'assistant', 'content' => $content],
                     'finish_reason' => $finishReason,
                 ],
             ],
             'usage' => [
-                'prompt_tokens'     => $promptTokens,
+                'prompt_tokens' => $promptTokens,
                 'completion_tokens' => $completionTokens,
-                'total_tokens'      => $promptTokens + $completionTokens,
+                'total_tokens' => $promptTokens + $completionTokens,
             ],
         ];
     }

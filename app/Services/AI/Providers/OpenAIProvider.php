@@ -10,11 +10,14 @@ use App\Services\AI\Exceptions\ProviderUnavailableException;
 use App\Services\AI\LLMResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class OpenAIProvider implements LLMProvider
 {
     protected string $providerName = 'openai';
+
+    protected string $apiKey = '';
+
+    protected string $baseUrl = '';
 
     public function __construct(protected CostTracker $costTracker) {}
 
@@ -35,21 +38,24 @@ class OpenAIProvider implements LLMProvider
 
     public function isAvailable(string $model): bool
     {
-        if (empty($this->apiKey())) return false;
+        if (empty($this->apiKey())) {
+            return false;
+        }
 
         $retryAfter = Cache::get("llm:rate:{$this->getName()}:{$model}:retry_after");
-        return !($retryAfter && $retryAfter > now()->timestamp);
+
+        return ! ($retryAfter && $retryAfter > now()->timestamp);
     }
 
     public function complete(array $params): LLMResponse
     {
-        $model   = $params['model'] ?? config('numen.providers.openai.default_model', 'gpt-4o');
+        $model = $params['model'] ?? config('numen.providers.openai.default_model', 'gpt-4o');
         $purpose = $params['_purpose'] ?? 'unknown';
-        $start   = microtime(true);
+        $start = microtime(true);
 
         // OpenAI format: system prompt goes as first message with role=system
         $messages = [];
-        if (!empty($params['system'])) {
+        if (! empty($params['system'])) {
             $messages[] = ['role' => 'system', 'content' => $params['system']];
         }
         $messages = array_merge($messages, $params['messages'] ?? []);
@@ -58,10 +64,10 @@ class OpenAIProvider implements LLMProvider
         $maxTokensKey = $this->usesMaxCompletionTokens($model) ? 'max_completion_tokens' : 'max_tokens';
 
         $apiParams = [
-            'model'        => $model,
-            $maxTokensKey  => $params['max_tokens'] ?? 4096,
-            'temperature'  => $params['temperature'] ?? 0.7,
-            'messages'     => $messages,
+            'model' => $model,
+            $maxTokensKey => $params['max_tokens'] ?? 4096,
+            'temperature' => $params['temperature'] ?? 0.7,
+            'messages' => $messages,
         ];
 
         try {
@@ -100,30 +106,30 @@ class OpenAIProvider implements LLMProvider
         if ($response->failed()) {
             throw new ProviderUnavailableException(
                 $this->getName(), $model,
-                "HTTP {$response->status()}: " . $response->json('error.message', $response->body()),
+                "HTTP {$response->status()}: ".$response->json('error.message', $response->body()),
             );
         }
 
-        $data         = $response->json();
-        $latencyMs    = (int) ((microtime(true) - $start) * 1000);
-        $inputTokens  = $data['usage']['prompt_tokens'] ?? 0;
+        $data = $response->json();
+        $latencyMs = (int) ((microtime(true) - $start) * 1000);
+        $inputTokens = $data['usage']['prompt_tokens'] ?? 0;
         $outputTokens = $data['usage']['completion_tokens'] ?? 0;
-        $content      = $data['choices'][0]['message']['content'] ?? '';
-        $stopReason   = $data['choices'][0]['finish_reason'] ?? 'stop';
-        $cost         = $this->costTracker->calculateCost($model, $inputTokens, $outputTokens);
+        $content = $data['choices'][0]['message']['content'] ?? '';
+        $stopReason = $data['choices'][0]['finish_reason'] ?? 'stop';
+        $cost = $this->costTracker->calculateCost($model, $inputTokens, $outputTokens);
 
         $this->log($params, $content, $model, $purpose, $inputTokens, $outputTokens, $cost, $latencyMs, $data);
 
         return new LLMResponse(
-            content:      $content,
-            model:        $model,
-            provider:     $this->getName(),
-            inputTokens:  $inputTokens,
+            content: $content,
+            model: $model,
+            provider: $this->getName(),
+            inputTokens: $inputTokens,
             outputTokens: $outputTokens,
-            costUsd:      $cost,
-            latencyMs:    $latencyMs,
-            stopReason:   $stopReason,
-            raw:          $data,
+            costUsd: $cost,
+            latencyMs: $latencyMs,
+            stopReason: $stopReason,
+            raw: $data,
         );
     }
 
@@ -143,7 +149,7 @@ class OpenAIProvider implements LLMProvider
     {
         return [
             'Authorization' => "Bearer {$this->apiKey()}",
-            'Content-Type'  => 'application/json',
+            'Content-Type' => 'application/json',
         ];
     }
 
@@ -153,18 +159,18 @@ class OpenAIProvider implements LLMProvider
     ): void {
         AIGenerationLog::create([
             'pipeline_run_id' => $params['_pipeline_run_id'] ?? null,
-            'persona_id'      => $params['_persona_id'] ?? null,
-            'model'           => $model,
-            'purpose'         => $purpose,
-            'messages'        => $params['messages'] ?? [],
-            'response'        => $content,
-            'input_tokens'    => $inputTokens,
-            'output_tokens'   => $outputTokens,
-            'cost_usd'        => $cost,
-            'latency_ms'      => $latencyMs,
-            'stop_reason'     => $raw['choices'][0]['finish_reason'] ?? null,
-            'metadata'        => [
-                'provider'    => $this->getName(),
+            'persona_id' => $params['_persona_id'] ?? null,
+            'model' => $model,
+            'purpose' => $purpose,
+            'messages' => $params['messages'] ?? [],
+            'response' => $content,
+            'input_tokens' => $inputTokens,
+            'output_tokens' => $outputTokens,
+            'cost_usd' => $cost,
+            'latency_ms' => $latencyMs,
+            'stop_reason' => $raw['choices'][0]['finish_reason'] ?? null,
+            'metadata' => [
+                'provider' => $this->getName(),
                 'temperature' => $params['temperature'] ?? null,
             ],
         ]);

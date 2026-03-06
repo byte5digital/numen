@@ -10,7 +10,6 @@ use App\Services\AI\Exceptions\ProviderUnavailableException;
 use App\Services\AI\LLMResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class AnthropicProvider implements LLMProvider
 {
@@ -33,32 +32,35 @@ class AnthropicProvider implements LLMProvider
 
     public function isAvailable(string $model): bool
     {
-        if (empty($this->apiKey())) return false;
+        if (empty($this->apiKey())) {
+            return false;
+        }
 
         $retryAfter = Cache::get("llm:rate:{$this->getName()}:{$model}:retry_after");
-        return !($retryAfter && $retryAfter > now()->timestamp);
+
+        return ! ($retryAfter && $retryAfter > now()->timestamp);
     }
 
     public function complete(array $params): LLMResponse
     {
-        $model   = $params['model'] ?? config('numen.providers.anthropic.default_model', 'claude-sonnet-4-6');
+        $model = $params['model'] ?? config('numen.providers.anthropic.default_model', 'claude-sonnet-4-6');
         $purpose = $params['_purpose'] ?? 'unknown';
-        $start   = microtime(true);
+        $start = microtime(true);
 
         // Anthropic uses separate 'system' field; messages contain user/assistant only
         $apiParams = [
-            'model'       => $model,
-            'max_tokens'  => $params['max_tokens'] ?? 4096,
+            'model' => $model,
+            'max_tokens' => $params['max_tokens'] ?? 4096,
             'temperature' => $params['temperature'] ?? 0.7,
-            'system'      => $params['system'] ?? '',
-            'messages'    => $params['messages'] ?? [],
+            'system' => $params['system'] ?? '',
+            'messages' => $params['messages'] ?? [],
         ];
 
         try {
             $response = Http::withHeaders([
-                'x-api-key'         => $this->apiKey(),
+                'x-api-key' => $this->apiKey(),
                 'anthropic-version' => '2023-06-01',
-                'content-type'      => 'application/json',
+                'content-type' => 'application/json',
             ])
                 ->timeout((int) config('numen.providers.anthropic.timeout', 120))
                 ->post("{$this->baseUrl()}/v1/messages", $apiParams);
@@ -102,30 +104,30 @@ class AnthropicProvider implements LLMProvider
         if ($response->failed()) {
             throw new ProviderUnavailableException(
                 $this->getName(), $model,
-                "HTTP {$response->status()}: " . $response->json('error.message', $response->body()),
+                "HTTP {$response->status()}: ".$response->json('error.message', $response->body()),
             );
         }
 
-        $data        = $response->json();
-        $latencyMs   = (int) ((microtime(true) - $start) * 1000);
+        $data = $response->json();
+        $latencyMs = (int) ((microtime(true) - $start) * 1000);
         $inputTokens = $data['usage']['input_tokens'] ?? 0;
-        $outputTokens= $data['usage']['output_tokens'] ?? 0;
+        $outputTokens = $data['usage']['output_tokens'] ?? 0;
         $cacheTokens = $data['usage']['cache_read_input_tokens'] ?? 0;
-        $content     = collect($data['content'] ?? [])->where('type', 'text')->pluck('text')->implode("\n");
-        $cost        = $this->costTracker->calculateCost($model, $inputTokens, $outputTokens, $cacheTokens);
+        $content = collect($data['content'] ?? [])->where('type', 'text')->pluck('text')->implode("\n");
+        $cost = $this->costTracker->calculateCost($model, $inputTokens, $outputTokens, $cacheTokens);
 
         $this->log($params, $content, $model, $purpose, $inputTokens, $outputTokens, $cacheTokens, $cost, $latencyMs, $data);
 
         return new LLMResponse(
-            content:      $content,
-            model:        $model,
-            provider:     $this->getName(),
-            inputTokens:  $inputTokens,
+            content: $content,
+            model: $model,
+            provider: $this->getName(),
+            inputTokens: $inputTokens,
             outputTokens: $outputTokens,
-            costUsd:      $cost,
-            latencyMs:    $latencyMs,
-            stopReason:   $data['stop_reason'] ?? 'end_turn',
-            raw:          $data,
+            costUsd: $cost,
+            latencyMs: $latencyMs,
+            stopReason: $data['stop_reason'] ?? 'end_turn',
+            raw: $data,
         );
     }
 
@@ -135,20 +137,20 @@ class AnthropicProvider implements LLMProvider
         float $cost, int $latencyMs, array $raw,
     ): void {
         AIGenerationLog::create([
-            'pipeline_run_id'   => $params['_pipeline_run_id'] ?? null,
-            'persona_id'        => $params['_persona_id'] ?? null,
-            'model'             => $model,
-            'purpose'           => $purpose,
-            'messages'          => $params['messages'] ?? [],
-            'response'          => $content,
-            'input_tokens'      => $inputTokens,
-            'output_tokens'     => $outputTokens,
+            'pipeline_run_id' => $params['_pipeline_run_id'] ?? null,
+            'persona_id' => $params['_persona_id'] ?? null,
+            'model' => $model,
+            'purpose' => $purpose,
+            'messages' => $params['messages'] ?? [],
+            'response' => $content,
+            'input_tokens' => $inputTokens,
+            'output_tokens' => $outputTokens,
             'cache_read_tokens' => $cacheTokens,
-            'cost_usd'          => $cost,
-            'latency_ms'        => $latencyMs,
-            'stop_reason'       => $raw['stop_reason'] ?? null,
-            'metadata'          => [
-                'provider'    => $this->getName(),
+            'cost_usd' => $cost,
+            'latency_ms' => $latencyMs,
+            'stop_reason' => $raw['stop_reason'] ?? null,
+            'metadata' => [
+                'provider' => $this->getName(),
                 'temperature' => $params['temperature'] ?? null,
             ],
         ]);

@@ -15,20 +15,21 @@ class ContentFactory extends Factory
     public function definition(): array
     {
         $title = $this->faker->unique()->sentence(4);
+
         return [
-            'space_id'        => Space::factory(),
+            'space_id' => Space::factory(),
             'content_type_id' => ContentType::factory(),
-            'slug'            => Str::slug($title),
-            'status'          => 'draft',
-            'locale'          => 'en',
-            'published_at'    => null,
+            'slug' => Str::slug($title),
+            'status' => 'draft',
+            'locale' => 'en',
+            'published_at' => null,
         ];
     }
 
     public function published(): static
     {
         return $this->state([
-            'status'       => 'published',
+            'status' => 'published',
             'published_at' => now(),
         ]);
     }

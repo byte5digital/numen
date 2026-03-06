@@ -22,22 +22,22 @@ class BlogController extends Controller
         }
 
         $contents = $query->paginate(10)->through(fn ($c) => [
-            'slug'           => $c->slug,
-            'title'          => $c->currentVersion?->title ?? 'Untitled',
-            'excerpt'        => $c->currentVersion?->excerpt,
-            'type'           => $c->contentType?->slug,
-            'quality_score'  => $c->currentVersion?->quality_score,
-            'seo_score'      => $c->currentVersion?->seo_score,
-            'published_at'   => $c->published_at?->diffForHumans(),
-            'hero_image_url' => $c->heroImage ? '/storage/' . $c->heroImage->path : null,
+            'slug' => $c->slug,
+            'title' => $c->currentVersion?->title ?? 'Untitled',
+            'excerpt' => $c->currentVersion?->excerpt,
+            'type' => $c->contentType?->slug,
+            'quality_score' => $c->currentVersion?->quality_score,
+            'seo_score' => $c->currentVersion?->seo_score,
+            'published_at' => $c->published_at?->diffForHumans(),
+            'hero_image_url' => $c->heroImage ? '/storage/'.$c->heroImage->path : null,
         ]);
 
         $contentTypes = ContentType::select('name', 'slug')->get();
 
         return Inertia::render('Public/BlogIndex', [
-            'contents'     => $contents,
+            'contents' => $contents,
             'contentTypes' => $contentTypes,
-            'currentType'  => $currentType,
+            'currentType' => $currentType,
         ]);
     }
 
@@ -57,8 +57,8 @@ class BlogController extends Controller
             ->limit(3)
             ->get()
             ->map(fn ($c) => [
-                'slug'    => $c->slug,
-                'title'   => $c->currentVersion?->title,
+                'slug' => $c->slug,
+                'title' => $c->currentVersion?->title,
                 'excerpt' => $c->currentVersion?->excerpt,
             ]);
 
@@ -66,36 +66,36 @@ class BlogController extends Controller
         $blocks = [];
         if ($version) {
             $blocks = $version->blocks()->get()->map(fn ($b) => [
-                'id'               => $b->id,
-                'type'             => $b->type,
-                'sort_order'       => $b->sort_order,
-                'data'             => $b->data ?? [],
+                'id' => $b->id,
+                'type' => $b->type,
+                'sort_order' => $b->sort_order,
+                'data' => $b->data ?? [],
                 'wysiwyg_override' => $b->wysiwyg_override,
             ])->values()->all();
         }
 
         return Inertia::render('Public/BlogShow', [
             'content' => [
-                'slug'           => $content->slug,
-                'title'          => $version?->title,
-                'excerpt'        => $version?->excerpt,
-                'body'           => $version?->body,
-                'body_format'    => $version?->body_format,
-                'type'           => $content->contentType?->slug,
-                'locale'         => $content->locale,
-                'taxonomy'       => $content->taxonomy,
-                'seo'            => $version?->seo_data,
-                'published_at'   => $content->published_at?->format('M d, Y'),
-                'updated_at'     => $content->updated_at?->toIso8601String(),
-                'hero_image_url' => $content->heroImage ? '/storage/' . $content->heroImage->path : null,
-                'meta'           => [
-                    'version'       => $version?->version_number,
+                'slug' => $content->slug,
+                'title' => $version?->title,
+                'excerpt' => $version?->excerpt,
+                'body' => $version?->body,
+                'body_format' => $version?->body_format,
+                'type' => $content->contentType?->slug,
+                'locale' => $content->locale,
+                'taxonomy' => $content->taxonomy,
+                'seo' => $version?->seo_data,
+                'published_at' => $content->published_at?->format('M d, Y'),
+                'updated_at' => $content->updated_at?->toIso8601String(),
+                'hero_image_url' => $content->heroImage ? '/storage/'.$content->heroImage->path : null,
+                'meta' => [
+                    'version' => $version?->version_number,
                     'quality_score' => $version?->quality_score,
-                    'seo_score'     => $version?->seo_score,
-                    'generated_by'  => $version?->author_type === 'ai_agent' ? 'ai' : 'human',
+                    'seo_score' => $version?->seo_score,
+                    'generated_by' => $version?->author_type === 'ai_agent' ? 'ai' : 'human',
                 ],
             ],
-            'blocks'         => $blocks,
+            'blocks' => $blocks,
             'relatedContent' => $relatedContent,
         ]);
     }

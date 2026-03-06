@@ -14,9 +14,9 @@ class ContentType extends Model
     protected $fillable = ['space_id', 'name', 'slug', 'schema', 'generation_config', 'seo_config'];
 
     protected $casts = [
-        'schema'            => 'array',
+        'schema' => 'array',
         'generation_config' => 'array',
-        'seo_config'        => 'array',
+        'seo_config' => 'array',
     ];
 
     public function space(): BelongsTo

@@ -20,9 +20,9 @@ class AIGenerationLog extends Model
     ];
 
     protected $casts = [
-        'messages'  => 'array',
-        'metadata'  => 'array',
-        'cost_usd'  => 'decimal:6',
+        'messages' => 'array',
+        'metadata' => 'array',
+        'cost_usd' => 'decimal:6',
     ];
 
     public function pipelineRun(): BelongsTo

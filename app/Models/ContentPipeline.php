@@ -15,9 +15,9 @@ class ContentPipeline extends Model
     protected $fillable = ['space_id', 'name', 'stages', 'trigger_config', 'is_active'];
 
     protected $casts = [
-        'stages'         => 'array',
+        'stages' => 'array',
         'trigger_config' => 'array',
-        'is_active'      => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     public function space(): BelongsTo

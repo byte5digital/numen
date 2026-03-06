@@ -17,12 +17,13 @@ class PipelineTest extends TestCase
     use RefreshDatabase;
 
     private Space $space;
+
     private PipelineExecutor $executor;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->space    = Space::factory()->create();
+        $this->space = Space::factory()->create();
         $this->executor = app(PipelineExecutor::class);
     }
 
@@ -33,15 +34,15 @@ class PipelineTest extends TestCase
         Bus::fake();
 
         $pipeline = ContentPipeline::factory()->create(['space_id' => $this->space->id]);
-        $brief    = ContentBrief::factory()->create(['space_id' => $this->space->id]);
+        $brief = ContentBrief::factory()->create(['space_id' => $this->space->id]);
 
         $run = $this->executor->start($brief, $pipeline);
 
         $this->assertInstanceOf(PipelineRun::class, $run);
         $this->assertDatabaseHas('pipeline_runs', [
-            'id'          => $run->id,
+            'id' => $run->id,
             'pipeline_id' => $pipeline->id,
-            'status'      => 'running',
+            'status' => 'running',
         ]);
     }
 
@@ -51,7 +52,7 @@ class PipelineTest extends TestCase
 
         $pipeline = ContentPipeline::factory()->create([
             'space_id' => $this->space->id,
-            'stages'   => [
+            'stages' => [
                 ['name' => 'generate', 'type' => 'ai_generate'],
                 ['name' => 'publish',  'type' => 'auto_publish'],
             ],
@@ -68,7 +69,7 @@ class PipelineTest extends TestCase
         Bus::fake();
 
         $pipeline = ContentPipeline::factory()->create(['space_id' => $this->space->id]);
-        $brief    = ContentBrief::factory()->create(['space_id' => $this->space->id]);
+        $brief = ContentBrief::factory()->create(['space_id' => $this->space->id]);
 
         $this->executor->start($brief, $pipeline);
 
@@ -81,7 +82,7 @@ class PipelineTest extends TestCase
 
         $pipeline = ContentPipeline::factory()->create([
             'space_id' => $this->space->id,
-            'stages'   => [
+            'stages' => [
                 ['name' => 'generate', 'type' => 'ai_generate', 'persona_role' => 'creator'],
             ],
         ]);
@@ -98,7 +99,7 @@ class PipelineTest extends TestCase
 
         $pipeline = ContentPipeline::factory()->create([
             'space_id' => $this->space->id,
-            'stages'   => [
+            'stages' => [
                 ['name' => 'illustrate', 'type' => 'ai_illustrate'],
             ],
         ]);
@@ -117,18 +118,18 @@ class PipelineTest extends TestCase
 
         $pipeline = ContentPipeline::factory()->create([
             'space_id' => $this->space->id,
-            'stages'   => [
+            'stages' => [
                 ['name' => 'generate', 'type' => 'ai_generate'],
                 ['name' => 'publish',  'type' => 'auto_publish'],
             ],
         ]);
         $brief = ContentBrief::factory()->create(['space_id' => $this->space->id]);
-        $run   = PipelineRun::create([
-            'pipeline_id'      => $pipeline->id,
+        $run = PipelineRun::create([
+            'pipeline_id' => $pipeline->id,
             'content_brief_id' => $brief->id,
-            'status'           => 'running',
-            'current_stage'    => 'generate',
-            'started_at'       => now(),
+            'status' => 'running',
+            'current_stage' => 'generate',
+            'started_at' => now(),
         ]);
 
         $this->executor->advance($run, ['success' => true, 'word_count' => 800]);
@@ -144,17 +145,17 @@ class PipelineTest extends TestCase
 
         $pipeline = ContentPipeline::factory()->create([
             'space_id' => $this->space->id,
-            'stages'   => [
+            'stages' => [
                 ['name' => 'generate', 'type' => 'ai_generate'],
             ],
         ]);
         $brief = ContentBrief::factory()->create(['space_id' => $this->space->id]);
-        $run   = PipelineRun::create([
-            'pipeline_id'      => $pipeline->id,
+        $run = PipelineRun::create([
+            'pipeline_id' => $pipeline->id,
             'content_brief_id' => $brief->id,
-            'status'           => 'running',
-            'current_stage'    => 'generate',
-            'started_at'       => now(),
+            'status' => 'running',
+            'current_stage' => 'generate',
+            'started_at' => now(),
         ]);
 
         $this->executor->advance($run, ['success' => true]);
@@ -171,14 +172,14 @@ class PipelineTest extends TestCase
         Bus::fake();
 
         $pipeline = ContentPipeline::factory()->withHumanGate()->create(['space_id' => $this->space->id]);
-        $brief    = ContentBrief::factory()->create(['space_id' => $this->space->id]);
+        $brief = ContentBrief::factory()->create(['space_id' => $this->space->id]);
 
         $run = PipelineRun::create([
-            'pipeline_id'      => $pipeline->id,
+            'pipeline_id' => $pipeline->id,
             'content_brief_id' => $brief->id,
-            'status'           => 'running',
-            'current_stage'    => 'generate',
-            'started_at'       => now(),
+            'status' => 'running',
+            'current_stage' => 'generate',
+            'started_at' => now(),
         ]);
 
         // Advance past generate → should hit human_gate (review)
@@ -193,14 +194,14 @@ class PipelineTest extends TestCase
         Bus::fake();
 
         $pipeline = ContentPipeline::factory()->withHumanGate()->create(['space_id' => $this->space->id]);
-        $brief    = ContentBrief::factory()->create(['space_id' => $this->space->id]);
+        $brief = ContentBrief::factory()->create(['space_id' => $this->space->id]);
 
         $run = PipelineRun::create([
-            'pipeline_id'      => $pipeline->id,
+            'pipeline_id' => $pipeline->id,
             'content_brief_id' => $brief->id,
-            'status'           => 'running',
-            'current_stage'    => 'generate',
-            'started_at'       => now(),
+            'status' => 'running',
+            'current_stage' => 'generate',
+            'started_at' => now(),
         ]);
 
         $this->executor->advance($run, ['success' => true]);
@@ -219,15 +220,15 @@ class PipelineTest extends TestCase
 
         $pipeline = ContentPipeline::factory()->create([
             'space_id' => $this->space->id,
-            'stages'   => [['name' => 'generate', 'type' => 'ai_generate']],
+            'stages' => [['name' => 'generate', 'type' => 'ai_generate']],
         ]);
         $brief = ContentBrief::factory()->create(['space_id' => $this->space->id]);
-        $run   = PipelineRun::create([
-            'pipeline_id'      => $pipeline->id,
+        $run = PipelineRun::create([
+            'pipeline_id' => $pipeline->id,
             'content_brief_id' => $brief->id,
-            'status'           => 'running',
-            'current_stage'    => 'generate',
-            'started_at'       => now(),
+            'status' => 'running',
+            'current_stage' => 'generate',
+            'started_at' => now(),
         ]);
 
         $this->executor->advance($run, ['success' => true]);
@@ -240,13 +241,13 @@ class PipelineTest extends TestCase
     public function test_mark_failed_sets_failed_status(): void
     {
         $pipeline = ContentPipeline::factory()->create(['space_id' => $this->space->id]);
-        $brief    = ContentBrief::factory()->create(['space_id' => $this->space->id]);
-        $run      = PipelineRun::create([
-            'pipeline_id'      => $pipeline->id,
+        $brief = ContentBrief::factory()->create(['space_id' => $this->space->id]);
+        $run = PipelineRun::create([
+            'pipeline_id' => $pipeline->id,
             'content_brief_id' => $brief->id,
-            'status'           => 'running',
-            'current_stage'    => 'generate',
-            'started_at'       => now(),
+            'status' => 'running',
+            'current_stage' => 'generate',
+            'started_at' => now(),
         ]);
 
         $run->markFailed('LLM API error: all providers exhausted');
@@ -260,13 +261,13 @@ class PipelineTest extends TestCase
     public function test_mark_failed_updates_brief_status(): void
     {
         $pipeline = ContentPipeline::factory()->create(['space_id' => $this->space->id]);
-        $brief    = ContentBrief::factory()->create(['space_id' => $this->space->id]);
-        $run      = PipelineRun::create([
-            'pipeline_id'      => $pipeline->id,
+        $brief = ContentBrief::factory()->create(['space_id' => $this->space->id]);
+        $run = PipelineRun::create([
+            'pipeline_id' => $pipeline->id,
             'content_brief_id' => $brief->id,
-            'status'           => 'running',
-            'current_stage'    => 'generate',
-            'started_at'       => now(),
+            'status' => 'running',
+            'current_stage' => 'generate',
+            'started_at' => now(),
         ]);
 
         $run->markFailed('Something went wrong');

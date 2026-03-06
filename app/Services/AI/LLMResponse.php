@@ -11,12 +11,12 @@ readonly class LLMResponse
         public string $content,
         public string $model,
         public string $provider,
-        public int    $inputTokens,
-        public int    $outputTokens,
-        public float  $costUsd,
-        public int    $latencyMs,
+        public int $inputTokens,
+        public int $outputTokens,
+        public float $costUsd,
+        public int $latencyMs,
         public string $stopReason = 'end_turn',
-        public array  $raw = [],
+        public array $raw = [],
     ) {}
 
     public function totalTokens(): int

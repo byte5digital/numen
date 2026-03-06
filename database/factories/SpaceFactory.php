@@ -13,10 +13,11 @@ class SpaceFactory extends Factory
     public function definition(): array
     {
         $name = $this->faker->unique()->words(2, true);
+
         return [
-            'name'       => ucwords($name),
-            'slug'       => Str::slug($name),
-            'settings'   => [],
+            'name' => ucwords($name),
+            'slug' => Str::slug($name),
+            'settings' => [],
             'api_config' => [],
         ];
     }

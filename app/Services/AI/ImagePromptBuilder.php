@@ -2,7 +2,6 @@
 
 namespace App\Services\AI;
 
-use App\Services\AI\Contracts\LLMProvider;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -20,17 +19,17 @@ class ImagePromptBuilder
         $messages = [
             [
                 'role' => 'user',
-                'content' => "Generate a single DALL-E 3 image prompt for a hero banner image.\n\n" .
-                    "Content title: {$title}\n" .
-                    "Content type: {$contentType}\n" .
-                    ($excerpt ? "Excerpt: {$excerpt}\n" : '') .
-                    ($tagList ? "Tags: {$tagList}\n" : '') .
-                    "\nRequirements:\n" .
-                    "- Professional blog hero image style\n" .
-                    "- Modern, clean, corporate blue color palette (#1E9BD7, #004B73)\n" .
-                    "- Abstract/conceptual visualization — no text overlays\n" .
-                    "- Suitable as a wide landscape banner (1792x1024)\n" .
-                    "- Photorealistic or high-quality digital art\n" .
+                'content' => "Generate a single DALL-E 3 image prompt for a hero banner image.\n\n".
+                    "Content title: {$title}\n".
+                    "Content type: {$contentType}\n".
+                    ($excerpt ? "Excerpt: {$excerpt}\n" : '').
+                    ($tagList ? "Tags: {$tagList}\n" : '').
+                    "\nRequirements:\n".
+                    "- Professional blog hero image style\n".
+                    "- Modern, clean, corporate blue color palette (#1E9BD7, #004B73)\n".
+                    "- Abstract/conceptual visualization — no text overlays\n".
+                    "- Suitable as a wide landscape banner (1792x1024)\n".
+                    "- Photorealistic or high-quality digital art\n".
                     "\nRespond with ONLY the prompt text, nothing else. No quotes, no explanation.",
             ],
         ];
@@ -56,15 +55,16 @@ class ImagePromptBuilder
             Log::warning('ImagePromptBuilder: LLM call failed, using fallback', [
                 'error' => $e->getMessage(),
             ]);
+
             return $this->fallbackPrompt($title, $contentType);
         }
     }
 
     private function fallbackPrompt(string $title, string $contentType): string
     {
-        return "Professional blog hero image for a technology article about {$title}. " .
-            "Modern, clean, corporate blue color palette (#1E9BD7, #004B73). " .
-            "Abstract, conceptual visualization. No text overlays. " .
-            "High-quality digital art, suitable as a wide landscape banner.";
+        return "Professional blog hero image for a technology article about {$title}. ".
+            'Modern, clean, corporate blue color palette (#1E9BD7, #004B73). '.
+            'Abstract, conceptual visualization. No text overlays. '.
+            'High-quality digital art, suitable as a wide landscape banner.';
     }
 }

@@ -7,7 +7,6 @@ use App\Models\ContentType;
 use App\Models\ContentVersion;
 use App\Models\Space;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class BlogPostSeeder extends Seeder
 {
@@ -22,6 +21,7 @@ class BlogPostSeeder extends Seeder
 
         if (Content::where('slug', $slug)->exists()) {
             $this->command->info('⏭  Architecture blog post already seeded, skipping.');
+
             return;
         }
 
@@ -119,35 +119,35 @@ The foundation is done. Everything on top is iteration.
 MARKDOWN;
 
         $content = Content::create([
-            'space_id'        => $space->id,
+            'space_id' => $space->id,
             'content_type_id' => $contentType->id,
-            'slug'            => $slug,
-            'status'          => 'published',
-            'locale'          => 'en',
-            'published_at'    => now(),
+            'slug' => $slug,
+            'status' => 'published',
+            'locale' => 'en',
+            'published_at' => now(),
         ]);
 
         $version = ContentVersion::create([
-            'content_id'     => $content->id,
+            'content_id' => $content->id,
             'version_number' => 1,
-            'title'          => 'From Hardcoded to Headless: How Numen Builds Its Own Pages',
-            'excerpt'        => 'Numen used to have a hardcoded homepage — the irony of a CMS that could not manage its own pages. We fixed that by introducing a block-based page model with structured components, WYSIWYG overrides, and AI generation per block. Here is how it works.',
-            'body'           => $body,
-            'body_format'    => 'markdown',
-            'author_type'    => 'human',
-            'author_id'      => 'bytybot',
-            'change_reason'  => 'Initial publish — architecture post about block/component system',
-            'quality_score'  => 92,
-            'seo_score'      => 88,
-            'seo_data'       => [
-                'meta_title'       => 'From Hardcoded to Headless: How Numen Builds Its Own Pages',
+            'title' => 'From Hardcoded to Headless: How Numen Builds Its Own Pages',
+            'excerpt' => 'Numen used to have a hardcoded homepage — the irony of a CMS that could not manage its own pages. We fixed that by introducing a block-based page model with structured components, WYSIWYG overrides, and AI generation per block. Here is how it works.',
+            'body' => $body,
+            'body_format' => 'markdown',
+            'author_type' => 'human',
+            'author_id' => 'bytybot',
+            'change_reason' => 'Initial publish — architecture post about block/component system',
+            'quality_score' => 92,
+            'seo_score' => 88,
+            'seo_data' => [
+                'meta_title' => 'From Hardcoded to Headless: How Numen Builds Its Own Pages',
                 'meta_description' => 'How Numen replaced a hardcoded homepage with a block-based component system — supporting structured data, WYSIWYG overrides, AI generation per block, and a headless API.',
-                'keywords'         => ['headless cms', 'block editor', 'component cms', 'ai content', 'laravel cms'],
+                'keywords' => ['headless cms', 'block editor', 'component cms', 'ai content', 'laravel cms'],
             ],
             'structured_fields' => [
                 'reading_time_minutes' => 5,
-                'difficulty'           => 'intermediate',
-                'series'               => 'Numen Architecture',
+                'difficulty' => 'intermediate',
+                'series' => 'Numen Architecture',
             ],
         ]);
 

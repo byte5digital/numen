@@ -14,12 +14,13 @@ class PageFactory extends Factory
     public function definition(): array
     {
         $title = $this->faker->unique()->words(3, true);
+
         return [
-            'space_id'     => Space::factory(),
-            'slug'         => Str::slug($title),
-            'title'        => ucwords($title),
-            'status'       => 'draft',
-            'meta'         => [],
+            'space_id' => Space::factory(),
+            'slug' => Str::slug($title),
+            'title' => ucwords($title),
+            'status' => 'draft',
+            'meta' => [],
             'published_at' => null,
         ];
     }
@@ -27,7 +28,7 @@ class PageFactory extends Factory
     public function published(): static
     {
         return $this->state([
-            'status'       => 'published',
+            'status' => 'published',
             'published_at' => now(),
         ]);
     }

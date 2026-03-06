@@ -28,13 +28,13 @@ class ComponentDefinitionController extends Controller
         // Merge builtin content block types
         $builtin = collect(ContentBlock::builtinTypes())->map(function ($schema, $type) {
             return [
-                'type'        => $type,
-                'label'       => ucwords(str_replace('_', ' ', $type)),
+                'type' => $type,
+                'label' => ucwords(str_replace('_', ' ', $type)),
                 'description' => null,
-                'schema'      => $schema,
-                'vue_template'=> null,
-                'is_builtin'  => true,
-                'created_by'  => 'system',
+                'schema' => $schema,
+                'vue_template' => null,
+                'is_builtin' => true,
+                'created_by' => 'system',
             ];
         });
 
@@ -51,16 +51,17 @@ class ComponentDefinitionController extends Controller
         $builtins = ContentBlock::builtinTypes();
         if (isset($builtins[$type])) {
             return response()->json(['data' => [
-                'type'        => $type,
-                'label'       => ucwords(str_replace('_', ' ', $type)),
-                'schema'      => $builtins[$type],
-                'vue_template'=> null,
-                'is_builtin'  => true,
-                'created_by'  => 'system',
+                'type' => $type,
+                'label' => ucwords(str_replace('_', ' ', $type)),
+                'schema' => $builtins[$type],
+                'vue_template' => null,
+                'is_builtin' => true,
+                'created_by' => 'system',
             ]]);
         }
 
         $definition = ComponentDefinition::where('type', $type)->firstOrFail();
+
         return response()->json(['data' => $definition]);
     }
 
@@ -80,12 +81,12 @@ class ComponentDefinitionController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'type'         => ['required', 'string', 'regex:/^[a-z][a-z0-9_]*$/', 'unique:component_definitions,type'],
-            'label'        => ['required', 'string', 'max:120'],
-            'description'  => ['nullable', 'string'],
-            'schema'       => ['required', 'array'],
+            'type' => ['required', 'string', 'regex:/^[a-z][a-z0-9_]*$/', 'unique:component_definitions,type'],
+            'label' => ['required', 'string', 'max:120'],
+            'description' => ['nullable', 'string'],
+            'schema' => ['required', 'array'],
             'vue_template' => ['nullable', 'string'],
-            'created_by'   => ['nullable', 'string', 'in:human,ai_agent'],
+            'created_by' => ['nullable', 'string', 'in:human,ai_agent'],
         ]);
 
         // Validate that type doesn't conflict with builtins
@@ -96,17 +97,17 @@ class ComponentDefinitionController extends Controller
         }
 
         $definition = ComponentDefinition::create([
-            'type'         => $data['type'],
-            'label'        => $data['label'],
-            'description'  => $data['description'] ?? null,
-            'schema'       => $data['schema'],
+            'type' => $data['type'],
+            'label' => $data['label'],
+            'description' => $data['description'] ?? null,
+            'schema' => $data['schema'],
             'vue_template' => $data['vue_template'] ?? null,
-            'is_builtin'   => false,
-            'created_by'   => $data['created_by'] ?? 'ai_agent',
+            'is_builtin' => false,
+            'created_by' => $data['created_by'] ?? 'ai_agent',
         ]);
 
         // Auto-generate a default template if none was supplied
-        if (!$definition->vue_template) {
+        if (! $definition->vue_template) {
             $definition->update([
                 'vue_template' => $definition->generateDefaultTemplate(),
             ]);
@@ -123,9 +124,9 @@ class ComponentDefinitionController extends Controller
         $definition = ComponentDefinition::where('type', $type)->firstOrFail();
 
         $data = $request->validate([
-            'label'        => ['sometimes', 'string', 'max:120'],
-            'description'  => ['nullable', 'string'],
-            'schema'       => ['sometimes', 'array'],
+            'label' => ['sometimes', 'string', 'max:120'],
+            'description' => ['nullable', 'string'],
+            'schema' => ['sometimes', 'array'],
             'vue_template' => ['nullable', 'string'],
         ]);
 

@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Content extends Model
@@ -24,11 +24,11 @@ class Content extends Model
     ];
 
     protected $casts = [
-        'taxonomy'     => 'array',
-        'metadata'     => 'array',
+        'taxonomy' => 'array',
+        'metadata' => 'array',
         'published_at' => 'datetime',
-        'expires_at'   => 'datetime',
-        'refresh_at'   => 'datetime',
+        'expires_at' => 'datetime',
+        'refresh_at' => 'datetime',
     ];
 
     // --- Scopes ---
@@ -87,9 +87,9 @@ class Content extends Model
     public function publish(): void
     {
         $this->update([
-            'status'       => 'published',
+            'status' => 'published',
             'published_at' => now(),
-            'refresh_at'   => now()->addDays((int) config('numen.pipeline.content_refresh_days', 30)),
+            'refresh_at' => now()->addDays((int) config('numen.pipeline.content_refresh_days', 30)),
         ]);
     }
 }

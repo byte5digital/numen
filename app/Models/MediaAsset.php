@@ -18,7 +18,7 @@ class MediaAsset extends Model
 
     protected $casts = [
         'ai_metadata' => 'array',
-        'variants'    => 'array',
+        'variants' => 'array',
     ];
 
     public function space(): BelongsTo

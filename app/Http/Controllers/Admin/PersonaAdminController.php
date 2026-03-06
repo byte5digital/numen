@@ -26,7 +26,7 @@ class PersonaAdminController extends Controller
     public function index()
     {
         return Inertia::render('Personas/Index', [
-            'personas'        => Persona::where('is_active', true)->get(),
+            'personas' => Persona::where('is_active', true)->get(),
             'availableModels' => $this->availableModels,
         ]);
     }
@@ -36,13 +36,13 @@ class PersonaAdminController extends Controller
         $persona = Persona::findOrFail($id);
 
         $data = $request->validate([
-            'model_config'                   => 'required|array',
-            'model_config.model'             => 'required|string',
-            'model_config.provider'          => 'nullable|string|in:anthropic,openai,azure',
-            'model_config.fallback_model'    => 'nullable|string',
+            'model_config' => 'required|array',
+            'model_config.model' => 'required|string',
+            'model_config.provider' => 'nullable|string|in:anthropic,openai,azure',
+            'model_config.fallback_model' => 'nullable|string',
             'model_config.fallback_provider' => 'nullable|string|in:anthropic,openai,azure',
-            'model_config.temperature'       => 'required|numeric|min:0|max:2',
-            'model_config.max_tokens'        => 'required|integer|min:256|max:32768',
+            'model_config.temperature' => 'required|numeric|min:0|max:2',
+            'model_config.max_tokens' => 'required|integer|min:256|max:32768',
         ]);
 
         $persona->update([

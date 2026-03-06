@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Log;
 
 class Setting extends Model
 {
     protected $primaryKey = 'key';
-    public $incrementing  = false;
-    protected $keyType    = 'string';
+
+    public $incrementing = false;
+
+    protected $keyType = 'string';
 
     protected $fillable = ['key', 'value', 'encrypted', 'group'];
 
@@ -32,7 +33,9 @@ class Setting extends Model
             fn () => static::find($key),
         );
 
-        if (!$setting) return $default;
+        if (! $setting) {
+            return $default;
+        }
 
         $value = $setting->encrypted
             ? static::decryptSafe($setting->value)
@@ -51,9 +54,9 @@ class Setting extends Model
         static::updateOrCreate(
             ['key' => $key],
             [
-                'value'     => $shouldEncrypt && $value ? Crypt::encryptString((string) $value) : (string) $value,
-                'encrypted' => $shouldEncrypt && !empty($value),
-                'group'     => $group,
+                'value' => $shouldEncrypt && $value ? Crypt::encryptString((string) $value) : (string) $value,
+                'encrypted' => $shouldEncrypt && ! empty($value),
+                'group' => $group,
             ],
         );
 
@@ -89,12 +92,14 @@ class Setting extends Model
                 ? static::decryptSafe($setting->value)
                 : $setting->value;
 
-            if ($value === null) continue;
+            if ($value === null) {
+                continue;
+            }
 
             // Map setting key → config key
             // e.g. "ai.providers.anthropic.api_key" → config('numen.providers.anthropic.api_key')
             // Strip only the leading "ai." prefix (str_replace would corrupt keys like "openai.api_key")
-            $configKey = 'numen.' . (str_starts_with($setting->key, 'ai.')
+            $configKey = 'numen.'.(str_starts_with($setting->key, 'ai.')
                 ? substr($setting->key, 3)
                 : $setting->key);
 
@@ -139,7 +144,9 @@ class Setting extends Model
 
     private static function decryptSafe(?string $value): ?string
     {
-        if (empty($value)) return null;
+        if (empty($value)) {
+            return null;
+        }
         try {
             return Crypt::decryptString($value);
         } catch (\Exception) {

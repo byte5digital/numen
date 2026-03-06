@@ -22,12 +22,12 @@ class PageController extends Controller
 
         $components = $page->components->map(function ($component) {
             $item = [
-                'id'               => $component->id,
-                'type'             => $component->type,
-                'sort_order'       => $component->sort_order,
-                'data'             => $component->data,
+                'id' => $component->id,
+                'type' => $component->type,
+                'sort_order' => $component->sort_order,
+                'data' => $component->data,
                 'wysiwyg_override' => $component->wysiwyg_override,
-                'ai_generated'     => $component->ai_generated,
+                'ai_generated' => $component->ai_generated,
             ];
 
             // Inject live stats into stats_row
@@ -49,10 +49,10 @@ class PageController extends Controller
                     ->limit($limit)
                     ->get()
                     ->map(fn ($c) => [
-                        'slug'      => $c->slug,
-                        'title'     => $c->currentVersion?->title ?? 'Untitled',
-                        'excerpt'   => $c->currentVersion?->excerpt,
-                        'type'      => $c->contentType?->slug,
+                        'slug' => $c->slug,
+                        'title' => $c->currentVersion?->title ?? 'Untitled',
+                        'excerpt' => $c->currentVersion?->excerpt,
+                        'type' => $c->contentType?->slug,
                         'seo_score' => $c->currentVersion?->seo_score,
                     ])
                     ->toArray();
@@ -63,9 +63,9 @@ class PageController extends Controller
 
         return response()->json([
             'data' => [
-                'slug'       => $page->slug,
-                'title'      => $page->title,
-                'meta'       => $page->meta,
+                'slug' => $page->slug,
+                'title' => $page->title,
+                'meta' => $page->meta,
                 'components' => $components,
             ],
         ]);
@@ -85,7 +85,7 @@ class PageController extends Controller
         return [
             'published_count' => Content::where('status', 'published')->count(),
             'total_generated' => \App\Models\AIGenerationLog::where('purpose', 'content_generation')->count(),
-            'avg_cost'        => number_format((\App\Models\AIGenerationLog::avg('cost_usd') ?? 0) * 3, 2),
+            'avg_cost' => number_format((\App\Models\AIGenerationLog::avg('cost_usd') ?? 0) * 3, 2),
         ];
     }
 }

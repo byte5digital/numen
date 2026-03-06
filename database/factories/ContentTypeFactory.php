@@ -14,11 +14,12 @@ class ContentTypeFactory extends Factory
     public function definition(): array
     {
         $name = $this->faker->unique()->words(2, true);
+
         return [
             'space_id' => Space::factory(),
-            'name'     => ucwords($name),
-            'slug'     => Str::slug($name, '_'),
-            'schema'   => ['fields' => []],
+            'name' => ucwords($name),
+            'slug' => Str::slug($name, '_'),
+            'schema' => ['fields' => []],
         ];
     }
 }

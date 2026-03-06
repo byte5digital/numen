@@ -34,13 +34,13 @@ class PageApiTest extends TestCase
     {
         Page::factory()->published()->create([
             'space_id' => $this->space->id,
-            'slug'     => 'home',
-            'title'    => 'Home Page',
+            'slug' => 'home',
+            'title' => 'Home Page',
         ]);
         Page::factory()->published()->create([
             'space_id' => $this->space->id,
-            'slug'     => 'about',
-            'title'    => 'About Us',
+            'slug' => 'about',
+            'title' => 'About Us',
         ]);
 
         $response = $this->getJson('/api/v1/pages');
@@ -66,9 +66,9 @@ class PageApiTest extends TestCase
     {
         Page::factory()->published()->create([
             'space_id' => $this->space->id,
-            'slug'     => 'landing-page',
-            'title'    => 'Landing Page',
-            'meta'     => ['description' => 'Welcome to our site'],
+            'slug' => 'landing-page',
+            'title' => 'Landing Page',
+            'meta' => ['description' => 'Welcome to our site'],
         ]);
 
         $response = $this->getJson('/api/v1/pages/landing-page');
@@ -82,21 +82,21 @@ class PageApiTest extends TestCase
     {
         $page = Page::factory()->published()->create([
             'space_id' => $this->space->id,
-            'slug'     => 'with-components',
+            'slug' => 'with-components',
         ]);
 
         PageComponent::create([
-            'page_id'    => $page->id,
-            'type'       => 'hero_banner',
+            'page_id' => $page->id,
+            'type' => 'hero_banner',
             'sort_order' => 0,
-            'data'       => ['headline' => 'Welcome!'],
+            'data' => ['headline' => 'Welcome!'],
         ]);
 
         PageComponent::create([
-            'page_id'    => $page->id,
-            'type'       => 'text_block',
+            'page_id' => $page->id,
+            'type' => 'text_block',
             'sort_order' => 1,
-            'data'       => ['content' => 'Body text here.'],
+            'data' => ['content' => 'Body text here.'],
         ]);
 
         $response = $this->getJson('/api/v1/pages/with-components');
@@ -117,8 +117,8 @@ class PageApiTest extends TestCase
     {
         Page::factory()->create([
             'space_id' => $this->space->id,
-            'slug'     => 'draft-page',
-            'status'   => 'draft',
+            'slug' => 'draft-page',
+            'status' => 'draft',
         ]);
 
         $response = $this->getJson('/api/v1/pages/draft-page');
@@ -130,8 +130,8 @@ class PageApiTest extends TestCase
     {
         Page::factory()->published()->create([
             'space_id' => $this->space->id,
-            'slug'     => 'test-page',
-            'title'    => 'Test Page Title',
+            'slug' => 'test-page',
+            'title' => 'Test Page Title',
         ]);
 
         $response = $this->getJson('/api/v1/pages');

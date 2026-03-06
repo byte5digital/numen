@@ -13,15 +13,15 @@ class PersonaFactory extends Factory
     public function definition(): array
     {
         return [
-            'space_id'      => Space::factory(),
-            'name'          => $this->faker->name(),
-            'role'          => $this->faker->randomElement(['creator', 'seo_expert', 'editor']),
+            'space_id' => Space::factory(),
+            'name' => $this->faker->name(),
+            'role' => $this->faker->randomElement(['creator', 'seo_expert', 'editor']),
             'system_prompt' => 'You are a helpful AI assistant.',
-            'capabilities'  => ['content_generation'],
-            'model_config'  => [
-                'model'       => 'claude-sonnet-4-6',
+            'capabilities' => ['content_generation'],
+            'model_config' => [
+                'model' => 'claude-sonnet-4-6',
                 'temperature' => 0.7,
-                'max_tokens'  => 4096,
+                'max_tokens' => 4096,
             ],
             'is_active' => true,
         ];

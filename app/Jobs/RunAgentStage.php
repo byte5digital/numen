@@ -19,7 +19,9 @@ class RunAgentStage implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 5;
+
     public int $timeout = 240; // AI calls can take 2+ minutes
+
     public int $maxExceptions = 3;
 
     public function __construct(
@@ -36,10 +38,10 @@ class RunAgentStage implements ShouldQueue
 
     public function handle(AgentFactory $agentFactory, PipelineExecutor $executor): void
     {
-        Log::info("Running agent stage", [
+        Log::info('Running agent stage', [
             'run_id' => $this->run->id,
-            'stage'  => $this->stage['name'],
-            'type'   => $this->stage['type'],
+            'stage' => $this->stage['name'],
+            'type' => $this->stage['type'],
         ]);
 
         try {
@@ -48,10 +50,10 @@ class RunAgentStage implements ShouldQueue
 
             // Determine agent role from stage config
             $role = $this->stage['agent_role'] ?? match ($this->stage['type']) {
-                'ai_generate'  => 'creator',
+                'ai_generate' => 'creator',
                 'ai_transform' => 'optimizer',
-                'ai_review'    => 'reviewer',
-                default        => 'creator',
+                'ai_review' => 'reviewer',
+                default => 'creator',
             };
 
             $agent = $agentFactory->makeByRole($spaceId, $role);
@@ -67,13 +69,14 @@ class RunAgentStage implements ShouldQueue
 
             $result = $agent->execute($task);
 
-            if (!$result->success) {
-                Log::warning("Agent stage failed", [
+            if (! $result->success) {
+                Log::warning('Agent stage failed', [
                     'run_id' => $this->run->id,
-                    'stage'  => $this->stage['name'],
+                    'stage' => $this->stage['name'],
                     'reason' => $result->text,
                 ]);
                 $this->run->markFailed($result->text);
+
                 return;
             }
 
@@ -105,26 +108,27 @@ class RunAgentStage implements ShouldQueue
 
             // Advance pipeline
             $executor->advance($this->run, [
-                'stage'   => $this->stage['name'],
+                'stage' => $this->stage['name'],
                 'success' => true,
-                'score'   => $result->score,
+                'score' => $result->score,
                 'summary' => substr($result->text ?? '', 0, 500),
             ]);
 
         } catch (\App\Services\AI\Exceptions\CostLimitExceededException $e) {
-            Log::warning("Agent stage blocked by cost limit — not retrying", [
+            Log::warning('Agent stage blocked by cost limit — not retrying', [
                 'run_id' => $this->run->id,
-                'stage'  => $this->stage['name'],
+                'stage' => $this->stage['name'],
                 'period' => $e->period,
             ]);
             $this->run->markFailed("Cost limit exceeded: {$e->getMessage()}");
             $this->fail($e);
+
             return;
         } catch (\Throwable $e) {
-            Log::error("Agent stage exception", [
-                'run_id'  => $this->run->id,
-                'stage'   => $this->stage['name'],
-                'error'   => $e->getMessage(),
+            Log::error('Agent stage exception', [
+                'run_id' => $this->run->id,
+                'stage' => $this->stage['name'],
+                'error' => $e->getMessage(),
             ]);
 
             if ($this->attempts() >= $this->tries) {
@@ -141,7 +145,7 @@ class RunAgentStage implements ShouldQueue
         $lastOutput = $this->run->context['last_stage_output'] ?? [];
 
         $contentType = [];
-        if (!empty($brief['content_type_slug'])) {
+        if (! empty($brief['content_type_slug'])) {
             $type = ContentType::where('slug', $brief['content_type_slug'])->first();
             $contentType = $type ? $type->toArray() : [];
         }
@@ -151,22 +155,22 @@ class RunAgentStage implements ShouldQueue
 
         return match ($this->stage['type']) {
             'ai_generate' => array_filter([
-                'brief'            => $brief,
-                'content_type'     => $contentType,
+                'brief' => $brief,
+                'content_type' => $contentType,
                 'existing_content' => $existingContent,
             ]),
             'ai_transform' => [
-                'content'         => $lastOutput,
+                'content' => $lastOutput,
                 'target_keywords' => $brief['target_keywords'] ?? [],
-                'brief'           => $brief,
+                'brief' => $brief,
             ],
             'ai_review' => [
-                'content'          => $this->getContentForReview(),
-                'brief'            => $brief,
+                'content' => $this->getContentForReview(),
+                'brief' => $brief,
                 'brand_guidelines' => $this->run->content?->space?->settings['brand_guidelines'] ?? '',
             ],
             default => [
-                'brief'       => $brief,
+                'brief' => $brief,
                 'last_output' => $lastOutput,
             ],
         };
@@ -175,15 +179,16 @@ class RunAgentStage implements ShouldQueue
     private function getContentForReview(): array
     {
         $content = $this->run->content;
-        if (!$content?->currentVersion) {
+        if (! $content?->currentVersion) {
             return $this->run->context['last_stage_output'] ?? [];
         }
 
         $version = $content->currentVersion;
+
         return [
-            'title'   => $version->title,
+            'title' => $version->title,
             'excerpt' => $version->excerpt ?? '',
-            'body'    => $version->body,
+            'body' => $version->body,
         ];
     }
 
@@ -200,49 +205,50 @@ class RunAgentStage implements ShouldQueue
             $nextVersionNumber = ($latestVersion?->version_number ?? 0) + 1;
 
             $version = \App\Models\ContentVersion::create([
-                'content_id'     => $content->id,
+                'content_id' => $content->id,
                 'version_number' => $nextVersionNumber,
-                'title'          => $data['title'] ?? $latestVersion?->title ?? $brief['title'],
-                'excerpt'        => $data['excerpt'] ?? $latestVersion?->excerpt ?? '',
-                'body'           => $data['body'] ?? $result->text,
-                'body_format'    => 'markdown',
-                'author_type'    => 'ai_agent',
-                'author_id'      => $this->stage['persona_id'] ?? 'system',
-                'change_reason'  => 'update_brief: ' . ($brief['description'] ?? 'AI update'),
+                'title' => $data['title'] ?? $latestVersion?->title ?? $brief['title'],
+                'excerpt' => $data['excerpt'] ?? $latestVersion?->excerpt ?? '',
+                'body' => $data['body'] ?? $result->text,
+                'body_format' => 'markdown',
+                'author_type' => 'ai_agent',
+                'author_id' => $this->stage['persona_id'] ?? 'system',
+                'change_reason' => 'update_brief: '.($brief['description'] ?? 'AI update'),
                 'pipeline_run_id' => $this->run->id,
             ]);
 
             $content->update([
                 'current_version_id' => $version->id,
-                'status'             => 'in_pipeline',
-                'taxonomy'           => array_merge($content->taxonomy ?? [], ['tags' => $data['tags'] ?? $content->taxonomy['tags'] ?? []]),
+                'status' => 'in_pipeline',
+                'taxonomy' => array_merge($content->taxonomy ?? [], ['tags' => $data['tags'] ?? $content->taxonomy['tags'] ?? []]),
             ]);
 
             $context['content_id'] = $content->id;
             $context['last_stage_output'] = $data;
+
             return;
         }
 
         // Normal mode: create new content
         $content = \App\Models\Content::create([
-            'space_id'        => $brief['space_id'],
+            'space_id' => $brief['space_id'],
             'content_type_id' => ContentType::where('slug', $brief['content_type_slug'] ?? 'blog_post')->first()?->id,
-            'slug'            => \Illuminate\Support\Str::slug($data['title'] ?? $brief['title']),
-            'status'          => 'in_pipeline',
-            'locale'          => $brief['target_locale'] ?? 'en',
-            'taxonomy'        => ['tags' => $data['tags'] ?? []],
+            'slug' => \Illuminate\Support\Str::slug($data['title'] ?? $brief['title']),
+            'status' => 'in_pipeline',
+            'locale' => $brief['target_locale'] ?? 'en',
+            'taxonomy' => ['tags' => $data['tags'] ?? []],
         ]);
 
         $version = \App\Models\ContentVersion::create([
-            'content_id'     => $content->id,
+            'content_id' => $content->id,
             'version_number' => 1,
-            'title'          => $data['title'] ?? $brief['title'],
-            'excerpt'        => $data['excerpt'] ?? '',
-            'body'           => $data['body'] ?? $result->text,
-            'body_format'    => 'markdown',
-            'author_type'    => 'ai_agent',
-            'author_id'      => $this->stage['persona_id'] ?? 'system',
-            'change_reason'  => 'initial_generation',
+            'title' => $data['title'] ?? $brief['title'],
+            'excerpt' => $data['excerpt'] ?? '',
+            'body' => $data['body'] ?? $result->text,
+            'body_format' => 'markdown',
+            'author_type' => 'ai_agent',
+            'author_id' => $this->stage['persona_id'] ?? 'system',
+            'change_reason' => 'initial_generation',
             'pipeline_run_id' => $this->run->id,
         ]);
 
@@ -256,7 +262,9 @@ class RunAgentStage implements ShouldQueue
     private function applySeoOptimization($result): void
     {
         $content = $this->run->content;
-        if (!$content?->currentVersion) return;
+        if (! $content?->currentVersion) {
+            return;
+        }
 
         $seoData = $result->data;
         $version = $content->currentVersion;
@@ -264,19 +272,19 @@ class RunAgentStage implements ShouldQueue
         $updateData = ['seo_data' => $seoData, 'seo_score' => $result->score];
 
         // If SEO agent provided an optimized body, create a new version
-        if (!empty($seoData['optimized_body'])) {
+        if (! empty($seoData['optimized_body'])) {
             \App\Models\ContentVersion::create([
-                'content_id'      => $content->id,
-                'version_number'  => $version->version_number + 1,
-                'title'           => $seoData['seo_title'] ?? $version->title,
-                'excerpt'         => $version->excerpt,
-                'body'            => $seoData['optimized_body'],
-                'body_format'     => 'markdown',
-                'seo_data'        => $seoData,
-                'seo_score'       => $result->score,
-                'author_type'     => 'ai_agent',
-                'author_id'       => $this->stage['persona_id'] ?? 'seo_agent',
-                'change_reason'   => 'seo_optimization',
+                'content_id' => $content->id,
+                'version_number' => $version->version_number + 1,
+                'title' => $seoData['seo_title'] ?? $version->title,
+                'excerpt' => $version->excerpt,
+                'body' => $seoData['optimized_body'],
+                'body_format' => 'markdown',
+                'seo_data' => $seoData,
+                'seo_score' => $result->score,
+                'author_type' => 'ai_agent',
+                'author_id' => $this->stage['persona_id'] ?? 'seo_agent',
+                'change_reason' => 'seo_optimization',
                 'pipeline_run_id' => $this->run->id,
             ]);
         } else {

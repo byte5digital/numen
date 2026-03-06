@@ -4,10 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\ContentBrief;
 use App\Models\ContentPipeline;
-use App\Models\PipelineRun;
 use App\Models\Space;
 use App\Models\User;
-use App\Pipelines\PipelineExecutor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Laravel\Sanctum\Sanctum;
@@ -18,16 +16,18 @@ class BriefApiTest extends TestCase
     use RefreshDatabase;
 
     private Space $space;
+
     private ContentPipeline $pipeline;
+
     private User $user;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->space    = Space::factory()->create();
+        $this->space = Space::factory()->create();
         $this->pipeline = ContentPipeline::factory()->create([
-            'space_id'  => $this->space->id,
+            'space_id' => $this->space->id,
             'is_active' => true,
         ]);
         $this->user = User::factory()->create();
@@ -38,8 +38,8 @@ class BriefApiTest extends TestCase
     public function test_unauthenticated_cannot_create_brief(): void
     {
         $response = $this->postJson('/api/v1/briefs', [
-            'space_id'          => $this->space->id,
-            'title'             => 'Test Brief',
+            'space_id' => $this->space->id,
+            'title' => 'Test Brief',
             'content_type_slug' => 'blog_post',
         ]);
 
@@ -61,18 +61,18 @@ class BriefApiTest extends TestCase
         Sanctum::actingAs($this->user);
 
         $response = $this->postJson('/api/v1/briefs', [
-            'space_id'          => $this->space->id,
-            'title'             => 'My New Article',
-            'description'       => 'Write about modern Laravel practices.',
+            'space_id' => $this->space->id,
+            'title' => 'My New Article',
+            'description' => 'Write about modern Laravel practices.',
             'content_type_slug' => 'blog_post',
-            'target_keywords'   => ['laravel', 'php'],
+            'target_keywords' => ['laravel', 'php'],
         ]);
 
         $response->assertCreated()
             ->assertJsonPath('data.status', 'processing');
 
         $this->assertDatabaseHas('content_briefs', [
-            'title'  => 'My New Article',
+            'title' => 'My New Article',
             'status' => 'processing',
         ]);
     }
@@ -83,23 +83,23 @@ class BriefApiTest extends TestCase
         Sanctum::actingAs($this->user);
 
         $response = $this->postJson('/api/v1/briefs', [
-            'space_id'          => $this->space->id,
-            'title'             => 'Pipeline Test Article',
+            'space_id' => $this->space->id,
+            'title' => 'Pipeline Test Article',
             'content_type_slug' => 'blog_post',
         ]);
 
         $response->assertCreated();
 
         $briefId = $response->json('data.brief_id');
-        $runId   = $response->json('data.pipeline_run_id');
+        $runId = $response->json('data.pipeline_run_id');
 
         $this->assertDatabaseHas('pipeline_runs', [
-            'id'     => $runId,
+            'id' => $runId,
             'status' => 'running',
         ]);
 
         $this->assertDatabaseHas('content_briefs', [
-            'id'     => $briefId,
+            'id' => $briefId,
             'status' => 'processing',
         ]);
     }
@@ -119,8 +119,8 @@ class BriefApiTest extends TestCase
         Sanctum::actingAs($this->user);
 
         $response = $this->postJson('/api/v1/briefs', [
-            'space_id'          => 'nonexistent-space-id',
-            'title'             => 'Test',
+            'space_id' => 'nonexistent-space-id',
+            'title' => 'Test',
             'content_type_slug' => 'blog_post',
         ]);
 
@@ -137,8 +137,8 @@ class BriefApiTest extends TestCase
         $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
 
         $this->withoutExceptionHandling()->postJson('/api/v1/briefs', [
-            'space_id'          => $this->space->id,
-            'title'             => 'Test Article',
+            'space_id' => $this->space->id,
+            'title' => 'Test Article',
             'content_type_slug' => 'blog_post',
         ]);
     }
@@ -165,7 +165,7 @@ class BriefApiTest extends TestCase
         ContentBrief::factory()->count(2)->create(['space_id' => $this->space->id]);
         ContentBrief::factory()->count(3)->create(['space_id' => $otherSpace->id]);
 
-        $response = $this->getJson('/api/v1/briefs?space_id=' . $this->space->id);
+        $response = $this->getJson('/api/v1/briefs?space_id='.$this->space->id);
 
         $response->assertOk()
             ->assertJsonPath('data.total', 2);
@@ -192,7 +192,7 @@ class BriefApiTest extends TestCase
 
         $brief = ContentBrief::factory()->create(['space_id' => $this->space->id]);
 
-        $response = $this->getJson('/api/v1/briefs/' . $brief->id);
+        $response = $this->getJson('/api/v1/briefs/'.$brief->id);
 
         $response->assertOk()
             ->assertJsonPath('data.id', $brief->id)

@@ -17,21 +17,23 @@ use App\Services\AI\LLMResponse;
 class AzureOpenAIProvider extends OpenAIProvider
 {
     private string $endpoint;
+
     private string $apiVersion;
-    private array  $deploymentMap;
+
+    private array $deploymentMap;
 
     public function __construct(CostTracker $costTracker)
     {
         parent::__construct($costTracker);
-        $this->providerName  = 'azure';
-        $this->apiKey        = (string) config('numen.providers.azure.api_key', '');
-        $this->endpoint      = rtrim((string) config('numen.providers.azure.endpoint', ''), '/');
-        $this->apiVersion    = (string) config('numen.providers.azure.api_version', '2024-02-01');
+        $this->providerName = 'azure';
+        $this->apiKey = (string) config('numen.providers.azure.api_key', '');
+        $this->endpoint = rtrim((string) config('numen.providers.azure.endpoint', ''), '/');
+        $this->apiVersion = (string) config('numen.providers.azure.api_version', '2024-02-01');
 
         // Map generic model names to Azure deployment names
         // Deployments can be named anything in Azure; configure in numen.providers.azure.deployments
         $this->deploymentMap = config('numen.providers.azure.deployments', [
-            'gpt-4o'      => 'gpt-4o',
+            'gpt-4o' => 'gpt-4o',
             'gpt-4o-mini' => 'gpt-4o-mini',
         ]);
     }
@@ -43,16 +45,19 @@ class AzureOpenAIProvider extends OpenAIProvider
 
     public function isAvailable(string $model): bool
     {
-        if (empty($this->apiKey) || empty($this->endpoint)) return false;
+        if (empty($this->apiKey) || empty($this->endpoint)) {
+            return false;
+        }
 
         $retryAfter = cache()->get("llm:rate:{$this->getName()}:{$model}:retry_after");
-        return !($retryAfter && $retryAfter > now()->timestamp);
+
+        return ! ($retryAfter && $retryAfter > now()->timestamp);
     }
 
     public function complete(array $params): LLMResponse
     {
         // Resolve the Azure deployment name from the model name
-        $model      = $params['model'] ?? 'gpt-4o';
+        $model = $params['model'] ?? 'gpt-4o';
         $deployment = $this->deploymentMap[$model] ?? $model;
 
         // Override base URL to Azure endpoint for this specific deployment
@@ -69,7 +74,7 @@ class AzureOpenAIProvider extends OpenAIProvider
     protected function headers(): array
     {
         return [
-            'api-key'      => $this->apiKey,
+            'api-key' => $this->apiKey,
             'Content-Type' => 'application/json',
         ];
     }

@@ -47,11 +47,11 @@ class ImageGenerator
 
         // Call OpenAI Images API
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $apiKey,
+            'Authorization' => 'Bearer '.$apiKey,
             'Content-Type' => 'application/json',
         ])
             ->timeout(120)
-            ->post($this->baseUrl() . '/images/generations', [
+            ->post($this->baseUrl().'/images/generations', [
                 'model' => 'dall-e-3',
                 'prompt' => $prompt,
                 'n' => 1,

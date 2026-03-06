@@ -8,8 +8,6 @@ use App\Models\ContentBlock;
 use App\Models\ContentBrief;
 use App\Models\ContentPipeline;
 use App\Pipelines\PipelineExecutor;
-use App\Services\AI\ImageGenerator;
-use App\Services\AI\ImagePromptBuilder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -21,17 +19,17 @@ class ContentAdminController extends Controller
             ->orderByDesc('updated_at')
             ->paginate(20)
             ->through(fn ($c) => [
-                'id'             => $c->id,
-                'slug'           => $c->slug,
-                'title'          => $c->currentVersion?->title ?? 'Untitled',
-                'type'           => $c->contentType?->slug,
-                'status'         => $c->status,
-                'locale'         => $c->locale,
-                'quality_score'  => $c->currentVersion?->quality_score,
-                'seo_score'      => $c->currentVersion?->seo_score,
-                'author_type'    => $c->currentVersion?->author_type,
-                'published_at'   => $c->published_at?->diffForHumans(),
-                'hero_image_url' => $c->heroImage ? '/storage/' . $c->heroImage->path : null,
+                'id' => $c->id,
+                'slug' => $c->slug,
+                'title' => $c->currentVersion?->title ?? 'Untitled',
+                'type' => $c->contentType?->slug,
+                'status' => $c->status,
+                'locale' => $c->locale,
+                'quality_score' => $c->currentVersion?->quality_score,
+                'seo_score' => $c->currentVersion?->seo_score,
+                'author_type' => $c->currentVersion?->author_type,
+                'published_at' => $c->published_at?->diffForHumans(),
+                'hero_image_url' => $c->heroImage ? '/storage/'.$c->heroImage->path : null,
             ]);
 
         return Inertia::render('Content/Index', [
@@ -52,57 +50,57 @@ class ContentAdminController extends Controller
 
         $blocks = $version
             ? $version->blocks()->orderBy('sort_order')->get()->map(fn ($b) => [
-                'id'               => $b->id,
-                'type'             => $b->type,
-                'sort_order'       => $b->sort_order,
-                'data'             => $b->data ?? [],
+                'id' => $b->id,
+                'type' => $b->type,
+                'sort_order' => $b->sort_order,
+                'data' => $b->data ?? [],
                 'wysiwyg_override' => $b->wysiwyg_override,
             ])->values()
             : collect();
 
         return Inertia::render('Content/Show', [
             'content' => [
-                'id'             => $content->id,
-                'slug'           => $content->slug,
-                'status'         => $content->status,
-                'locale'         => $content->locale,
-                'type'           => $content->contentType?->slug,
-                'type_name'      => $content->contentType?->name,
-                'taxonomy'       => $content->taxonomy,
-                'metadata'       => $content->metadata,
-                'published_at'   => $content->published_at?->format('Y-m-d H:i'),
-                'created_at'     => $content->created_at->diffForHumans(),
-                'updated_at'     => $content->updated_at->diffForHumans(),
-                'hero_image_url' => $content->heroImage ? '/storage/' . $content->heroImage->path : null,
+                'id' => $content->id,
+                'slug' => $content->slug,
+                'status' => $content->status,
+                'locale' => $content->locale,
+                'type' => $content->contentType?->slug,
+                'type_name' => $content->contentType?->name,
+                'taxonomy' => $content->taxonomy,
+                'metadata' => $content->metadata,
+                'published_at' => $content->published_at?->format('Y-m-d H:i'),
+                'created_at' => $content->created_at->diffForHumans(),
+                'updated_at' => $content->updated_at->diffForHumans(),
+                'hero_image_url' => $content->heroImage ? '/storage/'.$content->heroImage->path : null,
             ],
             'version' => $version ? [
-                'id'               => $version->id,
-                'version_number'   => $version->version_number,
-                'title'            => $version->title,
-                'excerpt'          => $version->excerpt,
-                'body'             => $version->body,
-                'body_format'      => $version->body_format,
-                'author_type'      => $version->author_type,
-                'author_id'        => $version->author_id,
-                'quality_score'    => $version->quality_score,
-                'seo_score'        => $version->seo_score,
-                'seo_data'         => $version->seo_data,
-                'structured_fields'=> $version->structured_fields,
-                'ai_metadata'      => $version->ai_metadata,
-                'change_reason'    => $version->change_reason,
-                'created_at'       => $version->created_at->diffForHumans(),
+                'id' => $version->id,
+                'version_number' => $version->version_number,
+                'title' => $version->title,
+                'excerpt' => $version->excerpt,
+                'body' => $version->body,
+                'body_format' => $version->body_format,
+                'author_type' => $version->author_type,
+                'author_id' => $version->author_id,
+                'quality_score' => $version->quality_score,
+                'seo_score' => $version->seo_score,
+                'seo_data' => $version->seo_data,
+                'structured_fields' => $version->structured_fields,
+                'ai_metadata' => $version->ai_metadata,
+                'change_reason' => $version->change_reason,
+                'created_at' => $version->created_at->diffForHumans(),
             ] : null,
             'versions' => $content->versions->map(fn ($v) => [
-                'id'             => $v->id,
+                'id' => $v->id,
                 'version_number' => $v->version_number,
-                'title'          => $v->title,
-                'author_type'    => $v->author_type,
-                'quality_score'  => $v->quality_score,
-                'seo_score'      => $v->seo_score,
-                'created_at'     => $v->created_at->diffForHumans(),
-                'is_current'     => $v->id === $content->current_version_id,
+                'title' => $v->title,
+                'author_type' => $v->author_type,
+                'quality_score' => $v->quality_score,
+                'seo_score' => $v->seo_score,
+                'created_at' => $v->created_at->diffForHumans(),
+                'is_current' => $v->id === $content->current_version_id,
             ]),
-            'blocks'     => $blocks,
+            'blocks' => $blocks,
             'blockTypes' => ContentBlock::allTypes(),
         ]);
     }
@@ -112,19 +110,19 @@ class ContentAdminController extends Controller
         $content = Content::findOrFail($id);
         $version = $content->currentVersion;
 
-        abort_if(!$version, 422, 'No current version to add blocks to.');
+        abort_if(! $version, 422, 'No current version to add blocks to.');
 
         $data = $request->validate([
-            'type'       => ['required', 'string'],
-            'data'       => ['nullable', 'array'],
+            'type' => ['required', 'string'],
+            'data' => ['nullable', 'array'],
             'sort_order' => ['nullable', 'integer'],
         ]);
 
         $maxOrder = $version->blocks()->max('sort_order') ?? -1;
 
         $block = $version->blocks()->create([
-            'type'       => $data['type'],
-            'data'       => $data['data'] ?? [],
+            'type' => $data['type'],
+            'data' => $data['data'] ?? [],
             'sort_order' => $data['sort_order'] ?? $maxOrder + 1,
         ]);
 
@@ -134,11 +132,11 @@ class ContentAdminController extends Controller
     public function updateBlock(Request $request, string $id, string $blockId)
     {
         $content = Content::findOrFail($id);
-        $block   = ContentBlock::where('content_version_id', $content->current_version_id)
+        $block = ContentBlock::where('content_version_id', $content->current_version_id)
             ->findOrFail($blockId);
 
         $data = $request->validate([
-            'data'             => ['nullable', 'array'],
+            'data' => ['nullable', 'array'],
             'wysiwyg_override' => ['nullable', 'string'],
         ]);
 
@@ -150,7 +148,7 @@ class ContentAdminController extends Controller
     public function deleteBlock(string $id, string $blockId)
     {
         $content = Content::findOrFail($id);
-        $block   = ContentBlock::where('content_version_id', $content->current_version_id)
+        $block = ContentBlock::where('content_version_id', $content->current_version_id)
             ->findOrFail($blockId);
 
         $block->delete();
@@ -163,7 +161,7 @@ class ContentAdminController extends Controller
         $content = Content::findOrFail($id);
 
         $data = $request->validate([
-            'order'   => ['required', 'array'],
+            'order' => ['required', 'array'],
             'order.*' => ['required', 'string'],
         ]);
 
@@ -179,7 +177,7 @@ class ContentAdminController extends Controller
     public function destroy(string $id)
     {
         $content = Content::findOrFail($id);
-        
+
         // Delete versions, blocks, and the content itself
         foreach ($content->versions as $version) {
             $version->blocks()->delete();
@@ -228,14 +226,14 @@ class ContentAdminController extends Controller
         $version = $content->currentVersion;
 
         $brief = ContentBrief::create([
-            'space_id'          => $content->space_id,
-            'content_id'        => $content->id,
-            'title'             => 'Update: ' . ($version?->title ?? $content->slug),
-            'description'       => $validated['prompt'],
+            'space_id' => $content->space_id,
+            'content_id' => $content->id,
+            'title' => 'Update: '.($version?->title ?? $content->slug),
+            'description' => $validated['prompt'],
             'content_type_slug' => $content->contentType?->slug ?? 'blog_post',
-            'target_locale'     => $content->locale,
-            'source'            => 'update_brief',
-            'status'            => 'pending',
+            'target_locale' => $content->locale,
+            'source' => 'update_brief',
+            'status' => 'pending',
         ]);
 
         $pipeline = ContentPipeline::where('space_id', $content->space_id)

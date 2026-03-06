@@ -7,7 +7,6 @@ use App\Services\AI\Exceptions\ProviderRateLimitException;
 use App\Services\AI\Exceptions\ProviderUnavailableException;
 use App\Services\AI\Providers\AnthropicProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -16,6 +15,7 @@ class AnthropicProviderTest extends TestCase
     use RefreshDatabase;
 
     private AnthropicProvider $provider;
+
     private CostTracker $costTracker;
 
     protected function setUp(): void
@@ -27,7 +27,7 @@ class AnthropicProviderTest extends TestCase
         config(['numen.providers.anthropic.base_url' => 'https://api.anthropic.com']);
 
         $this->costTracker = $this->createMock(CostTracker::class);
-        $this->provider    = new AnthropicProvider($this->costTracker);
+        $this->provider = new AnthropicProvider($this->costTracker);
     }
 
     // --- Request building ---
@@ -41,8 +41,8 @@ class AnthropicProviderTest extends TestCase
         $this->costTracker->method('calculateCost')->willReturn(0.001);
 
         $this->provider->complete([
-            'model'    => 'claude-sonnet-4-6',
-            'system'   => 'You are helpful.',
+            'model' => 'claude-sonnet-4-6',
+            'system' => 'You are helpful.',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
 
@@ -62,14 +62,15 @@ class AnthropicProviderTest extends TestCase
         $this->costTracker->method('calculateCost')->willReturn(0.001);
 
         $this->provider->complete([
-            'model'      => 'claude-sonnet-4-6',
-            'system'     => 'Be helpful.',
-            'messages'   => [['role' => 'user', 'content' => 'Tell me a joke']],
+            'model' => 'claude-sonnet-4-6',
+            'system' => 'Be helpful.',
+            'messages' => [['role' => 'user', 'content' => 'Tell me a joke']],
             'max_tokens' => 1024,
         ]);
 
         Http::assertSent(function ($request) {
             $body = $request->data();
+
             return isset($body['system'])
                 && $body['system'] === 'Be helpful.'
                 && isset($body['messages'])
@@ -89,7 +90,7 @@ class AnthropicProviderTest extends TestCase
         $this->costTracker->method('calculateCost')->willReturn(0.002);
 
         $response = $this->provider->complete([
-            'model'    => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'messages' => [['role' => 'user', 'content' => 'Question?']],
         ]);
 
@@ -107,7 +108,7 @@ class AnthropicProviderTest extends TestCase
         $this->costTracker->method('calculateCost')->willReturn(0.003);
 
         $response = $this->provider->complete([
-            'model'    => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'messages' => [['role' => 'user', 'content' => 'Question?']],
         ]);
 
@@ -128,7 +129,7 @@ class AnthropicProviderTest extends TestCase
         $this->costTracker->method('calculateCost')->willReturn(0.001);
 
         $response = $this->provider->complete([
-            'model'    => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
 
@@ -148,7 +149,7 @@ class AnthropicProviderTest extends TestCase
         $this->expectException(ProviderRateLimitException::class);
 
         $this->provider->complete([
-            'model'    => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
     }
@@ -163,7 +164,7 @@ class AnthropicProviderTest extends TestCase
 
         try {
             $this->provider->complete([
-                'model'    => 'claude-sonnet-4-6',
+                'model' => 'claude-sonnet-4-6',
                 'messages' => [['role' => 'user', 'content' => 'Hello']],
             ]);
         } catch (ProviderRateLimitException) {
@@ -185,7 +186,7 @@ class AnthropicProviderTest extends TestCase
         $this->expectException(ProviderRateLimitException::class);
 
         $this->provider->complete([
-            'model'    => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
     }
@@ -199,7 +200,7 @@ class AnthropicProviderTest extends TestCase
         $this->expectException(ProviderUnavailableException::class);
 
         $this->provider->complete([
-            'model'    => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
     }
@@ -213,7 +214,7 @@ class AnthropicProviderTest extends TestCase
         $this->expectException(ProviderUnavailableException::class);
 
         $this->provider->complete([
-            'model'    => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
     }
@@ -248,7 +249,7 @@ class AnthropicProviderTest extends TestCase
             ->willReturn(0.00105);
 
         $response = $this->provider->complete([
-            'model'    => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
 
@@ -270,7 +271,7 @@ class AnthropicProviderTest extends TestCase
             ->willReturn(0.0005);
 
         $this->provider->complete([
-            'model'    => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
     }
@@ -283,17 +284,17 @@ class AnthropicProviderTest extends TestCase
         int $outputTokens = 50,
     ): array {
         return [
-            'id'      => 'msg_01test',
-            'type'    => 'message',
-            'role'    => 'assistant',
+            'id' => 'msg_01test',
+            'type' => 'message',
+            'role' => 'assistant',
             'content' => [
                 ['type' => 'text', 'text' => $text],
             ],
-            'model'       => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'stop_reason' => 'end_turn',
-            'usage'       => [
-                'input_tokens'            => $inputTokens,
-                'output_tokens'           => $outputTokens,
+            'usage' => [
+                'input_tokens' => $inputTokens,
+                'output_tokens' => $outputTokens,
                 'cache_read_input_tokens' => 0,
             ],
         ];

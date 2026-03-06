@@ -34,14 +34,14 @@ class ContentBlock extends Model
     public static function builtinTypes(): array
     {
         return [
-            'paragraph'   => ['text' => 'wysiwyg'],
-            'heading'     => ['level' => 'string', 'text' => 'string'],
-            'code_block'  => ['language' => 'string', 'code' => 'text'],
-            'quote'       => ['text' => 'text', 'attribution' => 'string'],
-            'callout'     => ['variant' => 'string', 'title' => 'string', 'body' => 'text'],
-            'divider'     => [],
-            'image'       => ['url' => 'string', 'alt' => 'string', 'caption' => 'string'],
-            'embed'       => ['url' => 'string', 'caption' => 'string'],
+            'paragraph' => ['text' => 'wysiwyg'],
+            'heading' => ['level' => 'string', 'text' => 'string'],
+            'code_block' => ['language' => 'string', 'code' => 'text'],
+            'quote' => ['text' => 'text', 'attribution' => 'string'],
+            'callout' => ['variant' => 'string', 'title' => 'string', 'body' => 'text'],
+            'divider' => [],
+            'image' => ['url' => 'string', 'alt' => 'string', 'caption' => 'string'],
+            'embed' => ['url' => 'string', 'caption' => 'string'],
         ];
     }
 
@@ -68,6 +68,7 @@ class ContentBlock extends Model
             return $builtin[$type];
         }
         $definition = ComponentDefinition::where('type', $type)->first();
+
         return $definition?->schema ?? [];
     }
 }

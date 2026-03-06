@@ -26,6 +26,7 @@ Route::get('/api/documentation', function () {
 
 Route::get('/api/documentation/spec', function () {
     $spec = file_get_contents(base_path('openapi.yaml'));
+
     return response($spec, 200)
         ->header('Content-Type', 'application/yaml')
         ->header('Access-Control-Allow-Origin', '*');
@@ -67,7 +68,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::delete('/content/{id}', [ContentAdminController::class, 'destroy'])->name('admin.content.destroy');
     Route::patch('/content/{id}/status', [ContentAdminController::class, 'updateStatus'])->name('admin.content.status');
     Route::post('/content/{id}/generate-image', [ContentAdminController::class, 'generateImage'])->name('admin.content.generate-image');
-        Route::post('/content/{id}/update-brief', [ContentAdminController::class, 'createUpdateBrief'])->name('admin.content.update-brief');
+    Route::post('/content/{id}/update-brief', [ContentAdminController::class, 'createUpdateBrief'])->name('admin.content.update-brief');
     // Content block editor
     Route::post('/content/{id}/blocks', [ContentAdminController::class, 'addBlock'])->name('admin.content.blocks.store');
     Route::put('/content/{id}/blocks/{blockId}', [ContentAdminController::class, 'updateBlock'])->name('admin.content.blocks.update');

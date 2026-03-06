@@ -54,8 +54,8 @@ class SettingsAdminController extends Controller
     ];
 
     public function index(
-        AnthropicProvider  $anthropic,
-        OpenAIProvider     $openai,
+        AnthropicProvider $anthropic,
+        OpenAIProvider $openai,
         AzureOpenAIProvider $azure,
     ) {
         $current = $this->currentValues();
@@ -64,27 +64,27 @@ class SettingsAdminController extends Controller
         $providerStatus = [
             'anthropic' => [
                 'available' => $anthropic->isAvailable($current['ai.providers.anthropic.default_model'] ?? 'claude-sonnet-4-6'),
-                'key_set'   => !empty(config('numen.providers.anthropic.api_key')),
+                'key_set' => ! empty(config('numen.providers.anthropic.api_key')),
             ],
             'openai' => [
                 'available' => $openai->isAvailable($current['ai.providers.openai.default_model'] ?? 'gpt-4o'),
-                'key_set'   => !empty(config('numen.providers.openai.api_key')),
+                'key_set' => ! empty(config('numen.providers.openai.api_key')),
             ],
             'azure' => [
                 'available' => $azure->isAvailable($current['ai.providers.azure.default_model'] ?? 'gpt-4o'),
-                'key_set'   => !empty(config('numen.providers.azure.api_key')) && !empty(config('numen.providers.azure.endpoint')),
+                'key_set' => ! empty(config('numen.providers.azure.api_key')) && ! empty(config('numen.providers.azure.endpoint')),
             ],
         ];
 
         return Inertia::render('Settings/Index', [
-            'current'         => $current,
-            'providerStatus'  => $providerStatus,
+            'current' => $current,
+            'providerStatus' => $providerStatus,
             'availableModels' => $this->availableModels,
             // Separate flags so the Vue knows a key is set without exposing the value
             'keySet' => [
-                'anthropic' => !empty(config('numen.providers.anthropic.api_key')),
-                'openai'    => !empty(config('numen.providers.openai.api_key')),
-                'azure'     => !empty(config('numen.providers.azure.api_key')),
+                'anthropic' => ! empty(config('numen.providers.anthropic.api_key')),
+                'openai' => ! empty(config('numen.providers.openai.api_key')),
+                'azure' => ! empty(config('numen.providers.azure.api_key')),
             ],
         ]);
     }
@@ -96,25 +96,25 @@ class SettingsAdminController extends Controller
         $nested = Arr::undot($request->all());
 
         $data = validator($nested, [
-            'ai.default_provider'                      => ['required', 'in:anthropic,openai,azure'],
-            'ai.fallback_chain'                        => ['required', 'string'],
+            'ai.default_provider' => ['required', 'in:anthropic,openai,azure'],
+            'ai.fallback_chain' => ['required', 'string'],
 
             // Anthropic
-            'ai.providers.anthropic.api_key'           => ['nullable', 'string'],
-            'ai.providers.anthropic.base_url'          => ['nullable', 'url'],
-            'ai.providers.anthropic.default_model'     => ['required', 'string'],
+            'ai.providers.anthropic.api_key' => ['nullable', 'string'],
+            'ai.providers.anthropic.base_url' => ['nullable', 'url'],
+            'ai.providers.anthropic.default_model' => ['required', 'string'],
 
             // OpenAI
-            'ai.providers.openai.api_key'              => ['nullable', 'string'],
-            'ai.providers.openai.base_url'             => ['nullable', 'url'],
-            'ai.providers.openai.default_model'        => ['required', 'string'],
+            'ai.providers.openai.api_key' => ['nullable', 'string'],
+            'ai.providers.openai.base_url' => ['nullable', 'url'],
+            'ai.providers.openai.default_model' => ['required', 'string'],
 
             // Azure
-            'ai.providers.azure.api_key'               => ['nullable', 'string'],
-            'ai.providers.azure.endpoint'              => ['nullable', 'url'],
-            'ai.providers.azure.api_version'           => ['nullable', 'string'],
-            'ai.providers.azure.default_model'         => ['required', 'string'],
-            'ai.providers.azure.deployments.gpt-4o'    => ['nullable', 'string'],
+            'ai.providers.azure.api_key' => ['nullable', 'string'],
+            'ai.providers.azure.endpoint' => ['nullable', 'url'],
+            'ai.providers.azure.api_version' => ['nullable', 'string'],
+            'ai.providers.azure.default_model' => ['required', 'string'],
+            'ai.providers.azure.deployments.gpt-4o' => ['nullable', 'string'],
             'ai.providers.azure.deployments.gpt-4o-mini' => ['nullable', 'string'],
         ])->validate();
 
@@ -141,12 +141,12 @@ class SettingsAdminController extends Controller
         $nested = Arr::undot($request->all());
 
         $data = validator($nested, [
-            'ai.models.generation'         => ['required', 'string'],
+            'ai.models.generation' => ['required', 'string'],
             'ai.models.generation_premium' => ['required', 'string'],
-            'ai.models.seo'                => ['required', 'string'],
-            'ai.models.review'             => ['required', 'string'],
-            'ai.models.planning'           => ['required', 'string'],
-            'ai.models.classification'     => ['required', 'string'],
+            'ai.models.seo' => ['required', 'string'],
+            'ai.models.review' => ['required', 'string'],
+            'ai.models.planning' => ['required', 'string'],
+            'ai.models.classification' => ['required', 'string'],
         ])->validate();
 
         Setting::setMany(Arr::dot($data), 'ai_models');
@@ -162,9 +162,9 @@ class SettingsAdminController extends Controller
         $nested = Arr::undot($request->all());
 
         $data = validator($nested, [
-            'ai.cost_limits.daily_usd'       => ['required', 'numeric', 'min:0'],
+            'ai.cost_limits.daily_usd' => ['required', 'numeric', 'min:0'],
             'ai.cost_limits.per_content_usd' => ['required', 'numeric', 'min:0'],
-            'ai.cost_limits.monthly_usd'     => ['required', 'numeric', 'min:0'],
+            'ai.cost_limits.monthly_usd' => ['required', 'numeric', 'min:0'],
         ])->validate();
 
         Setting::setMany(Arr::dot($data), 'cost_limits');
@@ -186,42 +186,42 @@ class SettingsAdminController extends Controller
         return [
             // Routing
             'ai.default_provider' => config('numen.default_provider', 'anthropic'),
-            'ai.fallback_chain'   => (function () {
+            'ai.fallback_chain' => (function () {
                 $chain = config('numen.fallback_chain', ['anthropic', 'openai', 'azure']);
+
                 return is_array($chain) ? implode(',', $chain) : (string) $chain;
             })(),
 
             // Anthropic — API keys always sent as empty string; Vue shows "configured" badge from keySet prop
-            'ai.providers.anthropic.api_key'       => '',
-            'ai.providers.anthropic.base_url'      => config('numen.providers.anthropic.base_url', 'https://api.anthropic.com'),
+            'ai.providers.anthropic.api_key' => '',
+            'ai.providers.anthropic.base_url' => config('numen.providers.anthropic.base_url', 'https://api.anthropic.com'),
             'ai.providers.anthropic.default_model' => config('numen.providers.anthropic.default_model', 'claude-sonnet-4-6'),
 
             // OpenAI
-            'ai.providers.openai.api_key'       => '',
-            'ai.providers.openai.base_url'      => config('numen.providers.openai.base_url', 'https://api.openai.com/v1'),
+            'ai.providers.openai.api_key' => '',
+            'ai.providers.openai.base_url' => config('numen.providers.openai.base_url', 'https://api.openai.com/v1'),
             'ai.providers.openai.default_model' => config('numen.providers.openai.default_model', 'gpt-4o'),
 
             // Azure
-            'ai.providers.azure.api_key'       => '',
-            'ai.providers.azure.endpoint'      => config('numen.providers.azure.endpoint', ''),
-            'ai.providers.azure.api_version'   => config('numen.providers.azure.api_version', '2024-02-01'),
+            'ai.providers.azure.api_key' => '',
+            'ai.providers.azure.endpoint' => config('numen.providers.azure.endpoint', ''),
+            'ai.providers.azure.api_version' => config('numen.providers.azure.api_version', '2024-02-01'),
             'ai.providers.azure.default_model' => config('numen.providers.azure.default_model', 'gpt-4o'),
-            'ai.providers.azure.deployments.gpt-4o'      => config('numen.providers.azure.deployments.gpt-4o', 'gpt-4o'),
+            'ai.providers.azure.deployments.gpt-4o' => config('numen.providers.azure.deployments.gpt-4o', 'gpt-4o'),
             'ai.providers.azure.deployments.gpt-4o-mini' => config('numen.providers.azure.deployments.gpt-4o-mini', 'gpt-4o-mini'),
 
             // Model role assignments
-            'ai.models.generation'         => config('numen.models.generation', 'claude-sonnet-4-6'),
+            'ai.models.generation' => config('numen.models.generation', 'claude-sonnet-4-6'),
             'ai.models.generation_premium' => config('numen.models.generation_premium', 'claude-opus-4-6'),
-            'ai.models.seo'                => config('numen.models.seo', 'claude-haiku-4-5-20251001'),
-            'ai.models.review'             => config('numen.models.review', 'claude-opus-4-6'),
-            'ai.models.planning'           => config('numen.models.planning', 'claude-opus-4-6'),
-            'ai.models.classification'     => config('numen.models.classification', 'claude-haiku-4-5-20251001'),
+            'ai.models.seo' => config('numen.models.seo', 'claude-haiku-4-5-20251001'),
+            'ai.models.review' => config('numen.models.review', 'claude-opus-4-6'),
+            'ai.models.planning' => config('numen.models.planning', 'claude-opus-4-6'),
+            'ai.models.classification' => config('numen.models.classification', 'claude-haiku-4-5-20251001'),
 
             // Cost limits
-            'ai.cost_limits.daily_usd'       => config('numen.cost_limits.daily_usd', 50),
+            'ai.cost_limits.daily_usd' => config('numen.cost_limits.daily_usd', 50),
             'ai.cost_limits.per_content_usd' => config('numen.cost_limits.per_content_usd', 2),
-            'ai.cost_limits.monthly_usd'     => config('numen.cost_limits.monthly_usd', 500),
+            'ai.cost_limits.monthly_usd' => config('numen.cost_limits.monthly_usd', 500),
         ];
     }
-
 }

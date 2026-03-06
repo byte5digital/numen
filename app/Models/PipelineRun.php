@@ -19,9 +19,9 @@ class PipelineRun extends Model
 
     protected $casts = [
         'stage_results' => 'array',
-        'context'       => 'array',
-        'started_at'    => 'datetime',
-        'completed_at'  => 'datetime',
+        'context' => 'array',
+        'started_at' => 'datetime',
+        'completed_at' => 'datetime',
     ];
 
     public function pipeline(): BelongsTo
@@ -52,7 +52,7 @@ class PipelineRun extends Model
     public function markCompleted(): void
     {
         $this->update([
-            'status'       => 'completed',
+            'status' => 'completed',
             'completed_at' => now(),
         ]);
 
@@ -63,8 +63,8 @@ class PipelineRun extends Model
     public function markFailed(string $reason): void
     {
         $this->update([
-            'status'        => 'failed',
-            'completed_at'  => now(),
+            'status' => 'failed',
+            'completed_at' => now(),
             'stage_results' => array_merge($this->stage_results ?? [], [
                 'failure_reason' => $reason,
             ]),

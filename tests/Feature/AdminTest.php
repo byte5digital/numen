@@ -15,7 +15,9 @@ class AdminTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private Space $space;
+
     private ContentType $blogType;
 
     protected function setUp(): void
@@ -27,9 +29,9 @@ class AdminTest extends TestCase
 
         $this->blogType = ContentType::create([
             'space_id' => $this->space->id,
-            'name'     => 'Blog Post',
-            'slug'     => 'blog_post',
-            'schema'   => ['fields' => []],
+            'name' => 'Blog Post',
+            'slug' => 'blog_post',
+            'schema' => ['fields' => []],
         ]);
     }
 
@@ -45,7 +47,7 @@ class AdminTest extends TestCase
     public function test_valid_credentials_redirect_to_admin(): void
     {
         $response = $this->post('/login', [
-            'email'    => $this->admin->email,
+            'email' => $this->admin->email,
             'password' => 'password',
         ]);
 
@@ -56,7 +58,7 @@ class AdminTest extends TestCase
     public function test_invalid_credentials_return_error(): void
     {
         $response = $this->post('/login', [
-            'email'    => $this->admin->email,
+            'email' => $this->admin->email,
             'password' => 'wrong-password',
         ]);
 
@@ -122,7 +124,7 @@ class AdminTest extends TestCase
 
         $content = $this->createContent('My Article', 'my-article');
 
-        $response = $this->get('/admin/content/' . $content->id);
+        $response = $this->get('/admin/content/'.$content->id);
 
         $response->assertOk();
     }
@@ -142,7 +144,7 @@ class AdminTest extends TestCase
 
         $content = $this->createContent('Draft Article', 'draft-article');
 
-        $response = $this->patch('/admin/content/' . $content->id . '/status', [
+        $response = $this->patch('/admin/content/'.$content->id.'/status', [
             'status' => 'published',
         ]);
 
@@ -158,7 +160,7 @@ class AdminTest extends TestCase
         $content = $this->createContent('Old Article', 'old-article');
         $content->update(['status' => 'published', 'published_at' => now()]);
 
-        $response = $this->patch('/admin/content/' . $content->id . '/status', [
+        $response = $this->patch('/admin/content/'.$content->id.'/status', [
             'status' => 'archived',
         ]);
 
@@ -172,7 +174,7 @@ class AdminTest extends TestCase
 
         $content = $this->createContent('Article', 'article');
 
-        $response = $this->patch('/admin/content/' . $content->id . '/status', [
+        $response = $this->patch('/admin/content/'.$content->id.'/status', [
             'status' => 'invalid-status',
         ]);
 
@@ -185,7 +187,7 @@ class AdminTest extends TestCase
 
         $content = $this->createContent('To Delete', 'to-delete');
 
-        $response = $this->delete('/admin/content/' . $content->id);
+        $response = $this->delete('/admin/content/'.$content->id);
 
         $response->assertRedirect(route('admin.content'));
         $this->assertSoftDeleted('contents', ['id' => $content->id]);
@@ -196,22 +198,22 @@ class AdminTest extends TestCase
     private function createContent(string $title, string $slug): Content
     {
         $content = Content::create([
-            'space_id'        => $this->space->id,
+            'space_id' => $this->space->id,
             'content_type_id' => $this->blogType->id,
-            'slug'            => $slug,
-            'status'          => 'draft',
-            'locale'          => 'en',
+            'slug' => $slug,
+            'status' => 'draft',
+            'locale' => 'en',
         ]);
 
         $version = ContentVersion::create([
-            'content_id'     => $content->id,
+            'content_id' => $content->id,
             'version_number' => 1,
-            'title'          => $title,
-            'excerpt'        => "Excerpt for {$title}",
-            'body'           => "Body content for {$title}",
-            'body_format'    => 'markdown',
-            'author_type'    => 'ai_agent',
-            'author_id'      => 'content_creator',
+            'title' => $title,
+            'excerpt' => "Excerpt for {$title}",
+            'body' => "Body content for {$title}",
+            'body_format' => 'markdown',
+            'author_type' => 'ai_agent',
+            'author_id' => 'content_creator',
         ]);
 
         $content->update(['current_version_id' => $version->id]);

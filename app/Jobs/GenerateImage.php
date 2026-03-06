@@ -19,7 +19,9 @@ class GenerateImage implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public int $timeout = 180;
+
     public int $maxExceptions = 2;
 
     public function __construct(
@@ -45,25 +47,27 @@ class GenerateImage implements ShouldQueue
         if (empty(config('numen.providers.openai.api_key'))) {
             Log::warning('GenerateImage: OPENAI_API_KEY not configured — skipping ai_illustrate stage', [
                 'run_id' => $this->run->id,
-                'stage'  => $this->stage['name'],
+                'stage' => $this->stage['name'],
             ]);
             $executor->advance($this->run, [
-                'stage'   => $this->stage['name'],
+                'stage' => $this->stage['name'],
                 'success' => true,
                 'skipped' => true,
                 'summary' => 'Skipped: OPENAI_API_KEY not configured',
             ]);
+
             return;
         }
 
         try {
             $content = $this->run->content;
 
-            if (!$content) {
+            if (! $content) {
                 Log::warning('GenerateImage: no content attached to pipeline run', [
                     'run_id' => $this->run->id,
                 ]);
                 $this->run->markFailed('No content found for image generation');
+
                 return;
             }
 
@@ -99,27 +103,27 @@ class GenerateImage implements ShouldQueue
             $costUsd = $asset->ai_metadata['cost_usd'] ?? 0.08;
             AIGenerationLog::create([
                 'pipeline_run_id' => $this->run->id,
-                'model'           => 'dall-e-3',
-                'purpose'         => 'image_generation',
-                'messages'        => [['role' => 'user', 'content' => $prompt]],
-                'response'        => json_encode([
+                'model' => 'dall-e-3',
+                'purpose' => 'image_generation',
+                'messages' => [['role' => 'user', 'content' => $prompt]],
+                'response' => json_encode([
                     'asset_id' => $asset->id,
                     'size' => $size,
                     'style' => $style,
                     'revised_prompt' => $asset->ai_metadata['revised_prompt'] ?? null,
                 ]),
-                'input_tokens'  => 0,
+                'input_tokens' => 0,
                 'output_tokens' => 0,
-                'cost_usd'      => $costUsd,
-                'latency_ms'    => $imageLatency,
-                'stop_reason'   => 'complete',
-                'metadata'      => [
-                    'type'            => 'image',
-                    'model'           => 'dall-e-3',
-                    'size'            => $size,
-                    'style'           => $style,
-                    'prompt_latency'  => $promptLatency,
-                    'asset_path'      => $asset->path,
+                'cost_usd' => $costUsd,
+                'latency_ms' => $imageLatency,
+                'stop_reason' => 'complete',
+                'metadata' => [
+                    'type' => 'image',
+                    'model' => 'dall-e-3',
+                    'size' => $size,
+                    'style' => $style,
+                    'prompt_latency' => $promptLatency,
+                    'asset_path' => $asset->path,
                 ],
             ]);
 

@@ -32,6 +32,7 @@ class HomeController extends Controller
                 if ($component->type === 'content_list') {
                     $component->setAttribute('_recent_content', $this->recentContent($component->data['limit'] ?? 5));
                 }
+
                 return $component;
             }));
         }
@@ -46,7 +47,7 @@ class HomeController extends Controller
         return [
             'published_count' => Content::where('status', 'published')->count(),
             'total_generated' => \App\Models\AIGenerationLog::where('purpose', 'content_generation')->count(),
-            'avg_cost'        => number_format((\App\Models\AIGenerationLog::avg('cost_usd') ?? 0) * 3, 2),
+            'avg_cost' => number_format((\App\Models\AIGenerationLog::avg('cost_usd') ?? 0) * 3, 2),
         ];
     }
 
@@ -58,12 +59,12 @@ class HomeController extends Controller
             ->limit($limit)
             ->get()
             ->map(fn ($c) => [
-                'slug'           => $c->slug,
-                'title'          => $c->currentVersion?->title ?? 'Untitled',
-                'excerpt'        => $c->currentVersion?->excerpt,
-                'type'           => $c->contentType?->slug,
-                'seo_score'      => $c->currentVersion?->seo_score,
-                'hero_image_url' => $c->heroImage ? '/storage/' . $c->heroImage->path : null,
+                'slug' => $c->slug,
+                'title' => $c->currentVersion?->title ?? 'Untitled',
+                'excerpt' => $c->currentVersion?->excerpt,
+                'type' => $c->contentType?->slug,
+                'seo_score' => $c->currentVersion?->seo_score,
+                'hero_image_url' => $c->heroImage ? '/storage/'.$c->heroImage->path : null,
             ])
             ->toArray();
     }
@@ -71,14 +72,14 @@ class HomeController extends Controller
     private function serializePage(Page $page): array
     {
         return [
-            'slug'       => $page->slug,
-            'meta'       => $page->meta,
+            'slug' => $page->slug,
+            'meta' => $page->meta,
             'components' => $page->components->map(fn ($c) => [
-                'id'               => $c->id,
-                'type'             => $c->type,
-                'data'             => $c->data,
+                'id' => $c->id,
+                'type' => $c->type,
+                'data' => $c->data,
                 'wysiwyg_override' => $c->wysiwyg_override,
-                'recent_content'   => $c->getAttribute('_recent_content'),
+                'recent_content' => $c->getAttribute('_recent_content'),
             ])->values()->toArray(),
         ];
     }

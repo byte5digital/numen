@@ -14,7 +14,7 @@ class PipelineAdminController extends Controller
     {
         return Inertia::render('Pipelines/Index', [
             'pipelines' => ContentPipeline::all(),
-            'runs'      => PipelineRun::with(['brief', 'content.currentVersion', 'pipeline'])
+            'runs' => PipelineRun::with(['brief', 'content.currentVersion', 'pipeline'])
                 ->orderByDesc('created_at')
                 ->paginate(20)
                 ->through(function ($run) {
@@ -30,16 +30,16 @@ class PipelineAdminController extends Controller
                     }
 
                     return [
-                        'id'                 => $run->id,
-                        'brief_title'        => $run->brief?->title ?? 'Unknown',
-                        'status'             => $run->status,
-                        'current_stage'      => $run->current_stage,
+                        'id' => $run->id,
+                        'brief_title' => $run->brief?->title ?? 'Unknown',
+                        'status' => $run->status,
+                        'current_stage' => $run->current_stage,
                         'current_stage_type' => $currentStageType,
-                        'quality_score'      => $run->context['last_stage_score'] ?? null,
-                        'content_title'      => $run->content?->currentVersion?->title,
-                        'content_slug'       => $run->content?->slug,
-                        'created_at'         => $run->created_at->diffForHumans(),
-                        'updated_at'         => $run->updated_at->diffForHumans(),
+                        'quality_score' => $run->context['last_stage_score'] ?? null,
+                        'content_title' => $run->content?->currentVersion?->title,
+                        'content_slug' => $run->content?->slug,
+                        'created_at' => $run->created_at->diffForHumans(),
+                        'updated_at' => $run->updated_at->diffForHumans(),
                     ];
                 }),
         ]);

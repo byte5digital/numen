@@ -3,7 +3,6 @@
 namespace Tests\Unit;
 
 use App\Models\Content;
-use App\Models\ContentBrief;
 use App\Models\ContentPipeline;
 use App\Models\ContentType;
 use App\Models\ContentVersion;
@@ -32,9 +31,9 @@ class ModelTest extends TestCase
     {
         ContentType::create([
             'space_id' => $this->space->id,
-            'name'     => 'Blog',
-            'slug'     => 'blog',
-            'schema'   => [],
+            'name' => 'Blog',
+            'slug' => 'blog',
+            'schema' => [],
         ]);
 
         $this->assertCount(1, $this->space->contentTypes);
@@ -44,36 +43,36 @@ class ModelTest extends TestCase
     {
         $type = ContentType::create([
             'space_id' => $this->space->id,
-            'name'     => 'Blog',
-            'slug'     => 'blog',
-            'schema'   => [],
+            'name' => 'Blog',
+            'slug' => 'blog',
+            'schema' => [],
         ]);
 
         $content = Content::create([
-            'space_id'        => $this->space->id,
+            'space_id' => $this->space->id,
             'content_type_id' => $type->id,
-            'slug'            => 'test-post',
-            'status'          => 'draft',
+            'slug' => 'test-post',
+            'status' => 'draft',
         ]);
 
         $v1 = ContentVersion::create([
-            'content_id'     => $content->id,
+            'content_id' => $content->id,
             'version_number' => 1,
-            'title'          => 'Version 1',
-            'body'           => 'First draft',
-            'body_format'    => 'markdown',
-            'author_type'    => 'ai_agent',
-            'author_id'      => 'creator',
+            'title' => 'Version 1',
+            'body' => 'First draft',
+            'body_format' => 'markdown',
+            'author_type' => 'ai_agent',
+            'author_id' => 'creator',
         ]);
 
         $v2 = ContentVersion::create([
-            'content_id'     => $content->id,
+            'content_id' => $content->id,
             'version_number' => 2,
-            'title'          => 'Version 2',
-            'body'           => 'SEO optimized',
-            'body_format'    => 'markdown',
-            'author_type'    => 'ai_agent',
-            'author_id'      => 'seo_expert',
+            'title' => 'Version 2',
+            'body' => 'SEO optimized',
+            'body_format' => 'markdown',
+            'author_type' => 'ai_agent',
+            'author_id' => 'seo_expert',
         ]);
 
         $content->update(['current_version_id' => $v2->id]);
@@ -87,16 +86,16 @@ class ModelTest extends TestCase
     {
         $type = ContentType::create([
             'space_id' => $this->space->id,
-            'name'     => 'Blog',
-            'slug'     => 'blog',
-            'schema'   => [],
+            'name' => 'Blog',
+            'slug' => 'blog',
+            'schema' => [],
         ]);
 
         $content = Content::create([
-            'space_id'        => $this->space->id,
+            'space_id' => $this->space->id,
             'content_type_id' => $type->id,
-            'slug'            => 'publish-test',
-            'status'          => 'draft',
+            'slug' => 'publish-test',
+            'status' => 'draft',
         ]);
 
         $this->assertNull($content->published_at);
@@ -112,35 +111,35 @@ class ModelTest extends TestCase
     {
         $type = ContentType::create([
             'space_id' => $this->space->id,
-            'name'     => 'Blog',
-            'slug'     => 'blog',
-            'schema'   => [],
+            'name' => 'Blog',
+            'slug' => 'blog',
+            'schema' => [],
         ]);
 
         Content::create([
-            'space_id'        => $this->space->id,
+            'space_id' => $this->space->id,
             'content_type_id' => $type->id,
-            'slug'            => 'published-en',
-            'status'          => 'published',
-            'locale'          => 'en',
-            'published_at'    => now(),
+            'slug' => 'published-en',
+            'status' => 'published',
+            'locale' => 'en',
+            'published_at' => now(),
         ]);
 
         Content::create([
-            'space_id'        => $this->space->id,
+            'space_id' => $this->space->id,
             'content_type_id' => $type->id,
-            'slug'            => 'published-de',
-            'status'          => 'published',
-            'locale'          => 'de',
-            'published_at'    => now(),
+            'slug' => 'published-de',
+            'status' => 'published',
+            'locale' => 'de',
+            'published_at' => now(),
         ]);
 
         Content::create([
-            'space_id'        => $this->space->id,
+            'space_id' => $this->space->id,
             'content_type_id' => $type->id,
-            'slug'            => 'draft-en',
-            'status'          => 'draft',
-            'locale'          => 'en',
+            'slug' => 'draft-en',
+            'status' => 'draft',
+            'locale' => 'en',
         ]);
 
         $this->assertCount(2, Content::published()->get());
@@ -151,15 +150,15 @@ class ModelTest extends TestCase
     public function test_persona_model_config(): void
     {
         $persona = Persona::create([
-            'space_id'      => $this->space->id,
-            'name'          => 'Writer',
-            'role'          => 'creator',
+            'space_id' => $this->space->id,
+            'name' => 'Writer',
+            'role' => 'creator',
             'system_prompt' => 'You are a writer.',
-            'capabilities'  => ['content_generation'],
-            'model_config'  => [
-                'model'       => 'claude-sonnet-4-20250514',
+            'capabilities' => ['content_generation'],
+            'model_config' => [
+                'model' => 'claude-sonnet-4-20250514',
                 'temperature' => 0.9,
-                'max_tokens'  => 8192,
+                'max_tokens' => 8192,
             ],
         ]);
 
@@ -172,8 +171,8 @@ class ModelTest extends TestCase
     {
         $pipeline = ContentPipeline::create([
             'space_id' => $this->space->id,
-            'name'     => 'Test Pipeline',
-            'stages'   => [
+            'name' => 'Test Pipeline',
+            'stages' => [
                 ['name' => 'generate', 'type' => 'ai_generate'],
                 ['name' => 'seo', 'type' => 'ai_transform'],
                 ['name' => 'review', 'type' => 'ai_review'],
@@ -192,15 +191,15 @@ class ModelTest extends TestCase
     {
         $pipeline = ContentPipeline::create([
             'space_id' => $this->space->id,
-            'name'     => 'Test Pipeline',
-            'stages'   => [['name' => 'generate', 'type' => 'ai_generate']],
+            'name' => 'Test Pipeline',
+            'stages' => [['name' => 'generate', 'type' => 'ai_generate']],
         ]);
 
         $run = PipelineRun::create([
-            'pipeline_id'   => $pipeline->id,
-            'status'        => 'running',
+            'pipeline_id' => $pipeline->id,
+            'status' => 'running',
             'current_stage' => 'generate',
-            'started_at'    => now(),
+            'started_at' => now(),
         ]);
 
         $run->addStageResult('generate', ['success' => true, 'score' => 85]);

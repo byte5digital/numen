@@ -21,19 +21,19 @@ class BriefController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'space_id'          => 'required|exists:spaces,id',
-            'title'             => 'required|string|max:500',
-            'description'       => 'nullable|string|max:5000',
+            'space_id' => 'required|exists:spaces,id',
+            'title' => 'required|string|max:500',
+            'description' => 'nullable|string|max:5000',
             'content_type_slug' => 'required|string',
-            'target_keywords'   => 'nullable|array',
+            'target_keywords' => 'nullable|array',
             'target_keywords.*' => 'string|max:200',
-            'requirements'      => 'nullable|array',
-            'requirements.*'    => 'string|max:1000',
-            'reference_urls'    => 'nullable|array',
-            'target_locale'     => 'nullable|string|max:10',
-            'persona_id'        => 'nullable|exists:personas,id',
-            'priority'          => 'nullable|in:low,normal,high,urgent',
-            'pipeline_id'       => 'nullable|exists:content_pipelines,id',
+            'requirements' => 'nullable|array',
+            'requirements.*' => 'string|max:1000',
+            'reference_urls' => 'nullable|array',
+            'target_locale' => 'nullable|string|max:10',
+            'persona_id' => 'nullable|exists:personas,id',
+            'priority' => 'nullable|in:low,normal,high,urgent',
+            'pipeline_id' => 'nullable|exists:content_pipelines,id',
         ]);
 
         $brief = ContentBrief::create(array_merge($validated, [
@@ -53,10 +53,10 @@ class BriefController extends Controller
 
         return response()->json([
             'data' => [
-                'brief_id'        => $brief->id,
+                'brief_id' => $brief->id,
                 'pipeline_run_id' => $run->id,
-                'status'          => 'processing',
-                'message'         => 'Content brief created and pipeline started.',
+                'status' => 'processing',
+                'message' => 'Content brief created and pipeline started.',
             ],
         ], 201);
     }

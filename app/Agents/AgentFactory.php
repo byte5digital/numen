@@ -3,8 +3,8 @@
 namespace App\Agents;
 
 use App\Agents\Types\ContentCreatorAgent;
-use App\Agents\Types\SeoExpertAgent;
 use App\Agents\Types\EditorialDirectorAgent;
+use App\Agents\Types\SeoExpertAgent;
 use App\Models\Persona;
 use App\Services\AI\LLMManager;
 use InvalidArgumentException;
@@ -21,10 +21,10 @@ class AgentFactory
     public function make(Persona $persona): Agent
     {
         return match ($persona->role) {
-            'creator'   => new ContentCreatorAgent($persona, $this->client),
+            'creator' => new ContentCreatorAgent($persona, $this->client),
             'optimizer' => new SeoExpertAgent($persona, $this->client),
-            'reviewer'  => new EditorialDirectorAgent($persona, $this->client),
-            default     => throw new InvalidArgumentException("Unknown persona role: {$persona->role}"),
+            'reviewer' => new EditorialDirectorAgent($persona, $this->client),
+            default => throw new InvalidArgumentException("Unknown persona role: {$persona->role}"),
         };
     }
 

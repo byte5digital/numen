@@ -19,12 +19,12 @@ class PageAdminController extends Controller
         $pages = Page::with('components')
             ->get()
             ->map(fn ($p) => [
-                'id'              => $p->id,
-                'slug'            => $p->slug,
-                'title'           => $p->title,
-                'status'          => $p->status,
+                'id' => $p->id,
+                'slug' => $p->slug,
+                'title' => $p->title,
+                'status' => $p->status,
                 'component_count' => $p->components->count(),
-                'updated_at'      => $p->updated_at->diffForHumans(),
+                'updated_at' => $p->updated_at->diffForHumans(),
             ]);
 
         return Inertia::render('Pages/Index', [
@@ -43,24 +43,24 @@ class PageAdminController extends Controller
 
         return Inertia::render('Pages/Edit', [
             'page' => [
-                'id'         => $page->id,
-                'slug'       => $page->slug,
-                'title'      => $page->title,
-                'status'     => $page->status,
-                'meta'       => $page->meta,
+                'id' => $page->id,
+                'slug' => $page->slug,
+                'title' => $page->title,
+                'status' => $page->status,
+                'meta' => $page->meta,
                 'components' => $page->components->map(fn ($c) => [
-                    'id'               => $c->id,
-                    'type'             => $c->type,
-                    'sort_order'       => $c->sort_order,
-                    'data'             => $c->data ?? [],
+                    'id' => $c->id,
+                    'type' => $c->type,
+                    'sort_order' => $c->sort_order,
+                    'data' => $c->data ?? [],
                     'wysiwyg_override' => $c->wysiwyg_override,
-                    'ai_generated'     => $c->ai_generated,
-                    'locked'           => $c->locked,
-                    'ai_brief_id'      => $c->ai_brief_id,
+                    'ai_generated' => $c->ai_generated,
+                    'locked' => $c->locked,
+                    'ai_brief_id' => $c->ai_brief_id,
                 ])->values(),
             ],
             'componentTypes' => PageComponent::allTypes(),
-            'typeSchemas'    => $typeSchemas,
+            'typeSchemas' => $typeSchemas,
         ]);
     }
 
@@ -69,9 +69,9 @@ class PageAdminController extends Controller
         $component = PageComponent::where('page_id', $id)->findOrFail($componentId);
 
         $validated = $request->validate([
-            'data'             => 'nullable|array',
+            'data' => 'nullable|array',
             'wysiwyg_override' => 'nullable|string',
-            'locked'           => 'boolean',
+            'locked' => 'boolean',
         ]);
 
         // Empty string → null for wysiwyg_override
@@ -89,16 +89,16 @@ class PageAdminController extends Controller
         $page = Page::findOrFail($id);
 
         $validated = $request->validate([
-            'type' => 'required|string|in:' . implode(',', PageComponent::allTypes()),
+            'type' => 'required|string|in:'.implode(',', PageComponent::allTypes()),
         ]);
 
         $maxOrder = $page->components()->max('sort_order') ?? 0;
 
         PageComponent::create([
-            'page_id'    => $page->id,
-            'type'       => $validated['type'],
+            'page_id' => $page->id,
+            'type' => $validated['type'],
             'sort_order' => $maxOrder + 1,
-            'data'       => [],
+            'data' => [],
         ]);
 
         return back()->with('success', 'Block added.');
@@ -114,7 +114,7 @@ class PageAdminController extends Controller
     public function reorderComponents(Request $request, string $id)
     {
         $validated = $request->validate([
-            'order'   => 'required|array',
+            'order' => 'required|array',
             'order.*' => 'string',
         ]);
 
@@ -135,8 +135,8 @@ class PageAdminController extends Controller
     public function generateComponent(Request $request, string $id, string $componentId, PipelineExecutor $executor)
     {
         $component = PageComponent::where('page_id', $id)->findOrFail($componentId);
-        $page      = $component->page;
-        $space     = Space::first();
+        $page = $component->page;
+        $space = Space::first();
 
         $validated = $request->validate([
             'brief_description' => 'required|string|max:2000',
@@ -147,20 +147,20 @@ class PageAdminController extends Controller
             ->firstOrFail();
 
         $brief = ContentBrief::create([
-            'space_id'          => $space->id,
-            'pipeline_id'       => $pipeline->id,
-            'title'             => "AI generate [{$component->type}] block on page /{$page->slug}",
-            'description'       => $validated['brief_description'],
+            'space_id' => $space->id,
+            'pipeline_id' => $pipeline->id,
+            'title' => "AI generate [{$component->type}] block on page /{$page->slug}",
+            'description' => $validated['brief_description'],
             'content_type_slug' => 'blog_post',
-            'source'            => 'page_component',
-            'status'            => 'pending',
-            'requirements'      => [
-                'target'         => 'page_component',
-                'page_id'        => $page->id,
-                'page_slug'      => $page->slug,
-                'component_id'   => $component->id,
+            'source' => 'page_component',
+            'status' => 'pending',
+            'requirements' => [
+                'target' => 'page_component',
+                'page_id' => $page->id,
+                'page_slug' => $page->slug,
+                'component_id' => $component->id,
                 'component_type' => $component->type,
-                'instruction'    => 'Output structured content suitable for the component type. The admin will review and copy the result into the component fields.',
+                'instruction' => 'Output structured content suitable for the component type. The admin will review and copy the result into the component fields.',
             ],
         ]);
 

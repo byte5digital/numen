@@ -18,7 +18,9 @@ class GenerateContentImage implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public int $timeout = 180;
+
     public int $maxExceptions = 2;
 
     public function __construct(
@@ -62,16 +64,16 @@ class GenerateContentImage implements ShouldQueue
 
             AIGenerationLog::create([
                 'pipeline_run_id' => $pipelineRunId,
-                'model'           => 'dall-e-3',
-                'purpose'         => 'image_generation',
-                'messages'        => [['role' => 'user', 'content' => $prompt]],
-                'response'        => json_encode(['asset_id' => $asset->id, 'size' => $this->size]),
-                'input_tokens'    => 0,
-                'output_tokens'   => 0,
-                'cost_usd'        => $costUsd,
-                'latency_ms'      => $imageLatency,
-                'stop_reason'     => 'complete',
-                'metadata'        => ['type' => 'image', 'model' => 'dall-e-3', 'size' => $this->size, 'style' => $this->style],
+                'model' => 'dall-e-3',
+                'purpose' => 'image_generation',
+                'messages' => [['role' => 'user', 'content' => $prompt]],
+                'response' => json_encode(['asset_id' => $asset->id, 'size' => $this->size]),
+                'input_tokens' => 0,
+                'output_tokens' => 0,
+                'cost_usd' => $costUsd,
+                'latency_ms' => $imageLatency,
+                'stop_reason' => 'complete',
+                'metadata' => ['type' => 'image', 'model' => 'dall-e-3', 'size' => $this->size, 'style' => $this->style],
             ]);
 
             Log::info('GenerateContentImage: completed', [

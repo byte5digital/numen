@@ -5,7 +5,6 @@ namespace Tests\Unit;
 use App\Models\Persona;
 use App\Models\Space;
 use App\Services\AI\CostTracker;
-use App\Services\AI\Contracts\LLMProvider;
 use App\Services\AI\Exceptions\AllProvidersFailedException;
 use App\Services\AI\Exceptions\CostLimitExceededException;
 use App\Services\AI\Exceptions\ProviderRateLimitException;
@@ -23,18 +22,22 @@ class LLMManagerTest extends TestCase
     use RefreshDatabase;
 
     private AnthropicProvider $anthropic;
+
     private OpenAIProvider $openai;
+
     private AzureOpenAIProvider $azure;
+
     private CostTracker $costTracker;
+
     private LLMManager $manager;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->anthropic   = $this->createMock(AnthropicProvider::class);
-        $this->openai      = $this->createMock(OpenAIProvider::class);
-        $this->azure       = $this->createMock(AzureOpenAIProvider::class);
+        $this->anthropic = $this->createMock(AnthropicProvider::class);
+        $this->openai = $this->createMock(OpenAIProvider::class);
+        $this->azure = $this->createMock(AzureOpenAIProvider::class);
         $this->costTracker = $this->createMock(CostTracker::class);
 
         $this->anthropic->method('getName')->willReturn('anthropic');
@@ -62,7 +65,7 @@ class LLMManagerTest extends TestCase
             ->willReturn($this->makeResponse('anthropic', 'claude-sonnet-4-6'));
 
         $response = $this->manager->complete([
-            'model'    => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
 
@@ -80,7 +83,7 @@ class LLMManagerTest extends TestCase
             ->willReturn($this->makeResponse('openai', 'gpt-4o'));
 
         $response = $this->manager->complete([
-            'model'    => 'gpt-4o',
+            'model' => 'gpt-4o',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
 
@@ -99,7 +102,7 @@ class LLMManagerTest extends TestCase
             ->willReturn($this->makeResponse('openai', 'gpt-4o'));
 
         $response = $this->manager->complete([
-            'model'    => 'openai:gpt-4o',
+            'model' => 'openai:gpt-4o',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
 
@@ -120,7 +123,7 @@ class LLMManagerTest extends TestCase
             ->willReturn($this->makeResponse('anthropic', 'claude-sonnet-4-6'));
 
         $response = $this->manager->complete([
-            'model'    => '',
+            'model' => '',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
 
@@ -147,7 +150,7 @@ class LLMManagerTest extends TestCase
             ->willReturn($this->makeResponse('openai', 'gpt-4o'));
 
         $response = $this->manager->complete([
-            'model'    => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
 
@@ -170,7 +173,7 @@ class LLMManagerTest extends TestCase
             ->willReturn($this->makeResponse('openai', 'gpt-4o'));
 
         $response = $this->manager->complete([
-            'model'    => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
 
@@ -197,7 +200,7 @@ class LLMManagerTest extends TestCase
         $this->expectException(AllProvidersFailedException::class);
 
         $this->manager->complete([
-            'model'    => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
     }
@@ -224,7 +227,7 @@ class LLMManagerTest extends TestCase
             ->willReturn($this->makeResponse('azure', 'gpt-4o'));
 
         $response = $this->manager->complete([
-            'model'    => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
 
@@ -243,7 +246,7 @@ class LLMManagerTest extends TestCase
         $this->expectException(CostLimitExceededException::class);
 
         $this->manager->complete([
-            'model'    => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
     }
@@ -260,7 +263,7 @@ class LLMManagerTest extends TestCase
             ->willReturn($this->makeResponse('anthropic', 'claude-sonnet-4-6', 'Hello world', 100, 50));
 
         $result = $this->manager->createMessage([
-            'model'    => 'claude-sonnet-4-6',
+            'model' => 'claude-sonnet-4-6',
             'messages' => [['role' => 'user', 'content' => 'Hello']],
         ]);
 
@@ -303,11 +306,11 @@ class LLMManagerTest extends TestCase
 
         $space = Space::factory()->create();
         $persona = Persona::factory()->create([
-            'space_id'     => $space->id,
+            'space_id' => $space->id,
             'model_config' => [
-                'model'            => 'claude-sonnet-4-6',
-                'fallback_model'   => 'gpt-4o',
-                'fallback_provider'=> 'openai',
+                'model' => 'claude-sonnet-4-6',
+                'fallback_model' => 'gpt-4o',
+                'fallback_provider' => 'openai',
             ],
         ]);
 
@@ -340,13 +343,13 @@ class LLMManagerTest extends TestCase
         int $outputTokens = 50,
     ): LLMResponse {
         return new LLMResponse(
-            content:      $content,
-            model:        $model,
-            provider:     $provider,
-            inputTokens:  $inputTokens,
+            content: $content,
+            model: $model,
+            provider: $provider,
+            inputTokens: $inputTokens,
             outputTokens: $outputTokens,
-            costUsd:      0.001,
-            latencyMs:    200,
+            costUsd: 0.001,
+            latencyMs: 200,
         );
     }
 }

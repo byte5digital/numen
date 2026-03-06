@@ -29,9 +29,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (\App\Services\AI\Exceptions\CostLimitExceededException $e, \Illuminate\Http\Request $request) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'error'   => 'ai_cost_limit_exceeded',
+                    'error' => 'ai_cost_limit_exceeded',
                     'message' => $e->getMessage(),
-                    'period'  => $e->period,
+                    'period' => $e->period,
                 ], 402);
             }
 

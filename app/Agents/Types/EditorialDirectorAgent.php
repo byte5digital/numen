@@ -86,12 +86,16 @@ PROMPT;
         // Try JSON in code block
         if (preg_match('/```(?:json)?\s*(\{[\s\S]*?\})\s*```/s', $text, $matches)) {
             $data = json_decode($matches[1], true);
-            if ($data) return $this->normalizeReviewData($data);
+            if ($data) {
+                return $this->normalizeReviewData($data);
+            }
         }
 
         // Try raw JSON
         $data = json_decode($text, true);
-        if ($data) return $this->normalizeReviewData($data);
+        if ($data) {
+            return $this->normalizeReviewData($data);
+        }
 
         // Fallback: extract score from text
         $score = 50;
@@ -113,12 +117,12 @@ PROMPT;
     private function normalizeReviewData(array $data): array
     {
         return [
-            'quality_score'   => (int) ($data['quality_score'] ?? $data['qualityScore'] ?? $data['score'] ?? 50),
-            'verdict'         => $data['verdict'] ?? 'revise',
-            'strengths'       => $data['strengths'] ?? [],
-            'issues'          => $data['issues'] ?? [],
-            'suggestions'     => $data['suggestions'] ?? [],
-            'revised_title'   => $data['revised_title'] ?? $data['revisedTitle'] ?? null,
+            'quality_score' => (int) ($data['quality_score'] ?? $data['qualityScore'] ?? $data['score'] ?? 50),
+            'verdict' => $data['verdict'] ?? 'revise',
+            'strengths' => $data['strengths'] ?? [],
+            'issues' => $data['issues'] ?? [],
+            'suggestions' => $data['suggestions'] ?? [],
+            'revised_title' => $data['revised_title'] ?? $data['revisedTitle'] ?? null,
             'revised_excerpt' => $data['revised_excerpt'] ?? $data['revisedExcerpt'] ?? null,
             'critical_issues' => $data['critical_issues'] ?? $data['criticalIssues'] ?? false,
         ];

@@ -14,7 +14,7 @@ class Space extends Model
     protected $fillable = ['name', 'slug', 'settings', 'api_config'];
 
     protected $casts = [
-        'settings'   => 'array',
+        'settings' => 'array',
         'api_config' => 'array',
     ];
 

@@ -179,34 +179,34 @@ PROMPT;
     {
         return [
             // Meta tags
-            'seo_title'        => $data['seo_title'] ?? $data['seoTitle'] ?? null,
+            'seo_title' => $data['seo_title'] ?? $data['seoTitle'] ?? null,
             'meta_description' => $data['meta_description'] ?? $data['metaDescription'] ?? null,
-            'canonical_url'    => $data['canonical_url'] ?? $data['canonicalUrl'] ?? null,
-            'meta_robots'      => $data['meta_robots'] ?? $data['metaRobots'] ?? 'index, follow',
-            'keywords'         => $data['keywords'] ?? [],
+            'canonical_url' => $data['canonical_url'] ?? $data['canonicalUrl'] ?? null,
+            'meta_robots' => $data['meta_robots'] ?? $data['metaRobots'] ?? 'index, follow',
+            'keywords' => $data['keywords'] ?? [],
 
             // Open Graph
-            'og_title'         => $data['og_title'] ?? $data['ogTitle'] ?? null,
-            'og_description'   => $data['og_description'] ?? $data['ogDescription'] ?? null,
-            'og_type'          => $data['og_type'] ?? $data['ogType'] ?? 'article',
-            'og_locale'        => $data['og_locale'] ?? $data['ogLocale'] ?? 'en_US',
+            'og_title' => $data['og_title'] ?? $data['ogTitle'] ?? null,
+            'og_description' => $data['og_description'] ?? $data['ogDescription'] ?? null,
+            'og_type' => $data['og_type'] ?? $data['ogType'] ?? 'article',
+            'og_locale' => $data['og_locale'] ?? $data['ogLocale'] ?? 'en_US',
 
             // Twitter
-            'twitter_card'        => $data['twitter_card'] ?? $data['twitterCard'] ?? 'summary_large_image',
-            'twitter_title'       => $data['twitter_title'] ?? $data['twitterTitle'] ?? null,
+            'twitter_card' => $data['twitter_card'] ?? $data['twitterCard'] ?? 'summary_large_image',
+            'twitter_title' => $data['twitter_title'] ?? $data['twitterTitle'] ?? null,
             'twitter_description' => $data['twitter_description'] ?? $data['twitterDescription'] ?? null,
 
             // JSON-LD
-            'json_ld_article'     => $data['json_ld_article'] ?? $data['jsonLdArticle'] ?? $data['schema_org'] ?? null,
-            'json_ld_breadcrumb'  => $data['json_ld_breadcrumb'] ?? $data['jsonLdBreadcrumb'] ?? null,
+            'json_ld_article' => $data['json_ld_article'] ?? $data['jsonLdArticle'] ?? $data['schema_org'] ?? null,
+            'json_ld_breadcrumb' => $data['json_ld_breadcrumb'] ?? $data['jsonLdBreadcrumb'] ?? null,
 
             // Analysis
-            'keyword_density'             => $data['keyword_density'] ?? $data['keywordDensity'] ?? null,
-            'readability_score'           => $data['readability_score'] ?? $data['readabilityScore'] ?? null,
-            'word_count'                  => $data['word_count'] ?? $data['wordCount'] ?? null,
-            'heading_structure'           => $data['heading_structure'] ?? $data['headingStructure'] ?? null,
-            'internal_linking_suggestions'=> $data['internal_linking_suggestions'] ?? $data['internalLinkingSuggestions'] ?? [],
-            'body_suggestions'            => $data['body_suggestions'] ?? $data['bodySuggestions'] ?? [],
+            'keyword_density' => $data['keyword_density'] ?? $data['keywordDensity'] ?? null,
+            'readability_score' => $data['readability_score'] ?? $data['readabilityScore'] ?? null,
+            'word_count' => $data['word_count'] ?? $data['wordCount'] ?? null,
+            'heading_structure' => $data['heading_structure'] ?? $data['headingStructure'] ?? null,
+            'internal_linking_suggestions' => $data['internal_linking_suggestions'] ?? $data['internalLinkingSuggestions'] ?? [],
+            'body_suggestions' => $data['body_suggestions'] ?? $data['bodySuggestions'] ?? [],
 
             // Content
             'optimized_body' => $data['optimized_body'] ?? $data['optimizedBody'] ?? null,

@@ -14,6 +14,7 @@ class ContentApiTest extends TestCase
     use RefreshDatabase;
 
     private Space $space;
+
     private ContentType $blogType;
 
     protected function setUp(): void
@@ -27,9 +28,9 @@ class ContentApiTest extends TestCase
 
         $this->blogType = ContentType::create([
             'space_id' => $this->space->id,
-            'name'     => 'Blog Post',
-            'slug'     => 'blog_post',
-            'schema'   => ['fields' => []],
+            'name' => 'Blog Post',
+            'slug' => 'blog_post',
+            'schema' => ['fields' => []],
         ]);
     }
 
@@ -88,9 +89,9 @@ class ContentApiTest extends TestCase
     {
         $faqType = ContentType::create([
             'space_id' => $this->space->id,
-            'name'     => 'FAQ',
-            'slug'     => 'faq',
-            'schema'   => ['fields' => []],
+            'name' => 'FAQ',
+            'slug' => 'faq',
+            'schema' => ['fields' => []],
         ]);
 
         $this->createPublishedContent('Blog Post', 'blog-post');
@@ -133,7 +134,7 @@ class ContentApiTest extends TestCase
         $version->update([
             'seo_data' => [
                 'meta_description' => 'Test meta description',
-                'seo_title'        => 'SEO Optimized Title',
+                'seo_title' => 'SEO Optimized Title',
             ],
             'seo_score' => 85.50,
         ]);
@@ -166,23 +167,23 @@ class ContentApiTest extends TestCase
         string $locale = 'en',
     ): Content {
         $content = Content::create([
-            'space_id'        => $this->space->id,
+            'space_id' => $this->space->id,
             'content_type_id' => ($type ?? $this->blogType)->id,
-            'slug'            => $slug,
-            'status'          => 'published',
-            'locale'          => $locale,
-            'published_at'    => now(),
+            'slug' => $slug,
+            'status' => 'published',
+            'locale' => $locale,
+            'published_at' => now(),
         ]);
 
         $version = ContentVersion::create([
-            'content_id'     => $content->id,
+            'content_id' => $content->id,
             'version_number' => 1,
-            'title'          => $title,
-            'excerpt'        => "Excerpt for {$title}",
-            'body'           => "Full body content for {$title}",
-            'body_format'    => 'markdown',
-            'author_type'    => 'ai_agent',
-            'author_id'      => 'content_creator',
+            'title' => $title,
+            'excerpt' => "Excerpt for {$title}",
+            'body' => "Full body content for {$title}",
+            'body_format' => 'markdown',
+            'author_type' => 'ai_agent',
+            'author_id' => 'content_creator',
         ]);
 
         $content->update(['current_version_id' => $version->id]);
@@ -193,22 +194,22 @@ class ContentApiTest extends TestCase
     private function createDraftContent(string $title, string $slug): Content
     {
         $content = Content::create([
-            'space_id'        => $this->space->id,
+            'space_id' => $this->space->id,
             'content_type_id' => $this->blogType->id,
-            'slug'            => $slug,
-            'status'          => 'draft',
-            'locale'          => 'en',
+            'slug' => $slug,
+            'status' => 'draft',
+            'locale' => 'en',
         ]);
 
         $version = ContentVersion::create([
-            'content_id'     => $content->id,
+            'content_id' => $content->id,
             'version_number' => 1,
-            'title'          => $title,
-            'excerpt'        => "Draft excerpt",
-            'body'           => "Draft body",
-            'body_format'    => 'markdown',
-            'author_type'    => 'ai_agent',
-            'author_id'      => 'system',
+            'title' => $title,
+            'excerpt' => 'Draft excerpt',
+            'body' => 'Draft body',
+            'body_format' => 'markdown',
+            'author_type' => 'ai_agent',
+            'author_id' => 'system',
         ]);
 
         $content->update(['current_version_id' => $version->id]);
