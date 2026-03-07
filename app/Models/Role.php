@@ -71,7 +71,7 @@ class Role extends Model
         // Wildcard expansion: 'content.*' matches 'content.create', 'content.read', etc.
         $parts = explode('.', $permission);
         for ($i = count($parts) - 1; $i >= 1; $i--) {
-            $wildcard = implode('.', array_slice($parts, 0, $i)) . '.*';
+            $wildcard = implode('.', array_slice($parts, 0, $i)).'.*';
             if (in_array($wildcard, $permissions, true)) {
                 return true;
             }

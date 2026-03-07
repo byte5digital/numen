@@ -17,6 +17,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - User management (CRUD) with admin frontend pages — list, create, edit, delete users.
 - Self-service password change for logged-in users (profile settings page).
 - Permanent content deletion with full cascade cleanup (content blocks, versions, media assets, pipeline runs, AI logs).
+- **Role-Based Access Control (RBAC)** — Complete permission system for v0.5.0:
+  - `Role` model with space-scoped and global role assignment via `role_user` pivot table (with `updated_at` tracking)
+  - `Space` model for multi-tenant space isolation with `HasMany` relationships to content types and content
+  - `AuthorizationService` — Per-request permission resolution with role aggregation, wildcard support (`*`, `content.*`), and token-level scoping guards
+  - `RBACMiddleware` (`RequirePermission`) — Route middleware for declarative permission gates (`->middleware('permission:content.publish,spaceId')`) with 403 JSON responses and denial logging
+  - `PermissionRegistrar` — Single source of truth for permission catalog (20+ permissions grouped by category: content, users, roles, spaces, audit, settings, AI, components, pipelines, personas)
+  - API token scoping — `ApiKey` and Sanctum `PersonalAccessToken` abilities with wildcard expansion and exact matching
+  - Permission catalog endpoint (`GET /api/permissions`) — Returns all available permissions for role editor UI
+  - `AuditLog` model and logging — Tracks all permission checks, denials, and sensitive operations with user ID, action, resource type/ID, IP, user agent
+  - Comprehensive test suite — Token scoping tests, brief API tests with auth gates, all controllers protected with appropriate permission checks
+  - Security hardening — Missing auth gates added to Analytics, Brief, ComponentDefinition, Persona, Pipeline, Role, User controllers; token scope bug fixes; space isolation enforcement
 
 ### Fixed
 - Cast `content_refresh_days` to `int` for PHP 8.4 strict typing compatibility (`b143a22`)

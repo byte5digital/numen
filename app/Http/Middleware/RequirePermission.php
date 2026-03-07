@@ -28,7 +28,7 @@ class RequirePermission
 
         if (! $user) {
             return response()->json([
-                'error'    => 'Unauthenticated',
+                'error' => 'Unauthenticated',
                 'required' => $permission,
             ], 401);
         }
@@ -36,13 +36,13 @@ class RequirePermission
         if (! $this->authz->check($user, $permission, $spaceId)) {
             // Log the denied attempt
             AuditLog::create([
-                'user_id'    => $user->id,
-                'space_id'   => $spaceId,
-                'action'     => 'permission.denied',
-                'metadata'   => [
-                    'required'  => $permission,
-                    'path'      => $request->path(),
-                    'method'    => $request->method(),
+                'user_id' => $user->id,
+                'space_id' => $spaceId,
+                'action' => 'permission.denied',
+                'metadata' => [
+                    'required' => $permission,
+                    'path' => $request->path(),
+                    'method' => $request->method(),
                 ],
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
@@ -50,7 +50,7 @@ class RequirePermission
             ]);
 
             return response()->json([
-                'error'    => 'Forbidden',
+                'error' => 'Forbidden',
                 'required' => $permission,
             ], 403);
         }
