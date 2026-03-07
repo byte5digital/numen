@@ -66,9 +66,14 @@ class OpenAIProvider implements LLMProvider
         $apiParams = [
             'model' => $model,
             $maxTokensKey => $params['max_tokens'] ?? 4096,
-            'temperature' => $params['temperature'] ?? 0.7,
             'messages' => $messages,
         ];
+
+        // Some models (o-series, gpt-5-nano) do not support temperature.
+        // Omit the parameter entirely so the model uses its own default.
+        if ($this->supportsTemperature($model)) {
+            $apiParams['temperature'] = $params['temperature'] ?? 0.7;
+        }
 
         try {
             $response = Http::withHeaders($this->headers())
@@ -145,6 +150,21 @@ class OpenAIProvider implements LLMProvider
             || str_starts_with($model, 'gpt-5')
             || str_starts_with($model, 'gpt-4o')
             || str_starts_with($model, 'gpt-4.1');
+    }
+
+    /**
+     * Some models do not support a custom temperature value.
+     * o-series reasoning models and gpt-5-nano only accept the default (1).
+     * Omitting the parameter entirely avoids HTTP 400 errors.
+     */
+    protected function supportsTemperature(string $model): bool
+    {
+        return ! (
+            str_starts_with($model, 'o1')
+            || str_starts_with($model, 'o3')
+            || str_starts_with($model, 'o4')
+            || $model === 'gpt-5-nano'
+        );
     }
 
     protected function headers(): array
