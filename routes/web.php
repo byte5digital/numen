@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\QueueMonitorController;
 use App\Http\Controllers\Admin\SettingsAdminController;
 use App\Http\Controllers\Admin\TaxonomyAdminController;
+use App\Http\Controllers\Admin\TokenAdminController;
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Public\BlogController;
@@ -111,6 +112,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Profile / Password
     Route::get('/profile/password', [ProfileController::class, 'editPassword'])->name('admin.profile.password');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('admin.profile.password.update');
+
+    // API Tokens
+    Route::get('/tokens', [TokenAdminController::class, 'index'])->name('admin.tokens.index');
+    Route::post('/tokens', [TokenAdminController::class, 'store'])->name('admin.tokens.store');
+    Route::delete('/tokens/{id}', [TokenAdminController::class, 'destroy'])->name('admin.tokens.destroy');
 
     // Pages
     Route::get('/pages', [PageAdminController::class, 'index'])->name('admin.pages');

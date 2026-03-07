@@ -41,13 +41,13 @@ Route::prefix('v1')->group(function () {
         Route::get('/taxonomies/{vocabSlug}/terms/{termSlug}/content', [TaxonomyTermController::class, 'content']);
     });
 
-    // Component type definitions (public read, authenticated write) — tighter limit
+    // Component type definitions (public read) — tighter limit
     Route::middleware('throttle:30,1')->group(function () {
         Route::get('/component-types', [ComponentDefinitionController::class, 'index']);
         Route::get('/component-types/{type}', [ComponentDefinitionController::class, 'show']);
     });
 
-    // Management API (authenticated)
+    // Management API (write operations — bearer token required)
     Route::middleware('auth:sanctum')->group(function () {
 
         // Taxonomy management
