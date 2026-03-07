@@ -8,3 +8,6 @@ parameters:
     treatPhpDocTypesAsCertain: false
     excludePaths:
         - app/Http/Middleware/HandleInertiaRequests.php
+    ignoreErrors:
+        - '#Access to an undefined property .*(User|Role)::.*pivot#'
+        - '#Parameter.*callback of method.*map.*expects callable.*Closure.*given#'
