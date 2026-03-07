@@ -4,6 +4,8 @@ use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\PageController;
+use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -38,6 +40,23 @@ Route::prefix('v1')->group(function () {
 
     // Management API (authenticated)
     Route::middleware('auth:sanctum')->group(function () {
+
+        // Content management (write endpoints)
+        Route::post('/content', [ContentController::class, 'store']);
+        Route::put('/content/{id}', [ContentController::class, 'update']);
+        Route::delete('/content/{id}', [ContentController::class, 'destroy']);
+
+        // User management
+        Route::get('/users', [UserController::class, 'index']);
+        Route::post('/users', [UserController::class, 'store']);
+        Route::put('/users/{user}', [UserController::class, 'update']);
+        Route::delete('/users/{user}', [UserController::class, 'destroy']);
+
+        // Role management
+        Route::get('/roles', [RoleController::class, 'index']);
+        Route::post('/roles', [RoleController::class, 'store']);
+        Route::put('/roles/{role}', [RoleController::class, 'update']);
+        Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
 
         // Component type registration (AI agents register new block types here)
         Route::post('/component-types', [ComponentDefinitionController::class, 'store']);

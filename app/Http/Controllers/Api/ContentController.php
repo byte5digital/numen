@@ -5,11 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ContentResource;
 use App\Models\Content;
+use App\Services\AuthorizationService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ContentController extends Controller
 {
+    public function __construct(private AuthorizationService $authz) {}
+
     /**
      * List published content with filtering.
      */
@@ -81,5 +85,57 @@ class ContentController extends Controller
         $perPage = max(1, min((int) $request->query('per_page', 20), 100));
 
         return ContentResource::collection($query->paginate($perPage));
+    }
+
+    /**
+     * Create new content. Requires content.create permission.
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $this->authz->authorize($request->user(), 'content.create');
+
+        $data = $request->validate([
+            'slug'             => ['required', 'string', 'unique:contents,slug'],
+            'content_type_id'  => ['required', 'string', 'exists:content_types,id'],
+            'locale'           => ['sometimes', 'string', 'max:10'],
+            'status'           => ['sometimes', 'string', 'in:draft,published,archived'],
+        ]);
+
+        $content = Content::create(array_merge(['status' => 'draft', 'locale' => 'en'], $data));
+
+        return response()->json(['data' => $content], 201);
+    }
+
+    /**
+     * Update existing content. Requires content.update permission.
+     */
+    public function update(Request $request, string $id): ContentResource
+    {
+        $this->authz->authorize($request->user(), 'content.update');
+
+        $content = Content::findOrFail($id);
+
+        $data = $request->validate([
+            'slug'   => ['sometimes', 'string', 'unique:contents,slug,' . $id],
+            'status' => ['sometimes', 'string', 'in:draft,published,archived'],
+            'locale' => ['sometimes', 'string', 'max:10'],
+        ]);
+
+        $content->update($data);
+
+        return new ContentResource($content->fresh(['currentVersion', 'contentType']));
+    }
+
+    /**
+     * Delete content. Requires content.delete permission.
+     */
+    public function destroy(Request $request, string $id): JsonResponse
+    {
+        $this->authz->authorize($request->user(), 'content.delete');
+
+        $content = Content::findOrFail($id);
+        $content->delete();
+
+        return response()->json(['message' => 'Content deleted.']);
     }
 }
