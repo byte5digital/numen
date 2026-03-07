@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug');
             $table->text('description')->nullable();
-            $table->string('path', 1000)->nullable()->index();
+            $table->string('path', 1000)->nullable();
             $table->integer('depth')->default(0);
             $table->integer('sort_order')->default(0);
             $table->json('metadata')->nullable();
@@ -24,6 +24,7 @@ return new class extends Migration
 
             $table->unique(['vocabulary_id', 'slug']);
             $table->index(['vocabulary_id', 'parent_id']);
+            $table->rawIndex('`path`(768)', 'taxonomy_terms_path_index');
             $table->foreign('vocabulary_id')->references('id')->on('vocabularies')->cascadeOnDelete();
             $table->foreign('parent_id')->references('id')->on('taxonomy_terms')->nullOnDelete();
         });
