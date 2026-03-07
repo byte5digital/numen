@@ -51,12 +51,14 @@ class OpenAIImageProvider implements ImageProviderInterface
         ];
 
         // Quality/style support varies by model
-        if (str_starts_with($model, 'dall-e') || str_starts_with($model, 'gpt-image-1.5')) {
+        // Check more specific models first (gpt-image-1.5 contains gpt-image-1 as substring)
+        if (str_starts_with($model, 'gpt-image-1.5')) {
+            // gpt-image-1.5 supports quality and style directly
             $payload['quality'] = $quality;
             $payload['style'] = $style;
         } elseif (str_starts_with($model, 'gpt-image-1')) {
             // gpt-image-1 only supports: 'low', 'medium', 'high', 'auto'
-            // Map the standard Numen quality values
+            // Map standard Numen quality values to gpt-image-1 accepted values
             $gptImageQuality = match ($quality) {
                 'hd' => 'high',
                 default => 'medium', // 'standard' → 'medium'
@@ -64,6 +66,10 @@ class OpenAIImageProvider implements ImageProviderInterface
             $payload['quality'] = $gptImageQuality;
             // gpt-image-1 returns base64 by default; request it explicitly
             $payload['output_format'] = 'png';
+        } elseif (str_starts_with($model, 'dall-e')) {
+            // dall-e supports quality and style directly
+            $payload['quality'] = $quality;
+            $payload['style'] = $style;
         }
 
         $response = Http::withHeaders([
