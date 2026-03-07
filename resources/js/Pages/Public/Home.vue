@@ -14,7 +14,7 @@ const features = [
     {
         icon: '🎨',
         title: 'AI Image Generation',
-        desc: 'AI-powered hero images via OpenAI, Replicate, Together AI, or fal.ai. The Visual Director picks the right model for your brand.',
+        desc: 'Multi-provider hero images via OpenAI, Together AI, fal.ai, or Replicate. The Visual Director crafts optimized prompts for your brand.',
     },
     {
         icon: '🔌',
@@ -35,6 +35,11 @@ const features = [
         icon: '⚙️',
         title: 'Pipeline as Config',
         desc: 'Stages defined in DB, not code. Add review gates, human checkpoints, or custom agents without deploying.',
+    },
+    {
+        icon: '👥',
+        title: 'User Management',
+        desc: 'Role-based access control out of the box. Manage admin and author roles — control who can create briefs, manage personas, and configure the pipeline.',
     },
 ];
 
