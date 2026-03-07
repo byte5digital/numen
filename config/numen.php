@@ -138,17 +138,12 @@ return [
     |--------------------------------------------------------------------------
     */
     'taxonomy' => [
-        // AI auto-categorization settings
         'auto_assign_threshold' => env('NUMEN_TAXONOMY_AUTO_ASSIGN_THRESHOLD', 0.7),
         'auto_assign_max_terms' => env('NUMEN_TAXONOMY_AUTO_ASSIGN_MAX', 5),
         'categorization_model' => env('NUMEN_TAXONOMY_MODEL', 'claude-haiku-4-5-20251001'),
         'categorization_provider' => env('NUMEN_TAXONOMY_PROVIDER', 'anthropic'),
-
-        // Slug generation
         'slug_separator' => '-',
         'slug_max_length' => 255,
-
-        // Tree depth limits
         'max_depth' => env('NUMEN_TAXONOMY_MAX_DEPTH', 10),
     ],
 
@@ -156,10 +151,32 @@ return [
     |--------------------------------------------------------------------------
     | Storage Disk
     |--------------------------------------------------------------------------
-    | Disk used for persisting generated images and media assets.
-    | Laravel Cloud sets FILESYSTEM_DISK=s3 automatically when a bucket
-    | is attached. Locally defaults to 'public'.
     */
     'storage_disk' => env('FILESYSTEM_DISK', 'public'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Search Configuration
+    |--------------------------------------------------------------------------
+    | Three-tier AI-powered search: Instant (Meilisearch) + Semantic (pgvector) + Ask (RAG)
+    */
+    'search' => [
+        'embedding_provider' => env('SEARCH_EMBEDDING_PROVIDER', 'openai'),
+        'embedding_model' => env('SEARCH_EMBEDDING_MODEL', 'text-embedding-3-small'),
+        'embedding_dimensions' => env('SEARCH_EMBEDDING_DIMENSIONS', 1536),
+        'meilisearch_host' => env('MEILISEARCH_HOST', 'http://127.0.0.1:7700'),
+        'meilisearch_key' => env('MEILISEARCH_KEY'),
+        'rag_model' => env('SEARCH_RAG_MODEL', 'claude-haiku-4-5-20251001'),
+        'rag_provider' => env('SEARCH_RAG_PROVIDER', 'anthropic'),
+        'rag_max_context_tokens' => env('SEARCH_RAG_MAX_CONTEXT', 4000),
+        'rag_max_sources' => env('SEARCH_RAG_MAX_SOURCES', 5),
+        'chunk_max_tokens' => env('SEARCH_CHUNK_MAX_TOKENS', 512),
+        'chunk_overlap_tokens' => env('SEARCH_CHUNK_OVERLAP', 64),
+        'tiers_enabled' => [
+            'instant' => env('SEARCH_TIER_INSTANT', true),
+            'semantic' => env('SEARCH_TIER_SEMANTIC', true),
+            'ask' => env('SEARCH_TIER_ASK', true),
+        ],
+    ],
 
 ];

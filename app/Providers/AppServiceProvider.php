@@ -3,6 +3,10 @@
 namespace App\Providers;
 
 use App\Agents\AgentFactory;
+use App\Events\Content\ContentPublished;
+use App\Events\Content\ContentUnpublished;
+use App\Listeners\IndexContentForSearch;
+use App\Listeners\RemoveFromSearchIndex;
 use App\Models\Content;
 use App\Models\Setting;
 use App\Policies\ContentPolicy;
@@ -16,6 +20,16 @@ use App\Services\AI\LLMManager;
 use App\Services\AI\Providers\AnthropicProvider;
 use App\Services\AI\Providers\AzureOpenAIProvider;
 use App\Services\AI\Providers\OpenAIProvider;
+use App\Services\Search\ConversationalDriver;
+use App\Services\Search\EmbeddingService;
+use App\Services\Search\InstantSearchDriver;
+use App\Services\Search\PromotedResultsService;
+use App\Services\Search\SearchAnalyticsRecorder;
+use App\Services\Search\SearchCapabilityDetector;
+use App\Services\Search\SearchRanker;
+use App\Services\Search\SearchService;
+use App\Services\Search\SemanticSearchDriver;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -57,6 +71,31 @@ class AppServiceProvider extends ServiceProvider
         // ── AgentFactory now routes through LLMManager ─────────────────────
         $this->app->singleton(AgentFactory::class, fn ($app) => new AgentFactory($app->make(LLMManager::class))
         );
+
+        // ── Search layer ───────────────────────────────────────────────────
+        $this->app->singleton(EmbeddingService::class, fn ($app) => new EmbeddingService(
+            $app->make(CostTracker::class),
+        ));
+
+        $this->app->singleton(SemanticSearchDriver::class, fn ($app) => new SemanticSearchDriver(
+            $app->make(EmbeddingService::class),
+        ));
+
+        $this->app->singleton(ConversationalDriver::class, fn ($app) => new ConversationalDriver(
+            $app->make(SemanticSearchDriver::class),
+            $app->make(EmbeddingService::class),
+            $app->make(LLMManager::class),
+        ));
+
+        $this->app->singleton(SearchService::class, fn ($app) => new SearchService(
+            $app->make(InstantSearchDriver::class),
+            $app->make(SemanticSearchDriver::class),
+            $app->make(ConversationalDriver::class),
+            $app->make(SearchRanker::class),
+            $app->make(PromotedResultsService::class),
+            $app->make(SearchAnalyticsRecorder::class),
+            $app->make(SearchCapabilityDetector::class),
+        ));
     }
 
     public function boot(): void
@@ -66,5 +105,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Load DB settings into config (overrides .env defaults)
         Setting::loadIntoConfig();
+
+        // Register search event listeners
+        Event::listen(ContentPublished::class, IndexContentForSearch::class);
+        Event::listen(ContentUnpublished::class, RemoveFromSearchIndex::class);
     }
 }
