@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PHP](https://img.shields.io/badge/PHP-8.4-blue.svg)](https://php.net)
 [![Laravel](https://img.shields.io/badge/Laravel-12-red.svg)](https://laravel.com)
-[![Version](https://img.shields.io/badge/version-0.1.1-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.2.1-green.svg)](CHANGELOG.md)
 
 **AI-first headless CMS. You write briefs. AI writes content.**
 
