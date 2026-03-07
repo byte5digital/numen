@@ -39,10 +39,10 @@ class RequirePermission
     /**
      * Handle an incoming request by checking permission.
      *
-     * @param Request $request The HTTP request
-     * @param Closure $next The next middleware
-     * @param string $permission The required permission (e.g. 'content.publish')
-     * @param string|null $spaceId Optional space context for scoped permission check
+     * @param  Request  $request  The HTTP request
+     * @param  Closure  $next  The next middleware
+     * @param  string  $permission  The required permission (e.g. 'content.publish')
+     * @param  string|null  $spaceId  Optional space context for scoped permission check
      * @return Response The response (403 if denied, next middleware if allowed)
      */
     public function handle(Request $request, Closure $next, string $permission, ?string $spaceId = null): Response

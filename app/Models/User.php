@@ -55,6 +55,7 @@ class User extends Authenticatable
     {
         $roles = $this->roles->filter(function (Role $role) use ($spaceId) {
             $pivotSpace = $role->pivot->space_id ?? null;
+
             // Include global roles (no space) and roles for the given space
             return $pivotSpace === null || $pivotSpace === $spaceId;
         });

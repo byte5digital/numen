@@ -17,9 +17,9 @@ class AuditLogControllerTest extends TestCase
         $admin = $this->userWithRole(['*']);
 
         AuditLog::create([
-            'user_id'    => $admin->id,
-            'action'     => 'content.create',
-            'metadata'   => [],
+            'user_id' => $admin->id,
+            'action' => 'content.create',
+            'metadata' => [],
             'created_at' => now(),
         ]);
 
@@ -70,13 +70,13 @@ class AuditLogControllerTest extends TestCase
 
     public function test_audit_log_created_on_role_assign(): void
     {
-        $admin  = $this->userWithRole(['*']);
+        $admin = $this->userWithRole(['*']);
         $target = User::factory()->create();
-        $role   = Role::create([
-            'name'        => 'Some Role',
-            'slug'        => 'some-role-audit',
+        $role = Role::create([
+            'name' => 'Some Role',
+            'slug' => 'some-role-audit',
             'permissions' => ['content.read'],
-            'is_system'   => false,
+            'is_system' => false,
         ]);
 
         $this->actingAs($admin)->postJson("/api/v1/users/{$target->id}/roles", [
@@ -85,7 +85,7 @@ class AuditLogControllerTest extends TestCase
 
         $this->assertDatabaseHas('audit_logs', [
             'user_id' => $admin->id,
-            'action'  => 'role.assign',
+            'action' => 'role.assign',
         ]);
     }
 
@@ -96,20 +96,20 @@ class AuditLogControllerTest extends TestCase
         $space = \App\Models\Space::create(['name' => 'Test Space', 'slug' => 'test-space']);
         $contentType = \App\Models\ContentType::create([
             'space_id' => $space->id,
-            'name'     => 'Article',
-            'slug'     => 'article',
-            'schema'   => [],
+            'name' => 'Article',
+            'slug' => 'article',
+            'schema' => [],
         ]);
 
         $this->actingAs($admin)->postJson('/api/v1/content', [
-            'slug'            => 'test-content-audit',
+            'slug' => 'test-content-audit',
             'content_type_id' => $contentType->id,
-            'space_id'        => $space->id,
+            'space_id' => $space->id,
         ])->assertCreated();
 
         $this->assertDatabaseHas('audit_logs', [
             'user_id' => $admin->id,
-            'action'  => 'content.create',
+            'action' => 'content.create',
         ]);
     }
 
@@ -119,13 +119,14 @@ class AuditLogControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $role = Role::create([
-            'name'        => 'Test Role',
-            'slug'        => 'test-role-' . uniqid(),
+            'name' => 'Test Role',
+            'slug' => 'test-role-'.uniqid(),
             'permissions' => $permissions,
-            'is_system'   => false,
+            'is_system' => false,
         ]);
         $user->roles()->attach($role->id, ['space_id' => null]);
         $user->load('roles');
+
         return $user;
     }
 }

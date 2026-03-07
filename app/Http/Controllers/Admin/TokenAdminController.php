@@ -45,7 +45,13 @@ class TokenAdminController extends Controller
 
     public function destroy(Request $request, string $id): RedirectResponse
     {
-        $request->user()->tokens()->where('id', $id)->delete();
+        $token = $request->user()->tokens()->find($id);
+
+        if (! $token) {
+            abort(403, 'Unauthorized: Token does not belong to this user.');
+        }
+
+        $token->delete();
 
         return redirect()->route('admin.tokens.index');
     }

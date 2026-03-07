@@ -224,10 +224,10 @@ class AuthorizationServiceTest extends TestCase
         $this->authz->log($user, 'users.manage', $target, ['action' => 'deactivate']);
 
         $this->assertDatabaseHas('audit_logs', [
-            'user_id'       => $user->id,
-            'action'        => 'users.manage',
+            'user_id' => $user->id,
+            'action' => 'users.manage',
             'resource_type' => User::class,
-            'resource_id'   => (string) $target->id,
+            'resource_id' => (string) $target->id,
         ]);
     }
 
@@ -238,7 +238,7 @@ class AuthorizationServiceTest extends TestCase
         $user = $this->userWithRole(['content.create']);
 
         // Call check twice — second should use cache (no DB hit)
-        $first  = $this->authz->check($user, 'content.create');
+        $first = $this->authz->check($user, 'content.create');
         $second = $this->authz->check($user, 'content.create');
 
         $this->assertTrue($first);
@@ -252,10 +252,10 @@ class AuthorizationServiceTest extends TestCase
         $user = User::factory()->create();
 
         $role = Role::create([
-            'name'        => 'Test Role',
-            'slug'        => 'test-role-' . uniqid(),
+            'name' => 'Test Role',
+            'slug' => 'test-role-'.uniqid(),
             'permissions' => $permissions,
-            'is_system'   => false,
+            'is_system' => false,
         ]);
 
         $user->roles()->attach($role->id, ['space_id' => null]);

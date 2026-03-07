@@ -158,8 +158,8 @@ class AuthorizationService
      *  3. Flatten and deduplicate the permission list
      *  4. Return as a simple array (no keys)
      *
-     * @param User $user The user
-     * @param string|null $spaceId The space context (null = global only)
+     * @param  User  $user  The user
+     * @param  string|null  $spaceId  The space context (null = global only)
      * @return array<string> Flat, deduplicated permission array
      */
     private function resolvePermissions(User $user, ?string $spaceId): array
@@ -198,8 +198,8 @@ class AuthorizationService
      *     - `content.type.*` matches `content.type.manage`, etc.
      *  4. No match found → deny
      *
-     * @param string $requested The requested permission (e.g. 'content.publish')
-     * @param array<string> $permissions The user's permission array (may include wildcards)
+     * @param  string  $requested  The requested permission (e.g. 'content.publish')
+     * @param  array<string>  $permissions  The user's permission array (may include wildcards)
      * @return bool True if $requested matches any permission or wildcard in the array
      */
     private function permissionMatches(string $requested, array $permissions): bool

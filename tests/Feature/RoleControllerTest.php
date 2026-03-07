@@ -51,7 +51,7 @@ class RoleControllerTest extends TestCase
         $user = $this->adminUser();
 
         $response = $this->actingAs($user)->postJson('/api/v1/roles', [
-            'name'        => 'Custom Reviewer',
+            'name' => 'Custom Reviewer',
             'permissions' => ['content.read', 'pipeline.approve'],
         ]);
 
@@ -244,10 +244,10 @@ class RoleControllerTest extends TestCase
         $user = User::factory()->create();
 
         $role = Role::create([
-            'name'        => 'Test Role',
-            'slug'        => 'test-role-' . uniqid(),
+            'name' => 'Test Role',
+            'slug' => 'test-role-'.uniqid(),
             'permissions' => $permissions,
-            'is_system'   => false,
+            'is_system' => false,
         ]);
 
         $user->roles()->attach($role->id, ['space_id' => null]);
