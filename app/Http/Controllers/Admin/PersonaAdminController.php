@@ -12,19 +12,21 @@ class PersonaAdminController extends Controller
     private array $availableModels = [
         'anthropic' => [
             'claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001',
-            'claude-opus-4', 'claude-sonnet-4', 'claude-3-5-sonnet-20241022',
+            'claude-opus-4', 'claude-sonnet-4',
         ],
         'openai' => [
-            'gpt-5', 'gpt-5-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano',
-            'gpt-4.5-preview', 'gpt-4o', 'gpt-4o-mini', 'o4-mini', 'o3', 'o3-mini', 'o1',
+            'gpt-5.4', 'gpt-5.2', 'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano',
+            'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano',
+            'o3', 'o4-mini', 'gpt-4o', 'gpt-4o-mini',
         ],
         'azure' => [
-            'gpt-5', 'gpt-5-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4o-mini',
+            'gpt-5.4', 'gpt-5.2', 'gpt-5.1', 'gpt-5', 'gpt-5-mini',
+            'gpt-4.1', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4o-mini',
         ],
     ];
 
     private array $availableImageModels = [
-        'openai' => ['gpt-image-1.5', 'gpt-image-1', 'dall-e-3'],
+        'openai' => ['gpt-image-1.5', 'gpt-image-1', 'gpt-image-1-mini'],
         'together' => ['black-forest-labs/FLUX.1-schnell', 'black-forest-labs/FLUX.1-pro'],
         'fal' => ['fal-ai/flux/schnell', 'fal-ai/flux-pro'],
         'replicate' => ['black-forest-labs/flux-2-max', 'black-forest-labs/flux-2-pro', 'openai/gpt-image-1.5', 'google/nano-banana-pro'],
