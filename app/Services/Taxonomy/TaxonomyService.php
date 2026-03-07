@@ -72,13 +72,31 @@ class TaxonomyService
      * Update a term.
      *
      * @param  array<string, mixed>  $data
+     * @throws \InvalidArgumentException if a parent_id change would create a circular reference.
      */
     public function updateTerm(TaxonomyTerm $term, array $data): TaxonomyTerm
     {
-        // If parent_id changes, reload relation before save for path recomputation
+        // If parent_id changes, validate and reload relation before save for path recomputation
         if (isset($data['parent_id']) && $data['parent_id'] !== $term->parent_id) {
-            $newParent = $data['parent_id'] ? TaxonomyTerm::find($data['parent_id']) : null;
-            $term->setRelation('parent', $newParent);
+            $newParentId = $data['parent_id'];
+
+            if ($newParentId !== null) {
+                // A term cannot be its own parent
+                if ($newParentId === $term->id) {
+                    throw new \InvalidArgumentException('A term cannot be its own parent.');
+                }
+
+                $newParent = TaxonomyTerm::find($newParentId);
+
+                // Guard: reparenting into a descendant would create an infinite cycle
+                if ($newParent && $term->isAncestorOf($newParent)) {
+                    throw new \InvalidArgumentException('Cannot set a descendant as the parent (circular reference).');
+                }
+
+                $term->setRelation('parent', $newParent);
+            } else {
+                $term->setRelation('parent', null);
+            }
         }
 
         $term->update($data);
@@ -93,11 +111,30 @@ class TaxonomyService
 
     /**
      * Move a term to a new parent (re-computes path for term and all descendants).
+     *
+     * @throws \InvalidArgumentException if the move would create a circular reference.
      */
     public function moveTerm(TaxonomyTerm $term, ?string $newParentId): TaxonomyTerm
     {
-        $newParent = $newParentId ? TaxonomyTerm::find($newParentId) : null;
-        $term->setRelation('parent', $newParent);
+        if ($newParentId !== null) {
+            // A term cannot be its own parent
+            if ($newParentId === $term->id) {
+                throw new \InvalidArgumentException('A term cannot be its own parent.');
+            }
+
+            $newParent = TaxonomyTerm::find($newParentId);
+
+            // Guard: moving into a descendant would create an infinite cycle
+            if ($newParent && $term->isAncestorOf($newParent)) {
+                throw new \InvalidArgumentException('Cannot move a term into one of its own descendants (circular reference).');
+            }
+
+            $term->setRelation('parent', $newParent);
+        } else {
+            $newParent = null;
+            $term->setRelation('parent', null);
+        }
+
         $term->parent_id = $newParentId;
         $term->computePath();
         $term->save();

@@ -104,7 +104,7 @@ class TaxonomyTermController extends Controller
             'parent_id' => ['nullable', 'string', 'exists:taxonomy_terms,id'],
             'description' => ['nullable', 'string', 'max:5000'],
             'sort_order' => ['integer', 'min:0', 'max:9999'],
-            'metadata' => ['nullable', 'array'],
+            'metadata' => ['nullable', 'array', 'max:50'],
         ]);
 
         // Validate parent_id belongs to the same vocabulary (prevents cross-vocabulary parentage)
@@ -144,7 +144,7 @@ class TaxonomyTermController extends Controller
             'parent_id' => ['nullable', 'string', 'exists:taxonomy_terms,id'],
             'description' => ['nullable', 'string', 'max:5000'],
             'sort_order' => ['integer', 'min:0', 'max:9999'],
-            'metadata' => ['nullable', 'array'],
+            'metadata' => ['nullable', 'array', 'max:50'],
         ]);
 
         // Validate parent_id belongs to the same vocabulary (prevents cross-vocabulary parentage)
@@ -158,7 +158,11 @@ class TaxonomyTermController extends Controller
             }
         }
 
-        $term = $this->taxonomy->updateTerm($term, $validated);
+        try {
+            $term = $this->taxonomy->updateTerm($term, $validated);
+        } catch (\InvalidArgumentException $e) {
+            abort(422, $e->getMessage());
+        }
 
         return new TaxonomyTermResource($term);
     }
@@ -218,7 +222,11 @@ class TaxonomyTermController extends Controller
             }
         }
 
-        $term = $this->taxonomy->moveTerm($term, $validated['parent_id'] ?? null);
+        try {
+            $term = $this->taxonomy->moveTerm($term, $validated['parent_id'] ?? null);
+        } catch (\InvalidArgumentException $e) {
+            abort(422, $e->getMessage());
+        }
 
         return new TaxonomyTermResource($term);
     }

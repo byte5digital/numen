@@ -636,4 +636,62 @@ class TaxonomyApiTest extends TestCase
         $response->assertForbidden();
         $this->assertEquals(0, $otherTerm->fresh()->sort_order);
     }
+
+    // ─── Circular Reference Guards ────────────────────────────────────────────
+
+    public function test_move_term_rejects_self_as_parent(): void
+    {
+        Sanctum::actingAs($this->user);
+        $vocab = Vocabulary::factory()->create(['space_id' => $this->space->id]);
+        $term = TaxonomyTerm::factory()->create(['vocabulary_id' => $vocab->id]);
+
+        $response = $this->postJson("/api/v1/terms/{$term->id}/move", [
+            'parent_id' => $term->id,
+        ], ['X-Space' => 'test-space']);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_move_term_rejects_descendant_as_parent(): void
+    {
+        Sanctum::actingAs($this->user);
+        $vocab = Vocabulary::factory()->create(['space_id' => $this->space->id]);
+
+        // Build: root -> child -> grandchild
+        $root = TaxonomyTerm::factory()->create(['vocabulary_id' => $vocab->id]);
+        $child = TaxonomyTerm::factory()->create([
+            'vocabulary_id' => $vocab->id,
+            'parent_id' => $root->id,
+        ]);
+        $grandchild = TaxonomyTerm::factory()->create([
+            'vocabulary_id' => $vocab->id,
+            'parent_id' => $child->id,
+        ]);
+
+        // Trying to move $root under $grandchild would create a cycle
+        $response = $this->postJson("/api/v1/terms/{$root->id}/move", [
+            'parent_id' => $grandchild->id,
+        ], ['X-Space' => 'test-space']);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_update_term_rejects_descendant_as_parent(): void
+    {
+        Sanctum::actingAs($this->user);
+        $vocab = Vocabulary::factory()->create(['space_id' => $this->space->id]);
+
+        $parent = TaxonomyTerm::factory()->create(['vocabulary_id' => $vocab->id]);
+        $child = TaxonomyTerm::factory()->create([
+            'vocabulary_id' => $vocab->id,
+            'parent_id' => $parent->id,
+        ]);
+
+        // Trying to set child as parent of parent creates a cycle
+        $response = $this->putJson("/api/v1/terms/{$parent->id}", [
+            'parent_id' => $child->id,
+        ], ['X-Space' => 'test-space']);
+
+        $response->assertStatus(422);
+    }
 }

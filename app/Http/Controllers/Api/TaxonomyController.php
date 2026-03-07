@@ -71,7 +71,7 @@ class TaxonomyController extends Controller
             'description' => ['nullable', 'string', 'max:5000'],
             'hierarchy' => ['boolean'],
             'allow_multiple' => ['boolean'],
-            'settings' => ['nullable', 'array'],
+            'settings' => ['nullable', 'array', 'max:50'],
             'sort_order' => ['integer', 'min:0', 'max:9999'],
         ]);
 
@@ -98,7 +98,7 @@ class TaxonomyController extends Controller
             'description' => ['nullable', 'string', 'max:5000'],
             'hierarchy' => ['boolean'],
             'allow_multiple' => ['boolean'],
-            'settings' => ['nullable', 'array'],
+            'settings' => ['nullable', 'array', 'max:50'],
             'sort_order' => ['integer', 'min:0', 'max:9999'],
         ]);
 

@@ -113,7 +113,19 @@ class TaxonomyAdminController extends Controller
             'parent_id' => ['nullable', 'string', 'exists:taxonomy_terms,id'],
             'description' => ['nullable', 'string', 'max:5000'],
             'sort_order' => ['integer', 'min:0', 'max:9999'],
+            'metadata' => ['nullable', 'array', 'max:50'],
         ]);
+
+        // Prevent cross-vocabulary parentage
+        if (! empty($validated['parent_id'])) {
+            $parentInVocab = TaxonomyTerm::where('id', $validated['parent_id'])
+                ->where('vocabulary_id', $vocabulary->id)
+                ->exists();
+
+            if (! $parentInVocab) {
+                return back()->withErrors(['parent_id' => 'The parent term does not belong to this vocabulary.']);
+            }
+        }
 
         $this->taxonomy->createTerm($vocabulary->id, $validated);
 
@@ -133,9 +145,25 @@ class TaxonomyAdminController extends Controller
             'parent_id' => ['nullable', 'string', 'exists:taxonomy_terms,id'],
             'description' => ['nullable', 'string', 'max:5000'],
             'sort_order' => ['integer', 'min:0', 'max:9999'],
+            'metadata' => ['nullable', 'array', 'max:50'],
         ]);
 
-        $this->taxonomy->updateTerm($term, $validated);
+        // Prevent cross-vocabulary parentage
+        if (array_key_exists('parent_id', $validated) && $validated['parent_id'] !== null) {
+            $parentInVocab = TaxonomyTerm::where('id', $validated['parent_id'])
+                ->where('vocabulary_id', $term->vocabulary_id)
+                ->exists();
+
+            if (! $parentInVocab) {
+                return back()->withErrors(['parent_id' => 'The parent term does not belong to this vocabulary.']);
+            }
+        }
+
+        try {
+            $this->taxonomy->updateTerm($term, $validated);
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['parent_id' => $e->getMessage()]);
+        }
 
         return back()->with('success', 'Term updated.');
     }
@@ -168,7 +196,24 @@ class TaxonomyAdminController extends Controller
             'parent_id' => ['nullable', 'string', 'exists:taxonomy_terms,id'],
         ]);
 
-        $term = $this->taxonomy->moveTerm($term, $validated['parent_id'] ?? null);
+        $newParentId = $validated['parent_id'] ?? null;
+
+        // Prevent cross-vocabulary parentage
+        if ($newParentId !== null) {
+            $parentInVocab = TaxonomyTerm::where('id', $newParentId)
+                ->where('vocabulary_id', $term->vocabulary_id)
+                ->exists();
+
+            if (! $parentInVocab) {
+                return response()->json(['error' => 'The parent term does not belong to this vocabulary.'], 422);
+            }
+        }
+
+        try {
+            $term = $this->taxonomy->moveTerm($term, $newParentId);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
 
         return response()->json(['data' => $term]);
     }

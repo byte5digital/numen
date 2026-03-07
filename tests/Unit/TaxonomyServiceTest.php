@@ -528,4 +528,59 @@ class TaxonomyServiceTest extends TestCase
 
         $this->assertCount(1, $paginator->items());
     }
+
+    // --- Circular Reference Guards ---
+
+    public function test_move_term_throws_when_moving_into_itself(): void
+    {
+        $vocab = Vocabulary::factory()->create(['space_id' => $this->space->id]);
+        $term = $this->service->createTerm($vocab->id, ['name' => 'Root']);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->service->moveTerm($term, $term->id);
+    }
+
+    public function test_move_term_throws_when_moving_into_direct_child(): void
+    {
+        $vocab = Vocabulary::factory()->create(['space_id' => $this->space->id]);
+        $parent = $this->service->createTerm($vocab->id, ['name' => 'Parent']);
+        $child = $this->service->createTerm($vocab->id, ['name' => 'Child', 'parent_id' => $parent->id]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        // Moving parent into its own child is a cycle
+        $this->service->moveTerm($parent->fresh(), $child->id);
+    }
+
+    public function test_move_term_throws_when_moving_into_grandchild(): void
+    {
+        $vocab = Vocabulary::factory()->create(['space_id' => $this->space->id]);
+        $root = $this->service->createTerm($vocab->id, ['name' => 'Root']);
+        $child = $this->service->createTerm($vocab->id, ['name' => 'Child', 'parent_id' => $root->id]);
+        $grandchild = $this->service->createTerm($vocab->id, ['name' => 'Grandchild', 'parent_id' => $child->id]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->service->moveTerm($root->fresh(), $grandchild->id);
+    }
+
+    public function test_update_term_throws_when_parent_creates_cycle(): void
+    {
+        $vocab = Vocabulary::factory()->create(['space_id' => $this->space->id]);
+        $parent = $this->service->createTerm($vocab->id, ['name' => 'Parent']);
+        $child = $this->service->createTerm($vocab->id, ['name' => 'Child', 'parent_id' => $parent->id]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->service->updateTerm($parent->fresh(), ['parent_id' => $child->id]);
+    }
+
+    public function test_move_term_to_null_parent_succeeds(): void
+    {
+        $vocab = Vocabulary::factory()->create(['space_id' => $this->space->id]);
+        $parent = $this->service->createTerm($vocab->id, ['name' => 'Parent']);
+        $child = $this->service->createTerm($vocab->id, ['name' => 'Child', 'parent_id' => $parent->id]);
+
+        $moved = $this->service->moveTerm($child->fresh(), null);
+
+        $this->assertNull($moved->parent_id);
+        $this->assertEquals(0, $moved->depth);
+    }
 }
