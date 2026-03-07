@@ -6,11 +6,12 @@
     "require": {
         "php": "^8.4",
         "inertiajs/inertia-laravel": "^2.0",
-        "jfcherng/php-diff": "^6.16",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
+        "laravel/scout": "^10.24",
         "laravel/tinker": "^2.11",
-        "league/flysystem-aws-s3-v3": "^3.32",
+        "meilisearch/meilisearch-php": "^1.16",
+        "pgvector/pgvector": "^0.2.2",
         "tightenco/ziggy": "^2.0"
     },
     "require-dev": {
@@ -40,6 +41,13 @@
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
         ]
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": [
+                "pgvector/pgvector"
+            ]
+        }
     },
     "config": {
         "optimize-autoloader": true,

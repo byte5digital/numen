@@ -17,9 +17,11 @@ class ContentTypeFactory extends Factory
 
         return [
             'space_id' => Space::factory(),
-            'name' => ucwords($name),
-            'slug' => Str::slug($name, '_'),
+            'name' => ucfirst($name),
+            'slug' => Str::slug($name),
             'schema' => ['fields' => []],
+            'generation_config' => null,
+            'seo_config' => null,
         ];
     }
 }

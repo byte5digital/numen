@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\ContentTaxonomyController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\TaxonomyController;
 use App\Http\Controllers\Api\TaxonomyTermController;
+use App\Http\Controllers\Api\V1\Admin\SearchAdminController;
+use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\Versioning\AutoSaveController;
 use App\Http\Controllers\Api\Versioning\DiffController;
 use App\Http\Controllers\Api\Versioning\VersionController;
@@ -24,6 +26,35 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('v1')->group(function () {
+
+    // ── Search API (public, rate-limited) ──────────────────────────────────
+    Route::prefix('search')->middleware('throttle:60,1')->group(function () {
+        Route::get('/', [SearchController::class, 'search']);
+        Route::get('/suggest', [SearchController::class, 'suggest'])->middleware('throttle:120,1');
+        Route::post('/click', [SearchController::class, 'recordClick'])->middleware('throttle:30,1');
+    });
+
+    // Ask / RAG (lower rate limit — LLM calls are expensive)
+    Route::post('/search/ask', [SearchController::class, 'ask'])->middleware('throttle:10,1');
+
+    // ── Admin Search API (authenticated + admin role) ──────────────────────
+    Route::prefix('admin/search')->middleware(['auth:sanctum', 'admin'])->group(function () {
+        Route::get('/analytics', [SearchAdminController::class, 'analytics']);
+        Route::get('/analytics/gaps', [SearchAdminController::class, 'contentGaps']);
+
+        Route::get('/synonyms', [SearchAdminController::class, 'synonyms']);
+        Route::post('/synonyms', [SearchAdminController::class, 'storeSynonym']);
+        Route::put('/synonyms/{id}', [SearchAdminController::class, 'updateSynonym']);
+        Route::delete('/synonyms/{id}', [SearchAdminController::class, 'destroySynonym']);
+
+        Route::get('/promoted', [SearchAdminController::class, 'promoted']);
+        Route::post('/promoted', [SearchAdminController::class, 'storePromoted']);
+        Route::put('/promoted/{id}', [SearchAdminController::class, 'updatePromoted']);
+        Route::delete('/promoted/{id}', [SearchAdminController::class, 'destroyPromoted']);
+
+        Route::get('/health', [SearchAdminController::class, 'health']);
+        Route::post('/reindex', [SearchAdminController::class, 'reindex']);
+    });
 
     // Content delivery (read-only, public)
     Route::middleware('throttle:60,1')->group(function () {

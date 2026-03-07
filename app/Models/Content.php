@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Scout\Searchable;
 
 /**
  * @property string $id
@@ -33,7 +34,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \Carbon\Carbon $updated_at
  * @property \Carbon\Carbon|null $deleted_at
  * @property-read Space $space
- * @property-read ContentType $contentType
+ * @property-read ContentType|null $contentType
  * @property-read ContentVersion|null $currentVersion
  * @property-read ContentVersion|null $draftVersion
  * @property-read ContentDraft|null $autosaveDraft
@@ -47,7 +48,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Content extends Model
 {
-    use HasFactory, HasUlids, SoftDeletes;
+    use HasFactory, HasUlids, Searchable, SoftDeletes;
 
     protected $table = 'contents';
 
@@ -181,6 +182,77 @@ class Content extends Model
             $q->where('taxonomy_terms.slug', $termSlug)
                 ->whereHas('vocabulary', fn (Builder $v) => $v->where('slug', $vocabSlug));
         });
+    }
+
+    // --- Search (Laravel Scout / Meilisearch) ---
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray(): array
+    {
+        $version = $this->currentVersion;
+
+        if (! $version) {
+            return [];
+        }
+
+        return [
+            'id' => $this->id,
+            'title' => $version->title,
+            'excerpt' => $version->excerpt,
+            'body' => strip_tags((string) $version->body),
+            'blocks_text' => $this->getBlocksPlainText(),
+            'seo_title' => is_array($version->seo_data) ? ($version->seo_data['title'] ?? null) : null,
+            'seo_description' => is_array($version->seo_data) ? ($version->seo_data['description'] ?? null) : null,
+            'content_type' => $this->contentType?->slug,
+            'content_type_name' => $this->contentType?->name,
+            'space_id' => $this->space_id,
+            'locale' => $this->locale,
+            'status' => $this->status,
+            'slug' => $this->slug,
+            'published_at' => $this->published_at !== null ? $this->published_at->timestamp : null,
+            'updated_at' => $this->updated_at->timestamp,
+        ];
+    }
+
+    public function shouldBeSearchable(): bool
+    {
+        return $this->status === 'published' && $this->published_at !== null;
+    }
+
+    private function getBlocksPlainText(): string
+    {
+        $version = $this->currentVersion;
+
+        if (! $version) {
+            return '';
+        }
+
+        return $version->blocks()
+            ->get()
+            ->map(function (ContentBlock $block): string {
+                $data = $block->data;
+
+                if (is_string($data)) {
+                    return strip_tags($data);
+                }
+
+                if (is_array($data)) {
+                    $parts = [];
+                    foreach (['text', 'body', 'content', 'caption'] as $key) {
+                        if (! empty($data[$key]) && is_string($data[$key])) {
+                            $parts[] = strip_tags($data[$key]);
+                        }
+                    }
+
+                    return implode(' ', $parts);
+                }
+
+                return '';
+            })
+            ->filter()
+            ->implode(' ');
     }
 
     // --- Helpers ---

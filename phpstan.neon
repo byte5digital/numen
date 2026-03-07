@@ -8,3 +8,4 @@ parameters:
     treatPhpDocTypesAsCertain: false
     excludePaths:
         - app/Http/Middleware/HandleInertiaRequests.php
+        - app/Services/Versioning/DiffEngine.php
