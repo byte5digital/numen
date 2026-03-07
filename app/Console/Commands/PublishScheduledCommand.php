@@ -32,6 +32,19 @@ class PublishScheduledCommand extends Command
                 continue;
             }
 
+            // Fix 10: version↔content integrity check — guard against tampered or
+            // mismatched schedule records where the version belongs to a different content item
+            if ($schedule->version->content_id !== $schedule->content->id) {
+                $this->error(
+                    "Skipping schedule {$schedule->id}: version/content mismatch "
+                    . "(version.content_id={$schedule->version->content_id}, "
+                    . "schedule.content_id={$schedule->content->id})"
+                );
+                $schedule->update(['status' => 'failed']);
+
+                continue;
+            }
+
             try {
                 $versioning->publish($schedule->content, $schedule->version);
                 $schedule->update(['status' => 'published']);

@@ -19,6 +19,8 @@ class VersionController extends Controller
      */
     public function index(Content $content): JsonResponse
     {
+        $this->authorize('view', $content);
+
         $versions = $content->versions()
             ->select([
                 'id', 'version_number', 'label', 'status',
@@ -37,6 +39,8 @@ class VersionController extends Controller
      */
     public function show(Content $content, ContentVersion $version): JsonResponse
     {
+        $this->authorize('view', $content);
+
         abort_unless($version->content_id === $content->id, 404);
 
         $version->load(['blocks', 'pipelineRun', 'parentVersion:id,version_number,label']);
@@ -49,6 +53,8 @@ class VersionController extends Controller
      */
     public function createDraft(Content $content): JsonResponse
     {
+        $this->authorize('modify', $content);
+
         $draft = $this->versioning->createDraft($content);
 
         return response()->json(['data' => $draft], 201);
@@ -59,13 +65,15 @@ class VersionController extends Controller
      */
     public function update(Content $content, ContentVersion $version, Request $request): JsonResponse
     {
+        $this->authorize('modify', $content);
+
         abort_unless($version->content_id === $content->id, 404);
         abort_unless($version->status === 'draft', 422, 'Only draft versions can be edited.');
 
         $validated = $request->validate([
             'title' => 'sometimes|string|max:500',
             'excerpt' => 'nullable|string|max:2000',
-            'body' => 'sometimes|string',
+            'body' => 'sometimes|string|max:1048576', // Fix 4: cap body at 1 MB
             'body_format' => 'sometimes|in:markdown,html,blocks',
             'structured_fields' => 'nullable|array',
             'seo_data' => 'nullable|array',
@@ -82,6 +90,8 @@ class VersionController extends Controller
      */
     public function label(Content $content, ContentVersion $version, Request $request): JsonResponse
     {
+        $this->authorize('modify', $content);
+
         abort_unless($version->content_id === $content->id, 404);
 
         $request->validate(['label' => 'required|string|max:255']);
@@ -96,6 +106,8 @@ class VersionController extends Controller
      */
     public function publish(Content $content, ContentVersion $version): JsonResponse
     {
+        $this->authorize('publish', $content);
+
         abort_unless($version->content_id === $content->id, 404);
 
         $this->versioning->publish($content, $version);
@@ -108,6 +120,8 @@ class VersionController extends Controller
      */
     public function schedule(Content $content, ContentVersion $version, Request $request): JsonResponse
     {
+        $this->authorize('schedule', $content);
+
         abort_unless($version->content_id === $content->id, 404);
 
         $request->validate([
@@ -127,12 +141,21 @@ class VersionController extends Controller
 
     /**
      * Cancel a scheduled publish.
+     *
+     * Fix 6: scope cancellation to the specific version from the route param,
+     * not all pending schedules for the content.
      */
     public function cancelSchedule(Content $content, ContentVersion $version): JsonResponse
     {
+        $this->authorize('cancelSchedule', $content);
+
         abort_unless($version->content_id === $content->id, 404);
 
-        $content->scheduledPublishes()->where('status', 'pending')->update(['status' => 'cancelled']);
+        // Scope to the specific version — don't cancel unrelated pending schedules
+        $content->scheduledPublishes()
+            ->where('version_id', $version->id)
+            ->where('status', 'pending')
+            ->update(['status' => 'cancelled']);
 
         $version->update(['status' => 'draft', 'scheduled_at' => null]);
 
@@ -142,10 +165,15 @@ class VersionController extends Controller
     }
 
     /**
-     * Rollback to a historical version (creates new version + publishes it).
+     * Rollback to a historical version.
+     *
+     * Fix 5: creates a new DRAFT version only — does not auto-publish.
+     * The editor must review and explicitly publish after rollback.
      */
     public function rollback(Content $content, ContentVersion $version): JsonResponse
     {
+        $this->authorize('rollback', $content);
+
         abort_unless($version->content_id === $content->id, 404);
 
         $newVersion = $this->versioning->rollback($content, $version);
@@ -158,6 +186,8 @@ class VersionController extends Controller
      */
     public function branch(Content $content, ContentVersion $version, Request $request): JsonResponse
     {
+        $this->authorize('modify', $content);
+
         abort_unless($version->content_id === $content->id, 404);
 
         $request->validate([

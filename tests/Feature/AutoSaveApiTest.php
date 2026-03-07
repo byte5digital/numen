@@ -40,7 +40,7 @@ class AutoSaveApiTest extends TestCase
             'status' => 'draft',
             'locale' => 'en',
         ]);
-        $this->user = User::factory()->create();
+        $this->user = User::factory()->create(['role' => 'editor', 'space_id' => $this->space->id]);
     }
 
     // ─── Authentication guard ─────────────────────────────────────────────────

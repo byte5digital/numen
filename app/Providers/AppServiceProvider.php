@@ -14,6 +14,9 @@ use App\Services\AI\LLMManager;
 use App\Services\AI\Providers\AnthropicProvider;
 use App\Services\AI\Providers\AzureOpenAIProvider;
 use App\Services\AI\Providers\OpenAIProvider;
+use App\Models\Content;
+use App\Policies\ContentPolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -58,6 +61,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Register content access policies
+        Gate::policy(Content::class, ContentPolicy::class);
+
         // Load DB settings into config (overrides .env defaults)
         Setting::loadIntoConfig();
     }

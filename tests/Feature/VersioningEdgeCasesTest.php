@@ -50,24 +50,22 @@ class VersioningEdgeCasesTest extends TestCase
             'status' => 'draft',
             'locale' => 'en',
         ]);
-        $this->user = User::factory()->create();
+        $this->user = User::factory()->create(['role' => 'editor', 'space_id' => $this->space->id]);
     }
 
     // ─── Rollback to deleted/orphaned version ─────────────────────────────────
 
-    public function test_rollback_to_archived_version_succeeds(): void
+    public function test_rollback_to_archived_version_creates_draft(): void
     {
-        Event::fake();
-
         $v1 = $this->makeVersion(1, 'archived', 'V1 Content', 'V1 body');
         $v2 = $this->makeVersion(2, 'published', 'V2 Content', 'V2 body');
         $this->content->update(['current_version_id' => $v2->id]);
 
-        // Rollback to the archived V1
+        // Rollback creates a draft — editor must explicitly publish (two-step safety)
         $newVersion = $this->service->rollback($this->content, $v1);
 
         $this->assertEquals('V1 Content', $newVersion->title);
-        $this->assertEquals('published', $newVersion->status);
+        $this->assertEquals('draft', $newVersion->status); // draft, not published
         $this->assertEquals(3, $newVersion->version_number);
     }
 

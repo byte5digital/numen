@@ -44,7 +44,7 @@ class VersionApiTest extends TestCase
             'status' => 'draft',
             'locale' => 'en',
         ]);
-        $this->user = User::factory()->create();
+        $this->user = User::factory()->create(['role' => 'editor', 'space_id' => $this->space->id]);
     }
 
     // ─── Authentication guard ─────────────────────────────────────────────────
@@ -338,9 +338,10 @@ class VersionApiTest extends TestCase
 
     // ─── rollback ────────────────────────────────────────────────────────────
 
-    public function test_rollback_creates_new_published_version(): void
+    public function test_rollback_creates_new_draft_version_for_review(): void
     {
-        Event::fake();
+        // Rollback is a two-step process: creates a draft, then editor explicitly publishes.
+        // Auto-publishing on rollback was removed (security fix: prevents accidental publication).
         $v1 = $this->makeVersion(1, 'published', 'Original V1', 'Original body');
         $this->content->update(['current_version_id' => $v1->id]);
 
@@ -349,7 +350,11 @@ class VersionApiTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('data.title', 'Original V1')
-            ->assertJsonPath('data.status', 'published');
+            ->assertJsonPath('data.status', 'draft'); // draft, not published — requires explicit publish
+
+        // Content draft pointer should be updated to the new rollback draft
+        $this->content->refresh();
+        $this->assertEquals($response->json('data.id'), $this->content->draft_version_id);
     }
 
     public function test_rollback_increments_version_number(): void

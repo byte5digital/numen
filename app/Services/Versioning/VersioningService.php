@@ -25,8 +25,8 @@ class VersioningService
         $base = $branchFrom ?? $content->currentVersion;
         $nextNumber = $content->versions()->max('version_number') + 1;
 
-        /** @var string|null $userId */
-        $userId = Auth::id();
+        // Fix 9: use actual authenticated user ID; no 'system' fallback on API paths
+        $userId = (string) Auth::id();
 
         $draft = $content->versions()->create([
             'version_number' => $nextNumber,
@@ -37,7 +37,7 @@ class VersioningService
             'structured_fields' => $base?->structured_fields,
             'seo_data' => $base?->seo_data,
             'author_type' => 'human',
-            'author_id' => $userId ?? 'system',
+            'author_id' => $userId,
             'status' => 'draft',
             'parent_version_id' => $base?->id,
             'change_reason' => $branchFrom ? "Branched from v{$base->version_number}" : null,
@@ -76,6 +76,8 @@ class VersioningService
 
     /**
      * Promote a draft to a named version (save point).
+     *
+     * Fix 7: only clear the CURRENT USER's auto-save buffer, not all users' drafts.
      */
     public function saveVersion(
         ContentVersion $draft,
@@ -88,8 +90,10 @@ class VersioningService
             'content_hash' => $draft->computeHash(),
         ]);
 
-        // Clear auto-save buffer for this content
-        ContentDraft::where('content_id', $draft->content_id)->delete();
+        // Fix 7: scope deletion to the authenticated user only
+        ContentDraft::where('content_id', $draft->content_id)
+            ->where('user_id', Auth::id())
+            ->delete();
 
         return $draft->fresh() ?? $draft;
     }
@@ -122,6 +126,8 @@ class VersioningService
 
     /**
      * Schedule a version for future publishing.
+     *
+     * Fix 9: use actual authenticated user ID; no 'system' fallback on API paths.
      */
     public function schedule(
         Content $content,
@@ -142,13 +148,13 @@ class VersioningService
             'scheduled_publish_at' => $publishAt,
         ]);
 
-        /** @var string|null $userId */
-        $userId = Auth::id();
+        // Fix 9: use actual user ID, no 'system' fallback for authenticated API calls
+        $userId = (string) Auth::id();
 
         $schedule = ScheduledPublish::create([
             'content_id' => $content->id,
             'version_id' => $version->id,
-            'scheduled_by' => $userId ?? 'system',
+            'scheduled_by' => $userId,
             'publish_at' => $publishAt,
             'status' => 'pending',
             'notes' => $notes,
@@ -161,12 +167,17 @@ class VersioningService
     }
 
     /**
-     * Rollback: create a new version from a historical one and publish it.
+     * Rollback: create a new DRAFT version from a historical one.
+     *
+     * Fix 5: two-step rollback — creates a draft for review; the editor must
+     * explicitly call publish() after reviewing. No auto-publish.
+     *
+     * Fix 9: use actual authenticated user ID; no 'system' fallback on API paths.
      */
     public function rollback(Content $content, ContentVersion $targetVersion): ContentVersion
     {
-        /** @var string|null $userId */
-        $userId = Auth::id();
+        // Fix 9: use actual user ID, no 'system' fallback for authenticated API calls
+        $userId = (string) Auth::id();
 
         $nextNumber = $content->versions()->max('version_number') + 1;
 
@@ -181,8 +192,8 @@ class VersioningService
             'structured_fields' => $targetVersion->structured_fields,
             'seo_data' => $targetVersion->seo_data,
             'author_type' => 'human',
-            'author_id' => $userId ?? 'system',
-            'status' => 'draft',
+            'author_id' => $userId,
+            'status' => 'draft', // Fix 5: stays as draft — no auto-publish
             'parent_version_id' => $targetVersion->id,
             'change_reason' => "Rollback to v{$targetVersion->version_number}{$label}",
         ]);
@@ -195,8 +206,9 @@ class VersioningService
 
         $newVersion->update(['content_hash' => $newVersion->computeHash()]);
 
-        // Auto-publish the rollback
-        $this->publish($content, $newVersion);
+        // Fix 5: DO NOT auto-publish. The caller must explicitly publish after review.
+        // Point the content's draft pointer to the rollback version for easy access.
+        $content->update(['draft_version_id' => $newVersion->id]);
 
         return $newVersion;
     }
