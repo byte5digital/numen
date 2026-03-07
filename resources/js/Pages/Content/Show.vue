@@ -5,6 +5,10 @@ import { marked } from 'marked';
 import ContentBlockRenderer from '../../ContentBlocks/ContentBlockRenderer.vue';
 import ComponentFieldEditor from '../../Blocks/ComponentFieldEditor.vue';
 import TagPicker from '../../Components/Taxonomy/TagPicker.vue';
+import VersionHistory from '../../Components/Versioning/VersionHistory.vue';
+import DiffViewer from '../../Components/Versioning/DiffViewer.vue';
+import SchedulePublish from '../../Components/Versioning/SchedulePublish.vue';
+import DraftEditor from '../../Components/Versioning/DraftEditor.vue';
 
 const props = defineProps({
     content:       { type: Object, required: true },
@@ -18,11 +22,12 @@ const props = defineProps({
 const flash = computed(() => usePage().props.flash ?? {});
 
 const statusColors = {
-    published: 'bg-emerald-900/50 text-emerald-400',
-    draft:     'bg-gray-800 text-gray-400',
-    archived:  'bg-red-900/30 text-red-400',
+    published:   'bg-emerald-900/50 text-emerald-400',
+    draft:       'bg-gray-800 text-gray-400',
+    archived:    'bg-red-900/30 text-red-400',
     in_pipeline: 'bg-indigo-900/50 text-indigo-400',
-    review:    'bg-amber-900/50 text-amber-400',
+    review:      'bg-amber-900/50 text-amber-400',
+    scheduled:   'bg-amber-900/50 text-amber-400',
 };
 
 const activeTab = ref('content');
@@ -30,7 +35,7 @@ const activeTab = ref('content');
 // ----- Block editor state -----
 const localBlocks = ref(props.blocks.map(b => ({ ...b, data: { ...b.data } })));
 const expandedBlock = ref(null);
-const activeBlockTab = reactive({}); // blockId -> 'preview'|'fields'|'html'
+const activeBlockTab = reactive({});
 const showAddBlock = ref(false);
 const newBlockType = ref(Object.keys(props.blockTypes)[0] ?? 'paragraph');
 const saving = ref(null);
@@ -39,6 +44,100 @@ const updatePrompt = ref('');
 const submittingUpdate = ref(false);
 const showUpdateBrief = ref(false);
 
+// ----- Versioning state -----
+const versionList        = ref([...props.versions]);
+const activeVersion      = ref(props.version);
+const activeVersionId    = computed(() => activeVersion.value?.id ?? null);
+const showDiffViewer     = ref(false);
+const editingDraft       = ref(false);
+
+const isDraftVersion = computed(() =>
+    activeVersion.value?.status === 'draft' && !activeVersion.value?.scheduled_at
+);
+
+const isScheduledVersion = computed(() =>
+    !!(activeVersion.value?.scheduled_at)
+);
+
+// ── Versioning helpers ──────────────────────────────────────────────────────
+async function csrfCookie() {
+    await fetch('/sanctum/csrf-cookie', { credentials: 'include' });
+}
+
+function xsrfToken() {
+    const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : '';
+}
+
+async function loadVersionDetails(v) {
+    try {
+        await csrfCookie();
+        const res = await fetch(`/api/content/${props.content.id}/versions/${v.id}`, {
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'X-XSRF-TOKEN': xsrfToken(),
+            },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        activeVersion.value = data?.data ?? v;
+    } catch {
+        activeVersion.value = v;
+    }
+}
+
+async function refreshVersionList() {
+    try {
+        await csrfCookie();
+        const res = await fetch(`/api/content/${props.content.id}/versions`, {
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'X-XSRF-TOKEN': xsrfToken(),
+            },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        versionList.value = data?.data ?? data;
+    } catch {}
+}
+
+async function onVersionSelected(v) {
+    editingDraft.value = false;
+    await loadVersionDetails(v);
+}
+
+async function onVersionsUpdated(newVersionData) {
+    await refreshVersionList();
+    // If a new version was returned (draft/branch), select it
+    if (newVersionData) {
+        await loadVersionDetails(newVersionData);
+    }
+}
+
+function onDraftSaved(updatedVersion) {
+    if (updatedVersion) {
+        activeVersion.value = updatedVersion;
+    }
+    editingDraft.value = false;
+}
+
+function onDraftDiscarded() {
+    editingDraft.value = false;
+}
+
+async function onScheduled() {
+    await refreshVersionList();
+    await loadVersionDetails(activeVersion.value);
+}
+
+async function onScheduleCancelled() {
+    await refreshVersionList();
+    await loadVersionDetails(activeVersion.value);
+}
+
+// ── Existing content/block helpers ───────────────────────────────────────────
 function submitUpdateBrief() {
     if (!updatePrompt.value.trim() || submittingUpdate.value) return;
     submittingUpdate.value = true;
@@ -126,13 +225,13 @@ const scoreColor = (score) =>
     score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-amber-400' : 'text-red-400';
 
 const renderedBody = computed(() => {
-    if (!props.version?.body) return '';
-    if (props.version.body_format === 'html') return props.version.body;
-    return marked.parse(props.version.body);
+    if (!activeVersion.value?.body) return '';
+    if (activeVersion.value.body_format === 'html') return activeVersion.value.body;
+    return marked.parse(activeVersion.value.body);
 });
 
 // Taxonomy state
-const openTagPicker = ref(null); // vocabularyId that has picker open
+const openTagPicker = ref(null);
 
 function addTerm(termId) {
     router.post(
@@ -163,10 +262,18 @@ function selectedTermIds(vocabularyGroup) {
             <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-3 flex-wrap">
                     <h1 class="text-2xl font-bold text-white truncate">
-                        {{ version?.title ?? 'Untitled' }}
+                        {{ activeVersion?.title ?? 'Untitled' }}
                     </h1>
-                    <span class="px-2 py-1 text-xs rounded-full shrink-0" :class="statusColors[content.status] ?? 'bg-gray-800 text-gray-400'">
-                        {{ content.status }}
+                    <span class="px-2 py-1 text-xs rounded-full shrink-0"
+                          :class="isScheduledVersion
+                              ? statusColors.scheduled
+                              : (statusColors[content.status] ?? 'bg-gray-800 text-gray-400')">
+                        {{ isScheduledVersion ? '⏰ Scheduled' : content.status }}
+                    </span>
+                    <!-- Viewing non-current version indicator -->
+                    <span v-if="activeVersion?.id !== version?.id"
+                          class="text-xs px-2 py-1 bg-amber-900/30 text-amber-400 rounded-full border border-amber-700/30">
+                        Viewing v{{ activeVersion?.version_number }} (historical)
                     </span>
                 </div>
                 <p class="text-gray-500 text-sm mt-1 font-mono">{{ content.slug }}</p>
@@ -213,13 +320,13 @@ function selectedTermIds(vocabularyGroup) {
             <!-- Main content column -->
             <div class="lg:col-span-2 space-y-5">
 
-                <!-- Tabs -->
+                <!-- Main Tabs -->
                 <div class="flex gap-1 bg-gray-900 border border-gray-800 rounded-xl p-1 w-fit">
-                    <button v-for="tab in ['content', 'blocks', 'seo', 'metadata']" :key="tab"
-                            @click="activeTab = tab"
+                    <button v-for="tab in ['content', 'blocks', 'seo', 'metadata', 'diff']" :key="tab"
+                            @click="activeTab = tab; if(tab === 'diff') showDiffViewer = true"
                             class="px-4 py-1.5 rounded-lg text-sm font-medium transition capitalize"
                             :class="activeTab === tab ? 'bg-gray-800 text-white' : 'text-gray-500 hover:text-gray-300'">
-                        {{ tab }}
+                        {{ tab === 'diff' ? '🔀 Compare' : tab }}
                         <span v-if="tab === 'blocks' && localBlocks.length"
                               class="ml-1 text-xs px-1.5 py-0.5 bg-indigo-500/20 text-indigo-400 rounded-full">
                             {{ localBlocks.length }}
@@ -227,12 +334,36 @@ function selectedTermIds(vocabularyGroup) {
                     </button>
                 </div>
 
+                <!-- Draft Editor banner (when editing a draft) -->
+                <div v-if="isDraftVersion && !editingDraft"
+                     class="flex items-center justify-between px-4 py-3 bg-indigo-900/20 border border-indigo-700/30 rounded-xl">
+                    <div class="flex items-center gap-2 text-sm text-indigo-300">
+                        <span>✏️</span>
+                        <span>This is a draft version — you can edit it directly.</span>
+                    </div>
+                    <button
+                        @click="editingDraft = true; activeTab = 'content'"
+                        class="text-xs px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition"
+                    >
+                        Edit Draft
+                    </button>
+                </div>
+
+                <!-- Draft Editor (inline) -->
+                <DraftEditor
+                    v-if="editingDraft && isDraftVersion && activeVersion"
+                    :content-id="content.id"
+                    :version="activeVersion"
+                    @saved="onDraftSaved"
+                    @discarded="onDraftDiscarded"
+                />
+
                 <!-- Content tab -->
-                <div v-if="activeTab === 'content'" class="bg-gray-900 rounded-xl border border-gray-800 p-6">
-                    <div v-if="version">
+                <div v-if="activeTab === 'content' && !editingDraft" class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+                    <div v-if="activeVersion">
                         <div class="mb-4 pb-4 border-b border-gray-800">
-                            <h2 class="text-lg font-semibold text-white">{{ version.title }}</h2>
-                            <p v-if="version.excerpt" class="text-gray-400 text-sm mt-2 leading-relaxed italic">{{ version.excerpt }}</p>
+                            <h2 class="text-lg font-semibold text-white">{{ activeVersion.title }}</h2>
+                            <p v-if="activeVersion.excerpt" class="text-gray-400 text-sm mt-2 leading-relaxed italic">{{ activeVersion.excerpt }}</p>
                         </div>
                         <div class="prose prose-invert prose-sm max-w-none
                                     prose-headings:text-white prose-headings:font-bold
@@ -249,7 +380,6 @@ function selectedTermIds(vocabularyGroup) {
                 <!-- Blocks tab -->
                 <div v-else-if="activeTab === 'blocks'" class="space-y-3">
 
-                    <!-- Block list -->
                     <div v-if="!localBlocks.length" class="bg-gray-900 rounded-xl border border-gray-800 p-8 text-center text-gray-600 text-sm">
                         No blocks yet. Add one below to replace the raw body with a structured block layout.
                     </div>
@@ -257,7 +387,6 @@ function selectedTermIds(vocabularyGroup) {
                     <div v-for="(block, idx) in localBlocks" :key="block.id"
                          class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
 
-                        <!-- Block header -->
                         <div class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-800/50 transition"
                              @click="toggleBlock(block.id)">
                             <span class="text-xs font-mono text-gray-500 w-5 text-center">{{ idx + 1 }}</span>
@@ -273,10 +402,8 @@ function selectedTermIds(vocabularyGroup) {
                             <span class="text-gray-600 text-xs">{{ expandedBlock === block.id ? '▲' : '▼' }}</span>
                         </div>
 
-                        <!-- Block editor (expanded) -->
                         <div v-if="expandedBlock === block.id" class="border-t border-gray-800 p-4">
 
-                            <!-- Sub-tabs -->
                             <div class="flex gap-1 mb-4">
                                 <button v-for="t in ['preview', 'fields', 'html']" :key="t"
                                         @click="setBlockTab(block.id, t)"
@@ -286,13 +413,11 @@ function selectedTermIds(vocabularyGroup) {
                                 </button>
                             </div>
 
-                            <!-- Preview -->
                             <div v-if="blockTab(block.id) === 'preview'"
                                  class="rounded-lg border border-gray-800 bg-gray-950 p-4 min-h-[80px]">
                                 <ContentBlockRenderer :block="block" />
                             </div>
 
-                            <!-- Fields -->
                             <div v-else-if="blockTab(block.id) === 'fields'">
                                 <ComponentFieldEditor
                                     :schema="typeSchema(block.type)"
@@ -305,7 +430,6 @@ function selectedTermIds(vocabularyGroup) {
                                 </button>
                             </div>
 
-                            <!-- HTML Override -->
                             <div v-else>
                                 <textarea
                                     v-model="block.wysiwyg_override"
@@ -339,9 +463,7 @@ function selectedTermIds(vocabularyGroup) {
                         <div v-else class="flex items-center gap-3">
                             <select v-model="newBlockType"
                                     class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
-                                <option v-for="(schema, type) in blockTypes" :key="type" :value="type">
-                                    {{ type }}
-                                </option>
+                                <option v-for="(schema, type) in blockTypes" :key="type" :value="type">{{ type }}</option>
                             </select>
                             <button @click="addBlock"
                                     class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition">
@@ -357,104 +479,98 @@ function selectedTermIds(vocabularyGroup) {
 
                 <!-- SEO tab -->
                 <div v-else-if="activeTab === 'seo'" class="space-y-4">
-                    <div v-if="version?.seo_data" class="space-y-4">
+                    <div v-if="activeVersion?.seo_data" class="space-y-4">
 
-                        <!-- Meta Tags -->
                         <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
                             <h3 class="text-sm font-semibold text-white mb-3">🏷️ Meta Tags</h3>
                             <div class="space-y-3">
-                                <div v-if="version.seo_data.seo_title">
+                                <div v-if="activeVersion.seo_data.seo_title">
                                     <label class="text-xs text-gray-500 uppercase tracking-wide">Title Tag</label>
-                                    <p class="text-white text-sm mt-1">{{ version.seo_data.seo_title }}
-                                        <span class="text-xs text-gray-600 ml-2">({{ version.seo_data.seo_title?.length }} chars)</span>
+                                    <p class="text-white text-sm mt-1">{{ activeVersion.seo_data.seo_title }}
+                                        <span class="text-xs text-gray-600 ml-2">({{ activeVersion.seo_data.seo_title?.length }} chars)</span>
                                     </p>
                                 </div>
-                                <div v-if="version.seo_data.meta_description">
+                                <div v-if="activeVersion.seo_data.meta_description">
                                     <label class="text-xs text-gray-500 uppercase tracking-wide">Meta Description</label>
-                                    <p class="text-gray-300 text-sm mt-1">{{ version.seo_data.meta_description }}
-                                        <span class="text-xs text-gray-600 ml-2">({{ version.seo_data.meta_description?.length }} chars)</span>
+                                    <p class="text-gray-300 text-sm mt-1">{{ activeVersion.seo_data.meta_description }}
+                                        <span class="text-xs text-gray-600 ml-2">({{ activeVersion.seo_data.meta_description?.length }} chars)</span>
                                     </p>
                                 </div>
-                                <div v-if="version.seo_data.canonical_url" class="text-sm">
+                                <div v-if="activeVersion.seo_data.canonical_url" class="text-sm">
                                     <label class="text-xs text-gray-500 uppercase tracking-wide">Canonical</label>
-                                    <p class="text-indigo-400 font-mono text-xs mt-1">{{ version.seo_data.canonical_url }}</p>
+                                    <p class="text-indigo-400 font-mono text-xs mt-1">{{ activeVersion.seo_data.canonical_url }}</p>
                                 </div>
-                                <div v-if="version.seo_data.meta_robots" class="text-sm">
+                                <div v-if="activeVersion.seo_data.meta_robots" class="text-sm">
                                     <label class="text-xs text-gray-500 uppercase tracking-wide">Robots</label>
-                                    <p class="text-gray-300 font-mono text-xs mt-1">{{ version.seo_data.meta_robots }}</p>
+                                    <p class="text-gray-300 font-mono text-xs mt-1">{{ activeVersion.seo_data.meta_robots }}</p>
                                 </div>
-                                <div v-if="version.seo_data.keywords?.length">
+                                <div v-if="activeVersion.seo_data.keywords?.length">
                                     <label class="text-xs text-gray-500 uppercase tracking-wide">Keywords</label>
                                     <div class="flex flex-wrap gap-2 mt-2">
-                                        <span v-for="kw in version.seo_data.keywords" :key="kw"
+                                        <span v-for="kw in activeVersion.seo_data.keywords" :key="kw"
                                               class="px-2 py-1 bg-indigo-900/40 text-indigo-300 rounded text-xs">{{ kw }}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Open Graph -->
-                        <div v-if="version.seo_data.og_title" class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+                        <div v-if="activeVersion.seo_data.og_title" class="bg-gray-900 rounded-xl border border-gray-800 p-5">
                             <h3 class="text-sm font-semibold text-white mb-3">📘 Open Graph</h3>
                             <div class="space-y-2 text-sm">
-                                <div><span class="text-gray-500">og:title:</span> <span class="text-gray-300 ml-2">{{ version.seo_data.og_title }}</span></div>
-                                <div v-if="version.seo_data.og_description"><span class="text-gray-500">og:description:</span> <span class="text-gray-300 ml-2">{{ version.seo_data.og_description }}</span></div>
-                                <div><span class="text-gray-500">og:type:</span> <span class="text-gray-400 font-mono text-xs ml-2">{{ version.seo_data.og_type }}</span></div>
-                                <div v-if="version.seo_data.og_locale"><span class="text-gray-500">og:locale:</span> <span class="text-gray-400 font-mono text-xs ml-2">{{ version.seo_data.og_locale }}</span></div>
+                                <div><span class="text-gray-500">og:title:</span> <span class="text-gray-300 ml-2">{{ activeVersion.seo_data.og_title }}</span></div>
+                                <div v-if="activeVersion.seo_data.og_description"><span class="text-gray-500">og:description:</span> <span class="text-gray-300 ml-2">{{ activeVersion.seo_data.og_description }}</span></div>
+                                <div><span class="text-gray-500">og:type:</span> <span class="text-gray-400 font-mono text-xs ml-2">{{ activeVersion.seo_data.og_type }}</span></div>
                             </div>
                         </div>
 
-                        <!-- Twitter Card -->
-                        <div v-if="version.seo_data.twitter_title" class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+                        <div v-if="activeVersion.seo_data.twitter_title" class="bg-gray-900 rounded-xl border border-gray-800 p-5">
                             <h3 class="text-sm font-semibold text-white mb-3">🐦 Twitter Card</h3>
                             <div class="space-y-2 text-sm">
-                                <div><span class="text-gray-500">card:</span> <span class="text-gray-400 font-mono text-xs ml-2">{{ version.seo_data.twitter_card }}</span></div>
-                                <div><span class="text-gray-500">title:</span> <span class="text-gray-300 ml-2">{{ version.seo_data.twitter_title }}</span></div>
-                                <div v-if="version.seo_data.twitter_description"><span class="text-gray-500">description:</span> <span class="text-gray-300 ml-2">{{ version.seo_data.twitter_description }}</span></div>
+                                <div><span class="text-gray-500">card:</span> <span class="text-gray-400 font-mono text-xs ml-2">{{ activeVersion.seo_data.twitter_card }}</span></div>
+                                <div><span class="text-gray-500">title:</span> <span class="text-gray-300 ml-2">{{ activeVersion.seo_data.twitter_title }}</span></div>
+                                <div v-if="activeVersion.seo_data.twitter_description"><span class="text-gray-500">description:</span> <span class="text-gray-300 ml-2">{{ activeVersion.seo_data.twitter_description }}</span></div>
                             </div>
                         </div>
 
-                        <!-- JSON-LD -->
-                        <div v-if="version.seo_data.json_ld_article" class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+                        <div v-if="activeVersion.seo_data.json_ld_article" class="bg-gray-900 rounded-xl border border-gray-800 p-5">
                             <h3 class="text-sm font-semibold text-white mb-3">📋 JSON-LD Structured Data</h3>
                             <div class="space-y-3">
                                 <div>
                                     <label class="text-xs text-gray-500 uppercase tracking-wide">Article / BlogPosting</label>
-                                    <pre class="text-xs text-gray-400 bg-gray-950 rounded-lg p-3 mt-1 overflow-x-auto max-h-64">{{ JSON.stringify(version.seo_data.json_ld_article, null, 2) }}</pre>
+                                    <pre class="text-xs text-gray-400 bg-gray-950 rounded-lg p-3 mt-1 overflow-x-auto max-h-64">{{ JSON.stringify(activeVersion.seo_data.json_ld_article, null, 2) }}</pre>
                                 </div>
-                                <div v-if="version.seo_data.json_ld_breadcrumb">
+                                <div v-if="activeVersion.seo_data.json_ld_breadcrumb">
                                     <label class="text-xs text-gray-500 uppercase tracking-wide">BreadcrumbList</label>
-                                    <pre class="text-xs text-gray-400 bg-gray-950 rounded-lg p-3 mt-1 overflow-x-auto">{{ JSON.stringify(version.seo_data.json_ld_breadcrumb, null, 2) }}</pre>
+                                    <pre class="text-xs text-gray-400 bg-gray-950 rounded-lg p-3 mt-1 overflow-x-auto">{{ JSON.stringify(activeVersion.seo_data.json_ld_breadcrumb, null, 2) }}</pre>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Analysis -->
-                        <div v-if="version.seo_data.keyword_density || version.seo_data.body_suggestions?.length"
+                        <div v-if="activeVersion.seo_data.keyword_density || activeVersion.seo_data.body_suggestions?.length"
                              class="bg-gray-900 rounded-xl border border-gray-800 p-5">
                             <h3 class="text-sm font-semibold text-white mb-3">📊 SEO Analysis</h3>
                             <div class="space-y-3">
-                                <div v-if="version.seo_data.word_count" class="flex justify-between text-sm">
+                                <div v-if="activeVersion.seo_data.word_count" class="flex justify-between text-sm">
                                     <span class="text-gray-500">Word Count</span>
-                                    <span class="text-gray-300">{{ version.seo_data.word_count }}</span>
+                                    <span class="text-gray-300">{{ activeVersion.seo_data.word_count }}</span>
                                 </div>
-                                <div v-if="version.seo_data.readability_score" class="flex justify-between text-sm">
+                                <div v-if="activeVersion.seo_data.readability_score" class="flex justify-between text-sm">
                                     <span class="text-gray-500">Readability</span>
-                                    <span class="text-gray-300">{{ version.seo_data.readability_score }}</span>
+                                    <span class="text-gray-300">{{ activeVersion.seo_data.readability_score }}</span>
                                 </div>
-                                <div v-if="version.seo_data.keyword_density && typeof version.seo_data.keyword_density === 'object'">
+                                <div v-if="activeVersion.seo_data.keyword_density && typeof activeVersion.seo_data.keyword_density === 'object'">
                                     <label class="text-xs text-gray-500 uppercase tracking-wide">Keyword Density</label>
                                     <div class="grid grid-cols-2 gap-2 mt-2">
-                                        <div v-for="(d, kw) in version.seo_data.keyword_density" :key="kw" class="flex justify-between text-xs">
+                                        <div v-for="(d, kw) in activeVersion.seo_data.keyword_density" :key="kw" class="flex justify-between text-xs">
                                             <span class="text-gray-400">{{ kw }}</span>
                                             <span class="text-indigo-400 font-mono">{{ typeof d === 'number' ? (d * 100).toFixed(1) + '%' : d }}</span>
                                         </div>
                                     </div>
                                 </div>
-                                <div v-if="version.seo_data.body_suggestions?.length">
+                                <div v-if="activeVersion.seo_data.body_suggestions?.length">
                                     <label class="text-xs text-gray-500 uppercase tracking-wide">Suggestions</label>
                                     <ul class="mt-2 space-y-1">
-                                        <li v-for="(s, i) in version.seo_data.body_suggestions" :key="i" class="text-xs text-gray-400 flex gap-2">
+                                        <li v-for="(s, i) in activeVersion.seo_data.body_suggestions" :key="i" class="text-xs text-gray-400 flex gap-2">
                                             <span class="text-indigo-400">•</span> {{ s }}
                                         </li>
                                     </ul>
@@ -466,22 +582,30 @@ function selectedTermIds(vocabularyGroup) {
                 </div>
 
                 <!-- Metadata tab -->
-                <div v-else class="bg-gray-900 rounded-xl border border-gray-800 p-6">
-                    <div v-if="version?.structured_fields" class="space-y-3">
+                <div v-else-if="activeTab === 'metadata'" class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+                    <div v-if="activeVersion?.structured_fields" class="space-y-3">
                         <label class="text-xs text-gray-500 uppercase tracking-wide block">Structured Fields</label>
-                        <div v-for="(val, key) in version.structured_fields" :key="key"
+                        <div v-for="(val, key) in activeVersion.structured_fields" :key="key"
                              class="flex justify-between py-2 border-b border-gray-800 text-sm">
                             <span class="text-gray-500">{{ key }}</span>
                             <span class="text-gray-300">{{ val }}</span>
                         </div>
                     </div>
-                    <div v-if="version?.ai_metadata" class="mt-4 space-y-3">
+                    <div v-if="activeVersion?.ai_metadata" class="mt-4 space-y-3">
                         <label class="text-xs text-gray-500 uppercase tracking-wide block">AI Metadata</label>
-                        <pre class="text-xs text-gray-500 bg-gray-950 rounded-lg p-3 overflow-x-auto">{{ JSON.stringify(version.ai_metadata, null, 2) }}</pre>
+                        <pre class="text-xs text-gray-500 bg-gray-950 rounded-lg p-3 overflow-x-auto">{{ JSON.stringify(activeVersion.ai_metadata, null, 2) }}</pre>
                     </div>
-                    <p v-if="!version?.structured_fields && !version?.ai_metadata" class="text-gray-600 text-sm">
+                    <p v-if="!activeVersion?.structured_fields && !activeVersion?.ai_metadata" class="text-gray-600 text-sm">
                         No additional metadata.
                     </p>
+                </div>
+
+                <!-- Diff / Compare tab -->
+                <div v-else-if="activeTab === 'diff'">
+                    <DiffViewer
+                        :content-id="content.id"
+                        :versions="versionList"
+                    />
                 </div>
             </div>
 
@@ -492,9 +616,18 @@ function selectedTermIds(vocabularyGroup) {
                 <div v-if="content.hero_image_url" class="bg-gray-900 rounded-xl border border-gray-800 p-5">
                     <h3 class="text-sm font-medium text-white mb-3">Hero Image</h3>
                     <img :src="content.hero_image_url"
-                         :alt="version?.title"
+                         :alt="activeVersion?.title"
                          class="w-full rounded-lg shadow-md object-cover" />
                 </div>
+
+                <!-- Schedule Publishing (draft versions only) -->
+                <SchedulePublish
+                    v-if="isDraftVersion || isScheduledVersion"
+                    :content-id="content.id"
+                    :version="activeVersion"
+                    @scheduled="onScheduled"
+                    @cancelled="onScheduleCancelled"
+                />
 
                 <!-- Update Brief -->
                 <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
@@ -512,7 +645,7 @@ function selectedTermIds(vocabularyGroup) {
                         <textarea
                             v-model="updatePrompt"
                             rows="4"
-                            placeholder="Describe what to change, e.g. 'Make the tone more casual, add a section about pricing, update stats to 2026...'"
+                            placeholder="Describe what to change…"
                             class="w-full bg-gray-950 border border-gray-700 rounded-lg p-3 text-sm text-gray-300 resize-y focus:outline-none focus:border-indigo-500 placeholder-gray-600"
                         />
                         <div class="flex items-center gap-2">
@@ -522,7 +655,7 @@ function selectedTermIds(vocabularyGroup) {
                                 {{ submittingUpdate ? '⏳ Submitting…' : '🚀 Run Update Pipeline' }}
                             </button>
                         </div>
-                        <p class="text-xs text-gray-600">This creates a brief and runs the full pipeline (generate → illustrate → SEO → review → publish).</p>
+                        <p class="text-xs text-gray-600">This creates a brief and runs the full pipeline.</p>
                     </div>
                 </div>
 
@@ -532,26 +665,26 @@ function selectedTermIds(vocabularyGroup) {
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-gray-500">Quality</span>
-                            <span class="text-lg font-bold" :class="version?.quality_score ? scoreColor(version.quality_score) : 'text-gray-700'">
-                                {{ version?.quality_score ?? '—' }}
-                                <span v-if="version?.quality_score" class="text-xs text-gray-600">/100</span>
+                            <span class="text-lg font-bold" :class="activeVersion?.quality_score ? scoreColor(activeVersion.quality_score) : 'text-gray-700'">
+                                {{ activeVersion?.quality_score ?? '—' }}
+                                <span v-if="activeVersion?.quality_score" class="text-xs text-gray-600">/100</span>
                             </span>
                         </div>
-                        <div v-if="version?.quality_score" class="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                        <div v-if="activeVersion?.quality_score" class="h-1.5 bg-gray-800 rounded-full overflow-hidden">
                             <div class="h-full rounded-full transition-all"
-                                 :class="version.quality_score >= 80 ? 'bg-emerald-500' : version.quality_score >= 60 ? 'bg-amber-500' : 'bg-red-500'"
-                                 :style="{ width: `${version.quality_score}%` }" />
+                                 :class="activeVersion.quality_score >= 80 ? 'bg-emerald-500' : activeVersion.quality_score >= 60 ? 'bg-amber-500' : 'bg-red-500'"
+                                 :style="{ width: `${activeVersion.quality_score}%` }" />
                         </div>
                         <div class="flex items-center justify-between pt-1">
                             <span class="text-sm text-gray-500">SEO</span>
-                            <span class="text-lg font-bold" :class="version?.seo_score ? scoreColor(version.seo_score) : 'text-gray-700'">
-                                {{ version?.seo_score ?? '—' }}
-                                <span v-if="version?.seo_score" class="text-xs text-gray-600">/100</span>
+                            <span class="text-lg font-bold" :class="activeVersion?.seo_score ? scoreColor(activeVersion.seo_score) : 'text-gray-700'">
+                                {{ activeVersion?.seo_score ?? '—' }}
+                                <span v-if="activeVersion?.seo_score" class="text-xs text-gray-600">/100</span>
                             </span>
                         </div>
-                        <div v-if="version?.seo_score" class="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                        <div v-if="activeVersion?.seo_score" class="h-1.5 bg-gray-800 rounded-full overflow-hidden">
                             <div class="h-full rounded-full bg-blue-500"
-                                 :style="{ width: `${version.seo_score}%` }" />
+                                 :style="{ width: `${activeVersion.seo_score}%` }" />
                         </div>
                     </div>
                 </div>
@@ -570,13 +703,17 @@ function selectedTermIds(vocabularyGroup) {
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">Author</span>
-                            <span :class="version?.author_type === 'ai_agent' ? 'text-indigo-400' : 'text-emerald-400'">
-                                {{ version?.author_type === 'ai_agent' ? '🤖 AI' : '👤 Human' }}
+                            <span :class="activeVersion?.author_type === 'ai_agent' ? 'text-indigo-400' : 'text-emerald-400'">
+                                {{ activeVersion?.author_type === 'ai_agent' ? '🤖 AI' : '👤 Human' }}
                             </span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">Version</span>
-                            <span class="text-gray-300">v{{ version?.version_number ?? '—' }}</span>
+                            <span class="text-gray-300">v{{ activeVersion?.version_number ?? '—' }}</span>
+                        </div>
+                        <div v-if="activeVersion?.change_reason" class="flex flex-col gap-1">
+                            <span class="text-gray-500">Change Reason</span>
+                            <span class="text-gray-400 text-xs italic">{{ activeVersion.change_reason }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">Created</span>
@@ -604,7 +741,6 @@ function selectedTermIds(vocabularyGroup) {
                                 >+</button>
                             </div>
 
-                            <!-- Inline TagPicker -->
                             <div v-if="openTagPicker === group.vocabulary_id" class="mb-2">
                                 <TagPicker
                                     :vocabulary-id="group.vocabulary_id"
@@ -615,7 +751,6 @@ function selectedTermIds(vocabularyGroup) {
                                 />
                             </div>
 
-                            <!-- Term chips -->
                             <div class="flex flex-wrap gap-1.5">
                                 <span
                                     v-for="term in group.terms"
@@ -643,7 +778,6 @@ function selectedTermIds(vocabularyGroup) {
                         No taxonomy terms assigned.
                     </div>
 
-                    <!-- Add first term button when no groups yet -->
                     <div v-if="!taxonomyTerms.length" class="mt-2">
                         <p class="text-xs text-gray-600">
                             Go to
@@ -653,27 +787,15 @@ function selectedTermIds(vocabularyGroup) {
                     </div>
                 </div>
 
-                <!-- Version history -->
-                <div v-if="versions.length > 1" class="bg-gray-900 rounded-xl border border-gray-800 p-5">
-                    <h3 class="text-sm font-medium text-white mb-3">Version History</h3>
-                    <div class="space-y-2">
-                        <div v-for="v in versions" :key="v.id"
-                             class="flex items-center justify-between py-2 border-b border-gray-800/50 last:border-0">
-                            <div>
-                                <span class="text-xs text-gray-400">v{{ v.version_number }}</span>
-                                <span v-if="v.is_current"
-                                      class="ml-2 text-xs px-1.5 py-0.5 bg-indigo-500/20 text-indigo-400 rounded">current</span>
-                                <p class="text-xs text-gray-600 mt-0.5">{{ v.created_at }}</p>
-                            </div>
-                            <div class="text-right">
-                                <span :class="v.author_type === 'ai_agent' ? 'text-indigo-400' : 'text-emerald-400'" class="text-xs">
-                                    {{ v.author_type === 'ai_agent' ? '🤖' : '👤' }}
-                                </span>
-                                <p v-if="v.quality_score" class="text-xs text-gray-600">Q{{ v.quality_score }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Version History (always visible) -->
+                <VersionHistory
+                    :content-id="content.id"
+                    :versions="versionList"
+                    :active-version-id="activeVersionId"
+                    @version-selected="onVersionSelected"
+                    @versions-updated="onVersionsUpdated"
+                />
+
             </div>
         </div>
     </div>
