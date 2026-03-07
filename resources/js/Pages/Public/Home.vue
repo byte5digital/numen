@@ -20,6 +20,8 @@ const features = [
         icon: '🔌',
         title: 'Headless API',
         desc: 'Clean REST API for any frontend. Block-based content model. Deliver to websites, apps, or custom integrations.',
+        link: '/api/documentation',
+        linkText: 'Explore API →',
     },
     {
         icon: '🔄',
@@ -176,6 +178,10 @@ const stack = [
                     <span class="text-2xl mb-3 block">{{ feature.icon }}</span>
                     <h3 class="font-bold text-slate-900 mb-2">{{ feature.title }}</h3>
                     <p class="text-sm text-slate-500 leading-relaxed">{{ feature.desc }}</p>
+                    <a v-if="feature.link" :href="feature.link"
+                       class="inline-block mt-3 text-sm font-medium text-indigo-500 hover:text-indigo-700 transition">
+                        {{ feature.linkText }}
+                    </a>
                 </div>
             </div>
         </div>
@@ -246,8 +252,8 @@ const stack = [
                     Get Started on GitHub
                 </a>
                 <a href="/api/documentation"
-                   class="inline-flex items-center gap-2 px-7 py-3.5 text-slate-600 font-semibold text-base hover:text-indigo-500 transition">
-                    API Docs
+                   class="inline-flex items-center gap-2 px-7 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-base rounded-xl transition">
+                    📖 Swagger API Docs
                     <span>→</span>
                 </a>
             </div>
