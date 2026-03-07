@@ -7,12 +7,17 @@ use App\Models\Content;
 use App\Models\ContentBlock;
 use App\Models\ContentBrief;
 use App\Models\ContentPipeline;
+use App\Models\TaxonomyTerm;
 use App\Pipelines\PipelineExecutor;
+use App\Services\Taxonomy\TaxonomyService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ContentAdminController extends Controller
 {
+    public function __construct(private readonly TaxonomyService $taxonomy) {}
+
     public function index()
     {
         $contents = Content::with(['currentVersion', 'contentType', 'heroImage'])
@@ -37,13 +42,14 @@ class ContentAdminController extends Controller
         ]);
     }
 
-    public function show(string $id)
+    public function show(string $id): \Inertia\Response
     {
         $content = Content::with([
             'currentVersion.blocks',
             'contentType',
             'heroImage',
             'versions' => fn ($q) => $q->orderByDesc('version_number'),
+            'taxonomyTerms.vocabulary',
         ])->findOrFail($id);
 
         $version = $content->currentVersion;
@@ -102,7 +108,52 @@ class ContentAdminController extends Controller
             ]),
             'blocks' => $blocks,
             'blockTypes' => ContentBlock::allTypes(),
+            'taxonomyTerms' => (static function (\Illuminate\Database\Eloquent\Collection $terms): array {
+                $groups = [];
+                foreach ($terms->groupBy(fn (TaxonomyTerm $t) => $t->vocabulary->name) as $vocabName => $groupTerms) {
+                    /** @var \Illuminate\Support\Collection<int, TaxonomyTerm> $groupTerms */
+                    $groups[] = [
+                        'vocabulary_name' => (string) $vocabName,
+                        'vocabulary_id' => (string) $groupTerms->first()->vocabulary_id,
+                        'terms' => $groupTerms->map(static function (TaxonomyTerm $t): array {
+                            $pivot = $t->pivot;
+
+                            return [
+                                'id' => $t->id,
+                                'name' => $t->name,
+                                'slug' => $t->slug,
+                                'auto_assigned' => (bool) $pivot->auto_assigned,
+                                'confidence' => $pivot->confidence !== null ? (float) $pivot->confidence : null,
+                            ];
+                        })->values()->all(),
+                    ];
+                }
+
+                return $groups;
+            })($content->taxonomyTerms),
         ]);
+    }
+
+    public function assignTerm(Request $request, string $id): RedirectResponse
+    {
+        $content = Content::findOrFail($id);
+
+        $validated = $request->validate([
+            'term_id' => ['required', 'string', 'exists:taxonomy_terms,id'],
+        ]);
+
+        $this->taxonomy->assignTerms($content, [['term_id' => $validated['term_id']]]);
+
+        return back()->with('success', 'Term assigned.');
+    }
+
+    public function removeTerm(string $id, string $termId): RedirectResponse
+    {
+        $content = Content::findOrFail($id);
+
+        $this->taxonomy->removeTerms($content, [$termId]);
+
+        return back()->with('success', 'Term removed.');
     }
 
     public function addBlock(Request $request, string $id)

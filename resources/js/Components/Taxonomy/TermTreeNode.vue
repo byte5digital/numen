@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import TermForm from './TermForm.vue';
 
 const props = defineProps({
@@ -42,12 +42,18 @@ function deleteTerm() {
             </button>
             <span v-else class="w-4"></span>
 
-            <!-- Term name -->
-            <span class="flex-1 text-sm text-gray-200">{{ term.name }}</span>
+            <!-- Term name (clickable link) -->
+            <Link
+                :href="`/admin/taxonomy/terms/${term.id}`"
+                class="flex-1 text-sm text-gray-200 hover:text-indigo-300 transition"
+            >{{ term.name }}</Link>
 
             <!-- Meta -->
             <span class="text-xs text-gray-600 font-mono">{{ term.slug }}</span>
-            <span v-if="term.content_count > 0" class="text-xs text-gray-500">{{ term.content_count }} content</span>
+            <span
+                v-if="term.content_count > 0"
+                class="px-1.5 py-0.5 text-xs bg-indigo-900/30 text-indigo-400 rounded-full"
+            >{{ term.content_count }}</span>
 
             <!-- Actions (visible on hover) -->
             <div class="hidden group-hover:flex items-center gap-2">

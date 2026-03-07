@@ -30,6 +30,7 @@ use Illuminate\Support\Str;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, TaxonomyTerm> $children
  * @property-read \Illuminate\Database\Eloquent\Collection<int, TaxonomyTerm> $childrenRecursive
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Content> $contents
+ * @property-read ContentTaxonomyPivot $pivot
  */
 class TaxonomyTerm extends Model
 {

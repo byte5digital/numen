@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Content;
 use App\Models\Space;
 use App\Models\TaxonomyTerm;
 use App\Models\Vocabulary;
 use App\Services\Taxonomy\TaxonomyService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -45,6 +47,101 @@ class TaxonomyAdminController extends Controller
             'vocabulary' => $vocabulary,
             'tree' => $tree,
         ]);
+    }
+
+    /**
+     * Show a single taxonomy term with its assigned content.
+     */
+    public function showTerm(Request $request, string $termId): Response
+    {
+        $term = TaxonomyTerm::with(['vocabulary', 'children'])->findOrFail($termId);
+
+        $includeDescendants = $request->boolean('descendants');
+
+        $query = Content::with(['currentVersion', 'contentType']);
+
+        if ($includeDescendants) {
+            $descendantIds = TaxonomyTerm::descendantsOf($term->id)
+                ->pluck('id')
+                ->prepend($term->id)
+                ->toArray();
+
+            $query->whereHas('taxonomyTerms', fn ($q) => $q->whereIn('taxonomy_terms.id', $descendantIds));
+        } else {
+            $query->whereHas('taxonomyTerms', fn ($q) => $q->where('taxonomy_terms.id', $term->id));
+        }
+
+        $content = $query->with(['taxonomyTerms' => fn ($q) => $q->where('taxonomy_terms.id', $term->id)])
+            ->paginate(15)
+            ->through(fn (Content $c) => [
+                'id' => $c->id,
+                'slug' => $c->slug,
+                'title' => $c->currentVersion->title ?? 'Untitled',
+                'status' => $c->status,
+                'type' => $c->contentType->slug,
+                'type_name' => $c->contentType->name,
+                'auto_assigned' => (static function (Content $c): bool {
+                    $first = $c->taxonomyTerms->first();
+                    if ($first === null) {
+                        return false;
+                    }
+
+                    return (bool) $first->pivot->auto_assigned;
+                })($c),
+                'confidence' => (static function (Content $c): ?float {
+                    $first = $c->taxonomyTerms->first();
+                    if ($first === null) {
+                        return null;
+                    }
+                    $conf = $first->pivot->confidence;
+
+                    return $conf !== null ? (float) $conf : null;
+                })($c),
+                'published_at' => $c->published_at?->format('Y-m-d H:i'),
+                'created_at' => $c->created_at->diffForHumans(),
+            ]);
+
+        return Inertia::render('Taxonomy/TermShow', [
+            'term' => [
+                'id' => $term->id,
+                'name' => $term->name,
+                'slug' => $term->slug,
+                'description' => $term->description,
+                'depth' => $term->depth,
+                'content_count' => $term->content_count,
+                'vocabulary' => [
+                    'id' => $term->vocabulary->id,
+                    'name' => $term->vocabulary->name,
+                    'slug' => $term->vocabulary->slug,
+                    'hierarchy' => $term->vocabulary->hierarchy,
+                ],
+                'children' => $term->children->map(fn (TaxonomyTerm $child) => [
+                    'id' => $child->id,
+                    'name' => $child->name,
+                    'slug' => $child->slug,
+                    'content_count' => $child->content_count,
+                ])->values(),
+            ],
+            'content' => $content,
+            'includeDescendants' => $includeDescendants,
+        ]);
+    }
+
+    /**
+     * Search terms within a vocabulary (for autocomplete).
+     */
+    public function searchTerms(Request $request, string $vocabId): JsonResponse
+    {
+        $vocabulary = Vocabulary::findOrFail($vocabId);
+        $q = (string) $request->get('q', '');
+
+        $terms = TaxonomyTerm::inVocabulary($vocabulary->id)
+            ->when($q !== '', fn ($query) => $query->where('name', 'like', "%{$q}%"))
+            ->ordered()
+            ->limit(20)
+            ->get(['id', 'name', 'slug', 'depth']);
+
+        return response()->json(['data' => $terms]);
     }
 
     /**

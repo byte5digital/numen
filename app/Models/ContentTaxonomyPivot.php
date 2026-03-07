@@ -3,22 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\Pivot;
-use Illuminate\Support\Str;
 
+/**
+ * Pivot model for the content_taxonomy table.
+ *
+ * @property bool $auto_assigned
+ * @property float|null $confidence
+ * @property int $sort_order
+ */
 class ContentTaxonomyPivot extends Pivot
 {
-    public $incrementing = false;
-
-    protected $keyType = 'string';
-
     protected $table = 'content_taxonomy';
 
-    protected static function booted(): void
-    {
-        static::creating(function (self $pivot): void {
-            if (empty($pivot->id)) {
-                $pivot->id = (string) Str::ulid();
-            }
-        });
-    }
+    protected $casts = [
+        'auto_assigned' => 'boolean',
+        'confidence' => 'float',
+        'sort_order' => 'integer',
+    ];
 }

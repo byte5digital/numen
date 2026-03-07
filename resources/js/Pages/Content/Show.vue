@@ -4,13 +4,15 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import { marked } from 'marked';
 import ContentBlockRenderer from '../../ContentBlocks/ContentBlockRenderer.vue';
 import ComponentFieldEditor from '../../Blocks/ComponentFieldEditor.vue';
+import TagPicker from '../../Components/Taxonomy/TagPicker.vue';
 
 const props = defineProps({
-    content:    { type: Object, required: true },
-    version:    { type: Object, default: null },
-    versions:   { type: Array,  default: () => [] },
-    blocks:     { type: Array,  default: () => [] },
-    blockTypes: { type: Object, default: () => ({}) },
+    content:       { type: Object, required: true },
+    version:       { type: Object, default: null },
+    versions:      { type: Array,  default: () => [] },
+    blocks:        { type: Array,  default: () => [] },
+    blockTypes:    { type: Object, default: () => ({}) },
+    taxonomyTerms: { type: Array,  default: () => [] },
 });
 
 const flash = computed(() => usePage().props.flash ?? {});
@@ -128,6 +130,29 @@ const renderedBody = computed(() => {
     if (props.version.body_format === 'html') return props.version.body;
     return marked.parse(props.version.body);
 });
+
+// Taxonomy state
+const openTagPicker = ref(null); // vocabularyId that has picker open
+
+function addTerm(termId) {
+    router.post(
+        `/admin/content/${props.content.id}/terms`,
+        { term_id: termId },
+        { preserveScroll: true, onSuccess: () => { openTagPicker.value = null; } }
+    );
+}
+
+function removeTerm(termId) {
+    if (!confirm('Remove this term assignment?')) return;
+    router.delete(
+        `/admin/content/${props.content.id}/terms/${termId}`,
+        { preserveScroll: true }
+    );
+}
+
+function selectedTermIds(vocabularyGroup) {
+    return (vocabularyGroup?.terms ?? []).map((t) => t.id);
+}
 </script>
 
 <template>
@@ -561,6 +586,70 @@ const renderedBody = computed(() => {
                             <span class="text-gray-500">Published</span>
                             <span class="text-gray-400 text-xs">{{ content.published_at }}</span>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Taxonomy -->
+                <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+                    <h3 class="text-sm font-medium text-white mb-3">🏷️ Taxonomy</h3>
+
+                    <div v-if="taxonomyTerms.length" class="space-y-4">
+                        <div v-for="group in taxonomyTerms" :key="group.vocabulary_id">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span class="text-xs text-gray-500 uppercase tracking-wide">{{ group.vocabulary_name }}</span>
+                                <button
+                                    @click="openTagPicker = openTagPicker === group.vocabulary_id ? null : group.vocabulary_id"
+                                    class="text-xs text-indigo-400 hover:text-indigo-300 transition"
+                                    title="Add term"
+                                >+</button>
+                            </div>
+
+                            <!-- Inline TagPicker -->
+                            <div v-if="openTagPicker === group.vocabulary_id" class="mb-2">
+                                <TagPicker
+                                    :vocabulary-id="group.vocabulary_id"
+                                    :selected-term-ids="selectedTermIds(group)"
+                                    :vocabulary-name="group.vocabulary_name"
+                                    :allow-multiple="true"
+                                    @add="addTerm"
+                                />
+                            </div>
+
+                            <!-- Term chips -->
+                            <div class="flex flex-wrap gap-1.5">
+                                <span
+                                    v-for="term in group.terms"
+                                    :key="term.id"
+                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                                    :class="term.auto_assigned
+                                        ? 'bg-purple-900/40 text-purple-300'
+                                        : 'bg-indigo-900/40 text-indigo-300'"
+                                >
+                                    {{ term.name }}
+                                    <span v-if="term.auto_assigned && term.confidence !== null" class="text-purple-400">
+                                        🤖 {{ Math.round(term.confidence * 100) }}%
+                                    </span>
+                                    <button
+                                        @click="removeTerm(term.id)"
+                                        class="ml-0.5 opacity-60 hover:opacity-100 transition text-xs leading-none"
+                                        title="Remove"
+                                    >×</button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else class="text-xs text-gray-600">
+                        No taxonomy terms assigned.
+                    </div>
+
+                    <!-- Add first term button when no groups yet -->
+                    <div v-if="!taxonomyTerms.length" class="mt-2">
+                        <p class="text-xs text-gray-600">
+                            Go to
+                            <Link href="/admin/taxonomy" class="text-indigo-400 hover:text-indigo-300">Taxonomy</Link>
+                            to assign terms.
+                        </p>
                     </div>
                 </div>
 

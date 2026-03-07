@@ -73,6 +73,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::patch('/content/{id}/status', [ContentAdminController::class, 'updateStatus'])->name('admin.content.status');
     Route::post('/content/{id}/generate-image', [ContentAdminController::class, 'generateImage'])->name('admin.content.generate-image');
     Route::post('/content/{id}/update-brief', [ContentAdminController::class, 'createUpdateBrief'])->name('admin.content.update-brief');
+    // Content taxonomy
+    Route::post('/content/{id}/terms', [ContentAdminController::class, 'assignTerm'])->name('admin.content.terms.store');
+    Route::delete('/content/{id}/terms/{termId}', [ContentAdminController::class, 'removeTerm'])->name('admin.content.terms.destroy');
     // Content block editor
     Route::post('/content/{id}/blocks', [ContentAdminController::class, 'addBlock'])->name('admin.content.blocks.store');
     Route::put('/content/{id}/blocks/{blockId}', [ContentAdminController::class, 'updateBlock'])->name('admin.content.blocks.update');
@@ -134,6 +137,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::patch('/taxonomy/{id}', [TaxonomyAdminController::class, 'update'])->name('admin.taxonomy.update');
     Route::delete('/taxonomy/{id}', [TaxonomyAdminController::class, 'destroy'])->name('admin.taxonomy.destroy');
     Route::post('/taxonomy/{vocabId}/terms', [TaxonomyAdminController::class, 'storeTerm'])->name('admin.taxonomy.terms.store');
+    Route::get('/taxonomy/{vocabId}/terms/search', [TaxonomyAdminController::class, 'searchTerms'])->name('admin.taxonomy.terms.search');
+    Route::get('/taxonomy/terms/{termId}', [TaxonomyAdminController::class, 'showTerm'])->name('admin.taxonomy.terms.show');
     Route::patch('/taxonomy/terms/{termId}', [TaxonomyAdminController::class, 'updateTerm'])->name('admin.taxonomy.terms.update');
     Route::delete('/taxonomy/terms/{termId}', [TaxonomyAdminController::class, 'destroyTerm'])->name('admin.taxonomy.terms.destroy');
     Route::post('/taxonomy/terms/{termId}/move', [TaxonomyAdminController::class, 'moveTerm'])->name('admin.taxonomy.terms.move');
