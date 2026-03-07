@@ -185,11 +185,23 @@ curl http://localhost:8000/api/v1/content/my-article-slug
 # Filter by content type
 curl http://localhost:8000/api/v1/content/type/blog_post
 
+# Filter by taxonomy
+curl "http://localhost:8000/api/v1/content?taxonomy[categories]=laravel&taxonomy[tags]=tutorial"
+
 # List pages
 curl http://localhost:8000/api/v1/pages
 
 # Get page by slug
 curl http://localhost:8000/api/v1/pages/about
+
+# List taxonomy vocabularies
+curl http://localhost:8000/api/v1/taxonomies
+
+# Browse term tree
+curl http://localhost:8000/api/v1/taxonomies/categories
+
+# Content by term
+curl http://localhost:8000/api/v1/taxonomies/categories/terms/laravel/content
 ```
 
 ### Content Management (authenticated)
@@ -367,6 +379,7 @@ See [CHANGELOG.md](CHANGELOG.md) for what's in each release.
 - Self-service password change ✅
 - Permanent content deletion with cascade cleanup ✅
 - 134+ tests (up from 117 in 0.1.1) ✅
+- **Taxonomy & Content Organization** — hierarchical vocabularies, drag-and-drop term trees, AI auto-categorization, full REST API ([docs](docs/features/taxonomy.md)) ✅
 
 **Near-term (0.2.0):**
 - Deduplicate config `numen.anthropic` block (duplicates `numen.providers.anthropic`)
