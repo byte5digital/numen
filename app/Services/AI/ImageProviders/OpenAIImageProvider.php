@@ -50,12 +50,18 @@ class OpenAIImageProvider implements ImageProviderInterface
             'size' => $size,
         ];
 
-        // gpt-image-1 does not support style/quality in the same way as dall-e-3
+        // Quality/style support varies by model
         if (str_starts_with($model, 'dall-e') || str_starts_with($model, 'gpt-image-1.5')) {
             $payload['quality'] = $quality;
             $payload['style'] = $style;
         } elseif (str_starts_with($model, 'gpt-image-1')) {
-            $payload['quality'] = $quality;
+            // gpt-image-1 only supports: 'low', 'medium', 'high', 'auto'
+            // Map the standard Numen quality values
+            $gptImageQuality = match ($quality) {
+                'hd' => 'high',
+                default => 'medium', // 'standard' → 'medium'
+            };
+            $payload['quality'] = $gptImageQuality;
             // gpt-image-1 returns base64 by default; request it explicitly
             $payload['output_format'] = 'png';
         }
