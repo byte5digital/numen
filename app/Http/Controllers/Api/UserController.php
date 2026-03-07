@@ -90,6 +90,13 @@ class UserController extends Controller
             return response()->json(['error' => 'Cannot delete your own account.'], 422);
         }
 
+        // Audit log before deletion so user details are preserved in the trail
+        $this->authz->log($request->user(), 'user.delete', $user, [
+            'deleted_user_id' => $user->id,
+            'deleted_user_email' => $user->email,
+            'deleted_user_name' => $user->name,
+        ]);
+
         $user->delete();
 
         return response()->json(['message' => 'User deleted.']);

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\ContentBrief;
 use App\Models\ContentPipeline;
+use App\Models\Role;
 use App\Models\Space;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -30,7 +31,10 @@ class BriefApiTest extends TestCase
             'space_id' => $this->space->id,
             'is_active' => true,
         ]);
-        $this->user = User::factory()->create();
+
+        // Create an admin user with wildcard permissions and global role (no space restriction)
+        // This satisfies space isolation checks (global role = access to all spaces)
+        $this->user = $this->adminUser();
     }
 
     // --- Authentication ---
@@ -206,5 +210,158 @@ class BriefApiTest extends TestCase
         $response = $this->getJson('/api/v1/briefs/nonexistent-id');
 
         $response->assertNotFound();
+    }
+
+    // --- Security regression tests ---
+
+    /**
+     * A user with no permissions cannot create a brief (regression: CRITICAL #1).
+     */
+    public function test_user_without_permission_cannot_create_brief(): void
+    {
+        $unprivilegedUser = $this->userWithRole(['content.read']);
+        Sanctum::actingAs($unprivilegedUser);
+
+        $response = $this->postJson('/api/v1/briefs', [
+            'space_id' => $this->space->id,
+            'title' => 'Unauthorized Brief',
+            'content_type_slug' => 'blog_post',
+        ]);
+
+        $response->assertForbidden();
+    }
+
+    /**
+     * A user without content.read cannot list briefs (regression: CRITICAL #1).
+     */
+    public function test_user_without_permission_cannot_list_briefs(): void
+    {
+        $unprivilegedUser = $this->userWithRole(['users.manage']);
+        Sanctum::actingAs($unprivilegedUser);
+
+        $response = $this->getJson('/api/v1/briefs');
+
+        $response->assertForbidden();
+    }
+
+    /**
+     * A user without content.read cannot view a brief (regression: CRITICAL #1).
+     */
+    public function test_user_without_permission_cannot_show_brief(): void
+    {
+        $unprivilegedUser = $this->userWithRole(['users.manage']);
+        $brief = ContentBrief::factory()->create(['space_id' => $this->space->id]);
+        Sanctum::actingAs($unprivilegedUser);
+
+        $response = $this->getJson('/api/v1/briefs/'.$brief->id);
+
+        $response->assertForbidden();
+    }
+
+    /**
+     * Space isolation: user scoped to Space A cannot create briefs in Space B (regression: HIGH #5).
+     */
+    public function test_space_scoped_user_cannot_create_brief_in_foreign_space(): void
+    {
+        $spaceA = Space::factory()->create();
+        $spaceB = Space::factory()->create();
+        ContentPipeline::factory()->create(['space_id' => $spaceB->id, 'is_active' => true]);
+
+        // User has content.create, but only in spaceA (space-scoped role)
+        $user = User::factory()->create();
+        $role = Role::create([
+            'name' => 'Space A Author',
+            'slug' => 'space-a-author-' . uniqid(),
+            'permissions' => ['content.create', 'content.read'],
+            'is_system' => false,
+        ]);
+        $user->roles()->attach($role->id, ['space_id' => $spaceA->id]);
+        $user->load('roles');
+
+        Sanctum::actingAs($user);
+
+        // Attempt to create a brief in Space B — should be denied
+        $response = $this->postJson('/api/v1/briefs', [
+            'space_id' => $spaceB->id,
+            'title' => 'Unauthorized Cross-Space Brief',
+            'content_type_slug' => 'blog_post',
+        ]);
+
+        $response->assertForbidden();
+    }
+
+    /**
+     * Space isolation: user scoped to Space A can only see Space A briefs when listing (regression: CRITICAL #1).
+     */
+    public function test_space_scoped_user_only_sees_own_space_briefs(): void
+    {
+        $spaceA = Space::factory()->create();
+        $spaceB = Space::factory()->create();
+
+        ContentBrief::factory()->count(2)->create(['space_id' => $spaceA->id]);
+        ContentBrief::factory()->count(3)->create(['space_id' => $spaceB->id]);
+
+        // User has content.read in spaceA only
+        $user = User::factory()->create();
+        $role = Role::create([
+            'name' => 'Space A Reader',
+            'slug' => 'space-a-reader-' . uniqid(),
+            'permissions' => ['content.read'],
+            'is_system' => false,
+        ]);
+        $user->roles()->attach($role->id, ['space_id' => $spaceA->id]);
+        $user->load('roles');
+
+        Sanctum::actingAs($user);
+
+        $response = $this->getJson('/api/v1/briefs');
+
+        $response->assertOk()
+            ->assertJsonPath('data.total', 2);  // Only Space A briefs
+    }
+
+    /**
+     * Store creates an audit log entry (regression: CRITICAL #1 audit requirement).
+     */
+    public function test_brief_creation_creates_audit_log(): void
+    {
+        Bus::fake();
+        Sanctum::actingAs($this->user);
+
+        $this->postJson('/api/v1/briefs', [
+            'space_id' => $this->space->id,
+            'title' => 'Audited Brief',
+            'content_type_slug' => 'blog_post',
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'brief.create',
+            'user_id' => $this->user->id,
+        ]);
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private function adminUser(): User
+    {
+        return $this->userWithRole(['*']);
+    }
+
+    private function userWithRole(array $permissions): User
+    {
+        $user = User::factory()->create();
+
+        $role = Role::create([
+            'name'        => 'Test Role',
+            'slug'        => 'test-role-' . uniqid(),
+            'permissions' => $permissions,
+            'is_system'   => false,
+        ]);
+
+        // Global role (space_id = null) — grants access to all spaces
+        $user->roles()->attach($role->id, ['space_id' => null]);
+        $user->load('roles');
+
+        return $user;
     }
 }

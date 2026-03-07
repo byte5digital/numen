@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuditLogController;
-use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\PageController;
+use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\PersonaController;
+use App\Http\Controllers\Api\PipelineController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserRoleController;
@@ -83,49 +86,13 @@ Route::prefix('v1')->group(function () {
         Route::get('/briefs/{id}', [BriefController::class, 'show']);
 
         // Pipeline management
-        Route::get('/pipeline-runs/{id}', function (string $id) {
-            $run = \App\Models\PipelineRun::with(['content.currentVersion', 'brief', 'generationLogs'])
-                ->findOrFail($id);
+        Route::get('/pipeline-runs/{id}', [PipelineController::class, 'show']);
+        Route::post('/pipeline-runs/{id}/approve', [PipelineController::class, 'approve']);
 
-            return response()->json(['data' => $run]);
-        });
+        // Personas — restricted: contains system prompts and model assignments
+        Route::get('/personas', [PersonaController::class, 'index']);
 
-        Route::post('/pipeline-runs/{id}/approve', function (string $id) {
-            $run = \App\Models\PipelineRun::findOrFail($id);
-            if ($run->status !== 'paused_for_review') {
-                return response()->json(['error' => 'Run is not awaiting review'], 422);
-            }
-            app(\App\Pipelines\PipelineExecutor::class)->advance($run, [
-                'stage' => $run->current_stage,
-                'success' => true,
-                'summary' => 'Approved by human reviewer',
-            ]);
-
-            return response()->json(['data' => ['status' => 'approved']]);
-        });
-
-        // Personas
-        Route::get('/personas', function () {
-            return response()->json(['data' => \App\Models\Persona::where('is_active', true)->get()]);
-        });
-
-        // Analytics
-        Route::get('/analytics/costs', function () {
-            $logs = \App\Models\AIGenerationLog::selectRaw('
-                DATE(created_at) as date,
-                model,
-                purpose,
-                COUNT(*) as calls,
-                SUM(input_tokens) as total_input_tokens,
-                SUM(output_tokens) as total_output_tokens,
-                SUM(cost_usd) as total_cost
-            ')
-                ->groupBy('date', 'model', 'purpose')
-                ->orderByDesc('date')
-                ->limit(100)
-                ->get();
-
-            return response()->json(['data' => $logs]);
-        });
+        // Analytics — restricted: contains financial spend data
+        Route::get('/analytics/costs', [AnalyticsController::class, 'costs']);
     });
 });

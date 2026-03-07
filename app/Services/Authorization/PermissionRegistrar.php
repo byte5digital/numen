@@ -43,6 +43,15 @@ class PermissionRegistrar
             'ai' => [
                 'ai.generate' => 'Use AI content generation',
             ],
+            'components' => [
+                'component.manage' => 'Register and update custom component types',
+            ],
+            'pipelines' => [
+                'pipeline.approve' => 'Approve pending pipeline runs for publication',
+            ],
+            'personas' => [
+                'persona.view' => 'View persona configurations',
+            ],
         ];
     }
 

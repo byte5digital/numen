@@ -85,6 +85,44 @@ class TokenScopingTest extends TestCase
             ->assertJsonStructure(['data']);
     }
 
+    /**
+     * Regression: namespaced wildcard token ability (e.g. 'roles.*') must grant
+     * access to child permissions like 'roles.manage'.
+     * Previously checkTokenScope() used tokenCan() which did exact matching only,
+     * so 'roles.*' never matched 'roles.manage'. Fixed by expanding wildcards directly
+     * from the token abilities array.
+     */
+    public function test_namespaced_wildcard_token_allows_child_permissions(): void
+    {
+        $user = $this->userWithRole(['roles.manage']);
+
+        // Token has 'roles.*' — should allow 'roles.manage'
+        $token = $user->createToken('role-scoped-client', ['roles.*'])->plainTextToken;
+
+        $response = $this->withToken($token)->getJson('/api/v1/permissions');
+
+        // Role has permission AND token wildcard covers it → 200
+        $response->assertOk()
+            ->assertJsonStructure(['data']);
+    }
+
+    /**
+     * Regression: a token with 'content.*' must NOT grant access to 'roles.manage'.
+     * The wildcard only covers its own namespace.
+     */
+    public function test_namespaced_wildcard_does_not_cross_namespace(): void
+    {
+        $user = $this->userWithRole(['roles.manage']);
+
+        // Token has 'content.*' — should NOT allow 'roles.manage'
+        $token = $user->createToken('content-only-client', ['content.*'])->plainTextToken;
+
+        $response = $this->withToken($token)->getJson('/api/v1/permissions');
+
+        // Token scope blocks even though role has the permission
+        $response->assertForbidden();
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private function userWithRole(array $permissions): User

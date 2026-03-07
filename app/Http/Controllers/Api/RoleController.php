@@ -66,7 +66,41 @@ class RoleController extends Controller
      */
     public function update(Request $request, Role $role): JsonResponse
     {
-        $this->authz->authorize($request->user(), 'roles.manage');
+        $user = $request->user();
+
+        if ($role->space_id) {
+            // Space-scoped role — enforce permission within that space only
+            $this->authz->authorize($user, 'roles.manage', $role->space_id);
+
+            // Also verify the user actually belongs to that space
+            $hasSpaceAccess = $user->roles()
+                ->where(function ($q) use ($role) {
+                    $q->whereNull('role_user.space_id')
+                        ->orWhere('role_user.space_id', $role->space_id);
+                })
+                ->exists();
+
+            if (! $hasSpaceAccess) {
+                return response()->json(['error' => 'Forbidden', 'message' => 'No access to this space.'], 403);
+            }
+        } else {
+            // Global/system role — requires global roles.manage (no space restriction)
+            $this->authz->authorize($user, 'roles.manage');
+
+            // Global roles may only be modified by users with unrestricted (global) roles.manage
+            $hasGlobalPermission = $user->roles()
+                ->whereNull('role_user.space_id')
+                ->get()
+                ->contains(fn ($r) => in_array('*', $r->permissions ?? [], true)
+                    || in_array('roles.manage', $r->permissions ?? [], true));
+
+            if (! $hasGlobalPermission) {
+                return response()->json([
+                    'error' => 'Forbidden',
+                    'message' => 'Modifying global roles requires a global roles.manage permission.',
+                ], 403);
+            }
+        }
 
         $data = $request->validate([
             'name'        => ['sometimes', 'string', 'max:255'],
@@ -77,6 +111,10 @@ class RoleController extends Controller
         ]);
 
         $role->update($data);
+
+        $this->authz->log($user, 'role.update', $role, [
+            'updated_fields' => array_keys($data),
+        ]);
 
         return response()->json(['data' => $role->fresh()]);
     }

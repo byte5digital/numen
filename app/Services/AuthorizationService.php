@@ -60,16 +60,33 @@ class AuthorizationService
         if (method_exists($user, 'currentAccessToken') && $user->currentAccessToken()) {
             $token = $user->currentAccessToken();
 
-            // PAT tokens: use tokenCan() which handles wildcards
-            if (method_exists($user, 'tokenCan')) {
-                // Wildcard passes automatically via tokenCan
-                if (! $user->tokenCan($permission) && ! $user->tokenCan('*')) {
-                    return false;
+            // Access token abilities array directly for proper wildcard expansion.
+            // PersonalAccessToken stores abilities as a JSON-casted Eloquent attribute
+            // (not a method), so we access it directly and fall back to an empty array.
+            $abilities = (array) ($token->abilities ?? []);
+            if (! empty($abilities)) {
+
+                // Top-level wildcard '*' grants everything
+                if (in_array('*', $abilities, true)) {
+                    return true;
                 }
-            } elseif (method_exists($token, 'cant')) {
-                if ($token->cant($permission)) {
-                    return false;
+
+                // Exact match
+                if (in_array($permission, $abilities, true)) {
+                    return true;
                 }
+
+                // Namespaced wildcard expansion: 'content.*' matches 'content.create', etc.
+                $parts = explode('.', $permission);
+                for ($i = count($parts) - 1; $i > 0; $i--) {
+                    $wildcard = implode('.', array_slice($parts, 0, $i)) . '.*';
+                    if (in_array($wildcard, $abilities, true)) {
+                        return true;
+                    }
+                }
+
+                // No matching ability found — deny
+                return false;
             }
         }
 
