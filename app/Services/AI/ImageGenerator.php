@@ -89,10 +89,11 @@ class ImageGenerator
             throw new \RuntimeException('Failed to download generated image from OpenAI');
         }
 
-        // Save to storage (explicitly use 'public' disk so files land in storage/app/public/)
+        // Save to storage — use configurable disk so S3 works on Laravel Cloud
         $ulid = Str::ulid();
         $relativePath = "media/{$spaceId}/{$ulid}.webp";
-        $disk = Storage::disk('public');
+        $diskName = (string) config('numen.storage_disk', 'public');
+        $disk = Storage::disk($diskName);
 
         // Ensure directory exists
         $disk->makeDirectory("media/{$spaceId}");
@@ -111,7 +112,7 @@ class ImageGenerator
         $asset = MediaAsset::create([
             'space_id' => $spaceId,
             'filename' => "{$ulid}.webp",
-            'disk' => 'public',
+            'disk' => $diskName,
             'path' => $relativePath,
             'mime_type' => 'image/png', // DALL-E returns PNG
             'size_bytes' => $sizeBytes,

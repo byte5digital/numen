@@ -34,7 +34,7 @@ class ContentAdminController extends Controller
                 'seo_score' => $c->currentVersion?->seo_score,
                 'author_type' => $c->currentVersion?->author_type,
                 'published_at' => $c->published_at?->diffForHumans(),
-                'hero_image_url' => $c->heroImage ? '/storage/'.$c->heroImage->path : null,
+                'hero_image_url' => $c->heroImage ? $c->heroImage->url : null,
             ]);
 
         return Inertia::render('Content/Index', [
@@ -77,7 +77,7 @@ class ContentAdminController extends Controller
                 'published_at' => $content->published_at?->format('Y-m-d H:i'),
                 'created_at' => $content->created_at->diffForHumans(),
                 'updated_at' => $content->updated_at->diffForHumans(),
-                'hero_image_url' => $content->heroImage ? '/storage/'.$content->heroImage->path : null,
+                'hero_image_url' => $content->heroImage ? $content->heroImage->url : null,
             ],
             'version' => $version ? [
                 'id' => $version->id,

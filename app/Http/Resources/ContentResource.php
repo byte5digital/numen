@@ -46,7 +46,7 @@ class ContentResource extends JsonResource
 
             // Hero image
             'hero_image_url' => $this->heroImage
-                ? '/storage/'.$this->heroImage->path
+                ? $this->heroImage->url
                 : null,
 
             // Media

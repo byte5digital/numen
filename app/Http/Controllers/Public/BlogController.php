@@ -29,7 +29,7 @@ class BlogController extends Controller
             'quality_score' => $c->currentVersion?->quality_score,
             'seo_score' => $c->currentVersion?->seo_score,
             'published_at' => $c->published_at?->diffForHumans(),
-            'hero_image_url' => $c->heroImage ? '/storage/'.$c->heroImage->path : null,
+            'hero_image_url' => $c->heroImage ? $c->heroImage->url : null,
         ]);
 
         $contentTypes = ContentType::select('name', 'slug')->get();
@@ -87,7 +87,7 @@ class BlogController extends Controller
                 'seo' => $version?->seo_data,
                 'published_at' => $content->published_at->format('M d, Y'),
                 'updated_at' => $content->updated_at->toIso8601String(),
-                'hero_image_url' => $content->heroImage ? '/storage/'.$content->heroImage->path : null,
+                'hero_image_url' => $content->heroImage ? $content->heroImage->url : null,
                 'meta' => [
                     'version' => $version?->version_number,
                     'quality_score' => $version?->quality_score,

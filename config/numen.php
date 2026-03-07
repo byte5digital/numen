@@ -152,4 +152,14 @@ return [
         'max_depth' => env('NUMEN_TAXONOMY_MAX_DEPTH', 10),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Storage Disk
+    |--------------------------------------------------------------------------
+    | Disk used for persisting generated images and media assets.
+    | Laravel Cloud sets FILESYSTEM_DISK=s3 automatically when a bucket
+    | is attached. Locally defaults to 'public'.
+    */
+    'storage_disk' => env('FILESYSTEM_DISK', 'public'),
+
 ];
