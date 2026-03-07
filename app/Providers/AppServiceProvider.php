@@ -14,12 +14,22 @@ use App\Services\AI\LLMManager;
 use App\Services\AI\Providers\AnthropicProvider;
 use App\Services\AI\Providers\AzureOpenAIProvider;
 use App\Services\AI\Providers\OpenAIProvider;
+use App\Services\Authorization\AuthorizationService;
+use App\Services\Authorization\BudgetGuard;
+use App\Services\Authorization\PermissionRegistrar;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // ── Authorization / RBAC layer ─────────────────────────────────────
+        $this->app->singleton(PermissionRegistrar::class);
+        $this->app->singleton(AuthorizationService::class);
+        $this->app->singleton(BudgetGuard::class, fn ($app) => new BudgetGuard(
+            $app->make(AuthorizationService::class),
+        ));
+
         // ── New multi-provider AI layer ────────────────────────────────────
         $this->app->singleton(CostTracker::class);
 
@@ -60,5 +70,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Load DB settings into config (overrides .env defaults)
         Setting::loadIntoConfig();
+
+        // Gate integration and policies are registered in AuthServiceProvider.
     }
 }

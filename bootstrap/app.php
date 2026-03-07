@@ -23,6 +23,15 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register named middleware aliases
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'can' => \App\Http\Middleware\CheckPermission::class,
+        ]);
+
+        // Resolve active space on all web + api requests
+        $middleware->web(append: [
+            \App\Http\Middleware\ResolveActiveSpace::class,
+        ]);
+        $middleware->api(append: [
+            \App\Http\Middleware\ResolveActiveSpace::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

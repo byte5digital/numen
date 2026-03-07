@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,11 +17,11 @@ class UserAdminController extends Controller
     public function index(): Response
     {
         return Inertia::render('Users/Index', [
-            'users' => User::orderBy('name')->get()->map(fn (User $user) => [
+            'users' => User::with('roles')->orderBy('name')->get()->map(fn (User $user) => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'role' => $user->role,
+                'roles' => $user->roles->pluck('slug')->toArray(),
                 'created_at' => $user->created_at->format('Y-m-d'),
             ]),
         ]);
@@ -28,7 +29,9 @@ class UserAdminController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Users/Create');
+        return Inertia::render('Users/Create', [
+            'roles' => Role::whereNull('space_id')->orderBy('name')->get(['id', 'name', 'slug']),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -36,16 +39,19 @@ class UserAdminController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'role' => ['required', 'string', Rule::in(['admin', 'editor', 'viewer'])],
+            'role_id' => ['nullable', 'ulid', 'exists:roles,id'],
             'password' => ['required', 'string', 'min:8'],
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'role' => $data['role'],
             'password' => Hash::make($data['password']),
         ]);
+
+        if (! empty($data['role_id'])) {
+            $user->roles()->attach($data['role_id'], ['space_id' => null]);
+        }
 
         return redirect()->route('admin.users.index')->with('success', 'User created.');
     }
@@ -57,8 +63,9 @@ class UserAdminController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'role' => $user->role,
+                'roles' => $user->roles->pluck('id')->toArray(),
             ],
+            'roles' => Role::whereNull('space_id')->orderBy('name')->get(['id', 'name', 'slug']),
         ]);
     }
 
@@ -67,22 +74,14 @@ class UserAdminController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-            'role' => ['required', 'string', Rule::in(['admin', 'editor', 'viewer'])],
+            'role_ids' => ['nullable', 'array'],
+            'role_ids.*' => ['ulid', 'exists:roles,id'],
             'password' => ['nullable', 'string', 'min:8'],
         ]);
-
-        // Prevent demoting the last admin
-        if ($user->role === 'admin' && $data['role'] !== 'admin') {
-            $adminCount = User::where('role', 'admin')->count();
-            if ($adminCount <= 1) {
-                return back()->withErrors(['role' => 'Cannot demote the last admin.']);
-            }
-        }
 
         $updateData = [
             'name' => $data['name'],
             'email' => $data['email'],
-            'role' => $data['role'],
         ];
 
         if (! empty($data['password'])) {
@@ -90,6 +89,16 @@ class UserAdminController extends Controller
         }
 
         $user->update($updateData);
+
+        // Sync global roles (space_id = null)
+        if (isset($data['role_ids'])) {
+            $pivotData = [];
+            foreach ($data['role_ids'] as $roleId) {
+                $pivotData[$roleId] = ['space_id' => null];
+            }
+            // Sync only global roles (preserve space-scoped role assignments)
+            $user->roles()->wherePivotNull('space_id')->sync($pivotData);
+        }
 
         return redirect()->route('admin.users.index')->with('success', 'User updated.');
     }
@@ -102,8 +111,9 @@ class UserAdminController extends Controller
         }
 
         // Prevent deleting the last admin
-        if ($user->role === 'admin') {
-            $adminCount = User::where('role', 'admin')->count();
+        if ($user->isAdmin()) {
+            $adminRole = Role::where('slug', 'admin')->whereNull('space_id')->first();
+            $adminCount = $adminRole ? $adminRole->users()->count() : 0;
             if ($adminCount <= 1) {
                 return back()->withErrors(['user' => 'Cannot delete the last admin.']);
             }

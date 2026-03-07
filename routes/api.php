@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\ContentTaxonomyController;
 use App\Http\Controllers\Api\PageController;
+use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TaxonomyController;
 use App\Http\Controllers\Api\TaxonomyTermController;
 use Illuminate\Support\Facades\Route;
@@ -103,6 +105,28 @@ Route::prefix('v1')->group(function () {
         Route::get('/personas', function () {
             return response()->json(['data' => \App\Models\Persona::where('is_active', true)->get()]);
         });
+
+        // ── RBAC & Permissions ─────────────────────────────────────────────
+
+        // Role management
+        Route::get('/roles', [RoleController::class, 'index']);
+        Route::post('/roles', [RoleController::class, 'store']);
+        Route::put('/roles/{role}', [RoleController::class, 'update']);
+        Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
+        Route::get('/roles/{role}/users', [RoleController::class, 'users']);
+
+        // User role assignment
+        Route::post('/users/{user}/roles', [RoleController::class, 'assignRole']);
+        Route::delete('/users/{user}/roles/{role}', [RoleController::class, 'revokeRole']);
+
+        // Permission registry
+        Route::get('/permissions', [RoleController::class, 'permissions']);
+
+        // Audit logs
+        Route::get('/audit-logs', [AuditLogController::class, 'index']);
+
+        // AI budget
+        Route::get('/ai/budget/{user}', [RoleController::class, 'aiBudget']);
 
         // Analytics
         Route::get('/analytics/costs', function () {

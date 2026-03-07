@@ -34,6 +34,7 @@
     30 => 'Spatie\\LaravelIgnition\\IgnitionServiceProvider',
     31 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
     32 => 'App\\Providers\\AppServiceProvider',
+    33 => 'App\\Providers\\AuthServiceProvider',
   ),
   'eager' => 
   array (
@@ -55,6 +56,7 @@
     15 => 'Spatie\\LaravelIgnition\\IgnitionServiceProvider',
     16 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
     17 => 'App\\Providers\\AppServiceProvider',
+    18 => 'App\\Providers\\AuthServiceProvider',
   ),
   'deferred' => 
   array (

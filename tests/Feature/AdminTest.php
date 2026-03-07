@@ -97,7 +97,7 @@ class AdminTest extends TestCase
 
     public function test_non_admin_user_cannot_access_dashboard(): void
     {
-        $editor = User::factory()->create(['role' => 'editor']);
+        $editor = User::factory()->editor()->create();
         $this->actingAs($editor);
 
         $response = $this->get('/admin');
