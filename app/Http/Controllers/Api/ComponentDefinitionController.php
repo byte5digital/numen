@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ComponentDefinition;
 use App\Models\ContentBlock;
+use App\Services\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +22,8 @@ use Illuminate\Validation\ValidationException;
  */
 class ComponentDefinitionController extends Controller
 {
+    public function __construct(private AuthorizationService $authz) {}
+
     public function index(): JsonResponse
     {
         $custom = ComponentDefinition::all()->keyBy('type');
@@ -80,6 +83,9 @@ class ComponentDefinitionController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // Require component.manage permission — guards against unauthorized component registration
+        $this->authz->authorize($request->user(), 'component.manage');
+
         $data = $request->validate([
             'type' => ['required', 'string', 'regex:/^[a-z][a-z0-9_]*$/', 'unique:component_definitions,type'],
             'label' => ['required', 'string', 'max:120'],
@@ -113,6 +119,13 @@ class ComponentDefinitionController extends Controller
             ]);
         }
 
+        // Audit log the creation
+        $this->authz->log($request->user(), 'component.create', $definition, [
+            'type' => $definition->type,
+            'has_template' => (bool) $definition->vue_template,
+            'schema_keys' => array_keys($definition->schema ?? []),
+        ]);
+
         return response()->json(['data' => $definition->fresh()], 201);
     }
 
@@ -121,6 +134,9 @@ class ComponentDefinitionController extends Controller
      */
     public function update(Request $request, string $type): JsonResponse
     {
+        // Require component.manage permission
+        $this->authz->authorize($request->user(), 'component.manage');
+
         $definition = ComponentDefinition::where('type', $type)->firstOrFail();
 
         $data = $request->validate([
@@ -130,7 +146,16 @@ class ComponentDefinitionController extends Controller
             'vue_template' => ['nullable', 'string'],
         ]);
 
+        $oldValues = $definition->only(array_keys($data));
+
         $definition->update($data);
+
+        // Audit log the update
+        $this->authz->log($request->user(), 'component.update', $definition, [
+            'type' => $type,
+            'changed_fields' => array_keys($data),
+            'old_values' => $oldValues,
+        ]);
 
         return response()->json(['data' => $definition->fresh()]);
     }

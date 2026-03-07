@@ -68,9 +68,10 @@ Each stage is a queued job. The pipeline is event-driven. Stages are defined in 
 
 - **Provider abstraction** — swap Anthropic ↔ OpenAI ↔ Azure without touching pipeline code. Fallback chain auto-retries on rate limits.
 - **Multi-provider image generation** — Four image providers supported: OpenAI (GPT Image 1.5 / DALL-E 3), Together AI (FLUX models), fal.ai (FLUX / SD3.5 / Recraft), and Replicate (any model). An `ImagePromptBuilder` (powered by Haiku) crafts optimized prompts from content metadata; images are downloaded, stored as `MediaAsset` records, and attached to content. The active provider is configured per-persona via `generator_provider` / `generator_model`.
+- **RBAC with AI governance** — role-based access control (Admin, Editor, Author, Viewer) with space-scoped permissions, AI budget limits per role, and immutable audit logs. Tokens inherit a subset of user permissions. No external dependencies — Numen's own implementation.
 - **Pipeline-as-config** — stages defined in DB, not hardcoded. Add/remove/reorder stages without deploying code. Supports `human_gate` stages for manual review checkpoints.
 - **Block-based content** — every piece of content is a collection of typed `ContentBlock` records. Flexible for headless delivery.
-- **Full provenance** — every AI call logged (`AIGenerationLog`) with model, tokens, cost, and which pipeline stage triggered it. Image generation costs tracked per asset.
+- **Full provenance** — every AI call logged (`AIGenerationLog`) with model, tokens, cost, and which pipeline stage triggered it. Image generation costs tracked per asset. Audit logs track all sensitive actions (publish, role assignment, AI generation, etc.).
 
 ---
 
@@ -358,6 +359,15 @@ config/
 
 ---
 
+## Documentation
+
+- **[Role-Based Access Control (RBAC)](docs/features/permissions.md)** — team access management, roles, permissions, space scoping, and audit logs
+- **[RBAC Technical Guide](docs/RBAC_GUIDE.md)** — detailed API reference and implementation guide
+- **[Permissions Architecture](docs/architecture/permissions-architecture.md)** — system design, data model, and security considerations
+- **[OpenAPI Specification](openapi.yaml)** — full REST API reference with examples
+
+---
+
 ## Contributing
 
 Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
@@ -378,6 +388,7 @@ See [CHANGELOG.md](CHANGELOG.md) for what's in each release.
 - User management (CRUD) with admin frontend pages ✅
 - Self-service password change ✅
 - Permanent content deletion with cascade cleanup ✅
+- Role-Based Access Control (RBAC) with space-scoped roles, AI budget governance, and audit logs ✅
 - 134+ tests (up from 117 in 0.1.1) ✅
 - **Taxonomy & Content Organization** — hierarchical vocabularies, drag-and-drop term trees, AI auto-categorization, full REST API ([docs](docs/features/taxonomy.md)) ✅
 
