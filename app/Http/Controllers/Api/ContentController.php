@@ -97,11 +97,14 @@ class ContentController extends Controller
         $data = $request->validate([
             'slug'             => ['required', 'string', 'unique:contents,slug'],
             'content_type_id'  => ['required', 'string', 'exists:content_types,id'],
+            'space_id'         => ['required', 'string', 'exists:spaces,id'],
             'locale'           => ['sometimes', 'string', 'max:10'],
             'status'           => ['sometimes', 'string', 'in:draft,published,archived'],
         ]);
 
         $content = Content::create(array_merge(['status' => 'draft', 'locale' => 'en'], $data));
+
+        $this->authz->log($request->user(), 'content.create', $content);
 
         return response()->json(['data' => $content], 201);
     }
@@ -123,6 +126,8 @@ class ContentController extends Controller
 
         $content->update($data);
 
+        $this->authz->log($request->user(), 'content.update', $content);
+
         return new ContentResource($content->fresh(['currentVersion', 'contentType']));
     }
 
@@ -134,6 +139,7 @@ class ContentController extends Controller
         $this->authz->authorize($request->user(), 'content.delete');
 
         $content = Content::findOrFail($id);
+        $this->authz->log($request->user(), 'content.delete', $content);
         $content->delete();
 
         return response()->json(['message' => 'Content deleted.']);

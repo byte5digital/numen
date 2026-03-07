@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\UserRoleController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -57,6 +59,15 @@ Route::prefix('v1')->group(function () {
         Route::post('/roles', [RoleController::class, 'store']);
         Route::put('/roles/{role}', [RoleController::class, 'update']);
         Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
+
+        // User-role assignment
+        Route::get('/roles/{role}/users', [UserRoleController::class, 'roleUsers']);
+        Route::post('/users/{user}/roles', [UserRoleController::class, 'assignRole']);
+        Route::delete('/users/{user}/roles/{role}', [UserRoleController::class, 'revokeRole']);
+        Route::get('/users/{user}/roles', [UserRoleController::class, 'userRoles']);
+
+        // Audit logs
+        Route::get('/audit-logs', [AuditLogController::class, 'index']);
 
         // Component type registration (AI agents register new block types here)
         Route::post('/component-types', [ComponentDefinitionController::class, 'store']);

@@ -50,6 +50,8 @@ class UserController extends Controller
             'password' => Hash::make($data['password']),
         ]);
 
+        $this->authz->log($request->user(), 'user.create', $user);
+
         return response()->json(['data' => $user], 201);
     }
 
@@ -71,6 +73,8 @@ class UserController extends Controller
         }
 
         $user->update($data);
+
+        $this->authz->log($request->user(), 'user.update', $user);
 
         return response()->json(['data' => $user->fresh()]);
     }
