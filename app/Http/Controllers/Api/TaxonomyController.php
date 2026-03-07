@@ -56,40 +56,50 @@ class TaxonomyController extends Controller
 
     /**
      * Create a vocabulary.
+     * Space is derived from the X-Space header — not accepted from the request body
+     * to prevent cross-space privilege escalation.
      */
     public function store(Request $request): VocabularyResource
     {
+        // Resolve space from header — never trust a space_id from the body
+        $spaceSlug = $request->header('X-Space', 'default');
+        $space = Space::where('slug', $spaceSlug)->firstOrFail();
+
         $validated = $request->validate([
-            'space_id' => ['required', 'string', 'exists:spaces,id'],
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'slug' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
+            'description' => ['nullable', 'string', 'max:5000'],
             'hierarchy' => ['boolean'],
             'allow_multiple' => ['boolean'],
             'settings' => ['nullable', 'array'],
-            'sort_order' => ['integer'],
+            'sort_order' => ['integer', 'min:0', 'max:9999'],
         ]);
 
-        $vocabulary = $this->taxonomy->createVocabulary($validated['space_id'], $validated);
+        $vocabulary = $this->taxonomy->createVocabulary($space->id, $validated);
 
         return new VocabularyResource($vocabulary);
     }
 
     /**
      * Update a vocabulary.
+     * Verifies the vocabulary belongs to the space in X-Space header.
      */
     public function update(Request $request, string $id): VocabularyResource
     {
-        $vocabulary = Vocabulary::findOrFail($id);
+        // Scope to the request's space — prevents IDOR across spaces
+        $spaceSlug = $request->header('X-Space', 'default');
+        $space = Space::where('slug', $spaceSlug)->firstOrFail();
+
+        $vocabulary = Vocabulary::forSpace($space->id)->findOrFail($id);
 
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
-            'slug' => ['sometimes', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'slug' => ['sometimes', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
+            'description' => ['nullable', 'string', 'max:5000'],
             'hierarchy' => ['boolean'],
             'allow_multiple' => ['boolean'],
             'settings' => ['nullable', 'array'],
-            'sort_order' => ['integer'],
+            'sort_order' => ['integer', 'min:0', 'max:9999'],
         ]);
 
         $vocabulary = $this->taxonomy->updateVocabulary($vocabulary, $validated);
@@ -99,10 +109,15 @@ class TaxonomyController extends Controller
 
     /**
      * Delete a vocabulary.
+     * Verifies the vocabulary belongs to the space in X-Space header.
      */
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
-        $vocabulary = Vocabulary::findOrFail($id);
+        // Scope to the request's space — prevents IDOR across spaces
+        $spaceSlug = $request->header('X-Space', 'default');
+        $space = Space::where('slug', $spaceSlug)->firstOrFail();
+
+        $vocabulary = Vocabulary::forSpace($space->id)->findOrFail($id);
         $this->taxonomy->deleteVocabulary($vocabulary);
 
         return response()->json(['data' => ['deleted' => true]]);

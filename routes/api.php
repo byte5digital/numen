@@ -50,21 +50,23 @@ Route::prefix('v1')->group(function () {
     // Management API (write operations — bearer token required)
     Route::middleware('auth:sanctum')->group(function () {
 
-        // Taxonomy management
-        Route::post('/taxonomies', [TaxonomyController::class, 'store']);
-        Route::put('/taxonomies/{id}', [TaxonomyController::class, 'update']);
-        Route::delete('/taxonomies/{id}', [TaxonomyController::class, 'destroy']);
+        // Taxonomy management (rate-limited to prevent abuse)
+        Route::middleware('throttle:60,1')->group(function () {
+            Route::post('/taxonomies', [TaxonomyController::class, 'store']);
+            Route::put('/taxonomies/{id}', [TaxonomyController::class, 'update']);
+            Route::delete('/taxonomies/{id}', [TaxonomyController::class, 'destroy']);
 
-        Route::post('/taxonomies/{vocabId}/terms', [TaxonomyTermController::class, 'store']);
-        Route::put('/terms/{id}', [TaxonomyTermController::class, 'update']);
-        Route::delete('/terms/{id}', [TaxonomyTermController::class, 'destroy']);
-        Route::post('/terms/{id}/move', [TaxonomyTermController::class, 'move']);
-        Route::post('/terms/reorder', [TaxonomyTermController::class, 'reorder']);
+            Route::post('/taxonomies/{vocabId}/terms', [TaxonomyTermController::class, 'store']);
+            Route::put('/terms/{id}', [TaxonomyTermController::class, 'update']);
+            Route::delete('/terms/{id}', [TaxonomyTermController::class, 'destroy']);
+            Route::post('/terms/{id}/move', [TaxonomyTermController::class, 'move']);
+            Route::post('/terms/reorder', [TaxonomyTermController::class, 'reorder']);
 
-        Route::post('/content/{id}/terms', [ContentTaxonomyController::class, 'assign']);
-        Route::put('/content/{id}/terms', [ContentTaxonomyController::class, 'sync']);
-        Route::delete('/content/{id}/terms/{termId}', [ContentTaxonomyController::class, 'remove']);
-        Route::post('/content/{id}/auto-categorize', [ContentTaxonomyController::class, 'autoCategorize']);
+            Route::post('/content/{id}/terms', [ContentTaxonomyController::class, 'assign']);
+            Route::put('/content/{id}/terms', [ContentTaxonomyController::class, 'sync']);
+            Route::delete('/content/{id}/terms/{termId}', [ContentTaxonomyController::class, 'remove']);
+            Route::post('/content/{id}/auto-categorize', [ContentTaxonomyController::class, 'autoCategorize']);
+        });
 
         // Component type registration (AI agents register new block types here)
         Route::post('/component-types', [ComponentDefinitionController::class, 'store']);

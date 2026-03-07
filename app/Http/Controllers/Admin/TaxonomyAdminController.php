@@ -55,11 +55,11 @@ class TaxonomyAdminController extends Controller
         $validated = $request->validate([
             'space_id' => ['required', 'string', 'exists:spaces,id'],
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'slug' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
+            'description' => ['nullable', 'string', 'max:5000'],
             'hierarchy' => ['boolean'],
             'allow_multiple' => ['boolean'],
-            'sort_order' => ['integer'],
+            'sort_order' => ['integer', 'min:0', 'max:9999'],
         ]);
 
         $vocabulary = $this->taxonomy->createVocabulary($validated['space_id'], $validated);
@@ -77,11 +77,11 @@ class TaxonomyAdminController extends Controller
 
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
-            'slug' => ['sometimes', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'slug' => ['sometimes', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
+            'description' => ['nullable', 'string', 'max:5000'],
             'hierarchy' => ['boolean'],
             'allow_multiple' => ['boolean'],
-            'sort_order' => ['integer'],
+            'sort_order' => ['integer', 'min:0', 'max:9999'],
         ]);
 
         $this->taxonomy->updateVocabulary($vocabulary, $validated);
@@ -109,10 +109,10 @@ class TaxonomyAdminController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255'],
+            'slug' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
             'parent_id' => ['nullable', 'string', 'exists:taxonomy_terms,id'],
-            'description' => ['nullable', 'string'],
-            'sort_order' => ['integer'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'sort_order' => ['integer', 'min:0', 'max:9999'],
         ]);
 
         $this->taxonomy->createTerm($vocabulary->id, $validated);
@@ -129,10 +129,10 @@ class TaxonomyAdminController extends Controller
 
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
-            'slug' => ['sometimes', 'string', 'max:255'],
+            'slug' => ['sometimes', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
             'parent_id' => ['nullable', 'string', 'exists:taxonomy_terms,id'],
-            'description' => ['nullable', 'string'],
-            'sort_order' => ['integer'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'sort_order' => ['integer', 'min:0', 'max:9999'],
         ]);
 
         $this->taxonomy->updateTerm($term, $validated);
@@ -146,7 +146,11 @@ class TaxonomyAdminController extends Controller
     public function destroyTerm(Request $request, string $termId): RedirectResponse
     {
         $term = TaxonomyTerm::findOrFail($termId);
-        $strategy = $request->input('child_strategy', 'reparent');
+
+        $validated = $request->validate([
+            'child_strategy' => ['sometimes', 'string', 'in:reparent,cascade'],
+        ]);
+        $strategy = $validated['child_strategy'] ?? 'reparent';
 
         $this->taxonomy->deleteTerm($term, $strategy);
 

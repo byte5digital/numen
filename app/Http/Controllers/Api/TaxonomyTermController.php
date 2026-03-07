@@ -88,19 +88,35 @@ class TaxonomyTermController extends Controller
 
     /**
      * Create a term within a vocabulary.
+     * Vocabulary is resolved through the X-Space scope to prevent cross-space IDOR.
      */
     public function store(Request $request, string $vocabId): TaxonomyTermResource
     {
-        $vocabulary = Vocabulary::findOrFail($vocabId);
+        // Scope vocabulary lookup to the request's space — prevents cross-space term creation
+        $spaceSlug = $request->header('X-Space', 'default');
+        $space = Space::where('slug', $spaceSlug)->firstOrFail();
+
+        $vocabulary = Vocabulary::forSpace($space->id)->findOrFail($vocabId);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255'],
+            'slug' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
             'parent_id' => ['nullable', 'string', 'exists:taxonomy_terms,id'],
-            'description' => ['nullable', 'string'],
-            'sort_order' => ['integer'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'sort_order' => ['integer', 'min:0', 'max:9999'],
             'metadata' => ['nullable', 'array'],
         ]);
+
+        // Validate parent_id belongs to the same vocabulary (prevents cross-vocabulary parentage)
+        if (! empty($validated['parent_id'])) {
+            $parentInVocab = TaxonomyTerm::where('id', $validated['parent_id'])
+                ->where('vocabulary_id', $vocabulary->id)
+                ->exists();
+
+            if (! $parentInVocab) {
+                abort(422, 'The parent term does not belong to this vocabulary.');
+            }
+        }
 
         $term = $this->taxonomy->createTerm($vocabulary->id, $validated);
 
@@ -109,19 +125,38 @@ class TaxonomyTermController extends Controller
 
     /**
      * Update a term.
+     * Resolves the term through the X-Space scope to prevent cross-space IDOR.
      */
     public function update(Request $request, string $id): TaxonomyTermResource
     {
-        $term = TaxonomyTerm::findOrFail($id);
+        // Resolve space and verify the term's vocabulary belongs to it
+        $spaceSlug = $request->header('X-Space', 'default');
+        $space = Space::where('slug', $spaceSlug)->firstOrFail();
+
+        $term = TaxonomyTerm::whereHas(
+            'vocabulary',
+            fn ($q) => $q->where('space_id', $space->id)
+        )->findOrFail($id);
 
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
-            'slug' => ['sometimes', 'string', 'max:255'],
+            'slug' => ['sometimes', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
             'parent_id' => ['nullable', 'string', 'exists:taxonomy_terms,id'],
-            'description' => ['nullable', 'string'],
-            'sort_order' => ['integer'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'sort_order' => ['integer', 'min:0', 'max:9999'],
             'metadata' => ['nullable', 'array'],
         ]);
+
+        // Validate parent_id belongs to the same vocabulary (prevents cross-vocabulary parentage)
+        if (array_key_exists('parent_id', $validated) && $validated['parent_id'] !== null) {
+            $parentInVocab = TaxonomyTerm::where('id', $validated['parent_id'])
+                ->where('vocabulary_id', $term->vocabulary_id)
+                ->exists();
+
+            if (! $parentInVocab) {
+                abort(422, 'The parent term does not belong to this vocabulary.');
+            }
+        }
 
         $term = $this->taxonomy->updateTerm($term, $validated);
 
@@ -130,12 +165,24 @@ class TaxonomyTermController extends Controller
 
     /**
      * Delete a term.
+     * Resolves the term through the X-Space scope to prevent cross-space IDOR.
      */
     public function destroy(Request $request, string $id): JsonResponse
     {
-        $term = TaxonomyTerm::findOrFail($id);
+        // Resolve space and verify the term's vocabulary belongs to it
+        $spaceSlug = $request->header('X-Space', 'default');
+        $space = Space::where('slug', $spaceSlug)->firstOrFail();
 
-        $strategy = $request->input('child_strategy', 'reparent');
+        $term = TaxonomyTerm::whereHas(
+            'vocabulary',
+            fn ($q) => $q->where('space_id', $space->id)
+        )->findOrFail($id);
+
+        $validated = $request->validate([
+            'child_strategy' => ['sometimes', 'string', 'in:reparent,cascade'],
+        ]);
+
+        $strategy = $validated['child_strategy'] ?? 'reparent';
         $this->taxonomy->deleteTerm($term, $strategy);
 
         return response()->json(['data' => ['deleted' => true]]);
@@ -143,14 +190,33 @@ class TaxonomyTermController extends Controller
 
     /**
      * Move a term to a new parent.
+     * Resolves the term through the X-Space scope to prevent cross-space IDOR.
      */
     public function move(Request $request, string $id): TaxonomyTermResource
     {
-        $term = TaxonomyTerm::findOrFail($id);
+        // Resolve space and verify the term's vocabulary belongs to it
+        $spaceSlug = $request->header('X-Space', 'default');
+        $space = Space::where('slug', $spaceSlug)->firstOrFail();
+
+        $term = TaxonomyTerm::whereHas(
+            'vocabulary',
+            fn ($q) => $q->where('space_id', $space->id)
+        )->findOrFail($id);
 
         $validated = $request->validate([
             'parent_id' => ['nullable', 'string', 'exists:taxonomy_terms,id'],
         ]);
+
+        // Validate parent_id belongs to the same vocabulary (prevents cross-vocabulary parentage)
+        if (! empty($validated['parent_id'])) {
+            $parentInVocab = TaxonomyTerm::where('id', $validated['parent_id'])
+                ->where('vocabulary_id', $term->vocabulary_id)
+                ->exists();
+
+            if (! $parentInVocab) {
+                abort(422, 'The parent term does not belong to this vocabulary.');
+            }
+        }
 
         $term = $this->taxonomy->moveTerm($term, $validated['parent_id'] ?? null);
 
@@ -158,14 +224,28 @@ class TaxonomyTermController extends Controller
     }
 
     /**
-     * Reorder siblings.
+     * Reorder siblings within the current space.
+     * Verifies all supplied term IDs belong to the space in X-Space header.
      */
     public function reorder(Request $request): JsonResponse
     {
+        $spaceSlug = $request->header('X-Space', 'default');
+        $space = Space::where('slug', $spaceSlug)->firstOrFail();
+
         $validated = $request->validate([
             'ordering' => ['required', 'array'],
             'ordering.*' => ['integer'],
         ]);
+
+        // Verify every term in the ordering belongs to this space — prevents cross-space reordering
+        $termIds = array_keys($validated['ordering']);
+        $ownedCount = TaxonomyTerm::whereIn('id', $termIds)
+            ->whereHas('vocabulary', fn ($q) => $q->where('space_id', $space->id))
+            ->count();
+
+        if ($ownedCount !== count($termIds)) {
+            abort(403, 'One or more terms do not belong to this space.');
+        }
 
         $this->taxonomy->reorderTerms($validated['ordering']);
 

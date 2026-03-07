@@ -163,7 +163,13 @@ class TaxonomyService
     public function removeTerms(Content $content, array $termIds): void
     {
         $content->taxonomyTerms()->detach($termIds);
-        $this->refreshContentCountsForContent($content);
+        // Refresh counts for remaining terms AND the removed terms
+        $remainingIds = $content->taxonomyTerms()->pluck('taxonomy_terms.id')->toArray();
+        $allAffectedIds = array_unique(array_merge($remainingIds, $termIds));
+        $terms = TaxonomyTerm::whereIn('id', $allAffectedIds)->get();
+        foreach ($terms as $term) {
+            $this->recalculateContentCount($term);
+        }
     }
 
     /**
@@ -173,8 +179,15 @@ class TaxonomyService
      */
     public function syncTerms(Content $content, array $termIds): void
     {
+        // Capture previously assigned term IDs before sync
+        $oldTermIds = $content->taxonomyTerms()->pluck('taxonomy_terms.id')->toArray();
         $content->taxonomyTerms()->sync($termIds);
-        $this->refreshContentCountsForContent($content);
+        // Refresh counts for all affected terms (added + removed)
+        $allAffectedIds = array_unique(array_merge($oldTermIds, $termIds));
+        $terms = TaxonomyTerm::whereIn('id', $allAffectedIds)->get();
+        foreach ($terms as $term) {
+            $this->recalculateContentCount($term);
+        }
     }
 
     /**
