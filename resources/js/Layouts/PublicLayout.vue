@@ -26,7 +26,7 @@ const isHome = computed(() => page.url === '/');
                         :class="page.url.startsWith('/blog') ? 'text-indigo-500' : 'text-slate-600 hover:text-indigo-500'">
                         Blog
                     </Link>
-                    <a href="/api/v1/content" class="text-sm text-slate-600 hover:text-indigo-500 transition hidden sm:inline font-medium">
+                    <a href="/api/documentation" class="text-sm text-slate-600 hover:text-indigo-500 transition hidden sm:inline font-medium">
                         API
                     </a>
                     <a href="https://github.com/byte5digital/numen" target="_blank"
@@ -55,7 +55,7 @@ const isHome = computed(() => page.url === '/');
                 <div class="flex items-center gap-6 text-sm text-white/50">
                     <Link href="/" class="hover:text-white transition">Home</Link>
                     <Link href="/blog" class="hover:text-white transition">Blog</Link>
-                    <a href="/api/v1/content" class="hover:text-white transition">API</a>
+                    <a href="/api/documentation" class="hover:text-white transition">API</a>
                     <a href="https://github.com/byte5digital/numen" target="_blank" class="hover:text-white transition">GitHub</a>
                     <a href="https://www.byte5.de" target="_blank" class="hover:text-white transition">byte5.de</a>
                 </div>
