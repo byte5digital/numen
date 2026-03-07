@@ -22,10 +22,11 @@ class ApiKey extends Model
 {
     use HasUlids;
 
-    protected $fillable = ['space_id', 'name', 'key_hash', 'scopes', 'expires_at', 'last_used_at'];
+    protected $fillable = ['space_id', 'name', 'key_hash', 'scopes', 'permissions', 'expires_at', 'last_used_at'];
 
     protected $casts = [
         'scopes' => 'array',
+        'permissions' => 'array',
         'expires_at' => 'datetime',
         'last_used_at' => 'datetime',
     ];
