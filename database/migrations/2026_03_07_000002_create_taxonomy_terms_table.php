@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -24,7 +25,11 @@ return new class extends Migration
 
             $table->unique(['vocabulary_id', 'slug']);
             $table->index(['vocabulary_id', 'parent_id']);
-            $table->rawIndex('`path`(768)', 'taxonomy_terms_path_index');
+            if (DB::getDriverName() === 'mysql') {
+                $table->rawIndex('`path`(768)', 'taxonomy_terms_path_index');
+            } else {
+                $table->index('path', 'taxonomy_terms_path_index');
+            }
             $table->foreign('vocabulary_id')->references('id')->on('vocabularies')->cascadeOnDelete();
             $table->foreign('parent_id')->references('id')->on('taxonomy_terms')->nullOnDelete();
         });
