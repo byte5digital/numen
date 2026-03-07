@@ -78,7 +78,7 @@ class TaxonomyService
     public function updateTerm(TaxonomyTerm $term, array $data): TaxonomyTerm
     {
         // If parent_id changes, validate and reload relation before save for path recomputation
-        if (isset($data['parent_id']) && $data['parent_id'] !== $term->parent_id) {
+        if (array_key_exists('parent_id', $data) && $data['parent_id'] !== $term->parent_id) {
             $newParentId = $data['parent_id'];
 
             if ($newParentId !== null) {
@@ -103,7 +103,7 @@ class TaxonomyService
         $term->update($data);
 
         // Re-compute paths for all descendants
-        if (isset($data['parent_id'])) {
+        if (array_key_exists('parent_id', $data)) {
             $this->recomputeDescendantPaths($term->fresh() ?? $term);
         }
 
