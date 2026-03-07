@@ -4,6 +4,9 @@ use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\PageController;
+use App\Http\Controllers\Api\Versioning\AutoSaveController;
+use App\Http\Controllers\Api\Versioning\DiffController;
+use App\Http\Controllers\Api\Versioning\VersionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -73,6 +76,30 @@ Route::prefix('v1')->group(function () {
         // Personas
         Route::get('/personas', function () {
             return response()->json(['data' => \App\Models\Persona::where('is_active', true)->get()]);
+        });
+
+        // Content Versioning
+        Route::prefix('content/{content}/versions')->group(function () {
+            Route::get('/', [VersionController::class, 'index']);
+            Route::post('/draft', [VersionController::class, 'createDraft']);
+            Route::get('/{version}', [VersionController::class, 'show']);
+            Route::patch('/{version}', [VersionController::class, 'update']);
+            Route::post('/{version}/label', [VersionController::class, 'label']);
+            Route::post('/{version}/publish', [VersionController::class, 'publish']);
+            Route::post('/{version}/schedule', [VersionController::class, 'schedule']);
+            Route::delete('/{version}/schedule', [VersionController::class, 'cancelSchedule']);
+            Route::post('/{version}/rollback', [VersionController::class, 'rollback']);
+            Route::post('/{version}/branch', [VersionController::class, 'branch']);
+        });
+
+        // Version diff
+        Route::get('/content/{content}/diff', [DiffController::class, 'compare']);
+
+        // Auto-save drafts
+        Route::prefix('content/{content}/autosave')->group(function () {
+            Route::post('/', [AutoSaveController::class, 'save']);
+            Route::get('/', [AutoSaveController::class, 'show']);
+            Route::delete('/', [AutoSaveController::class, 'discard']);
         });
 
         // Analytics

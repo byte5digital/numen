@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $space_id
  * @property string $content_type_id
  * @property string|null $current_version_id
+ * @property string|null $draft_version_id
  * @property string $slug
  * @property string $status
  * @property string $locale
@@ -25,13 +27,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \Carbon\Carbon|null $published_at
  * @property \Carbon\Carbon|null $expires_at
  * @property \Carbon\Carbon|null $refresh_at
+ * @property \Carbon\Carbon|null $scheduled_publish_at
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  * @property \Carbon\Carbon|null $deleted_at
  * @property-read Space $space
  * @property-read ContentType $contentType
  * @property-read ContentVersion|null $currentVersion
+ * @property-read ContentVersion|null $draftVersion
+ * @property-read ContentDraft|null $autosaveDraft
  * @property-read \Illuminate\Database\Eloquent\Collection<int, ContentVersion> $versions
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ScheduledPublish> $scheduledPublishes
+ * @property-read ScheduledPublish|null $nextScheduledPublish
  * @property-read MediaAsset|null $heroImage
  * @property-read \Illuminate\Database\Eloquent\Collection<int, MediaAsset> $mediaAssets
  * @property-read \Illuminate\Database\Eloquent\Collection<int, PipelineRun> $pipelineRuns
@@ -43,10 +50,10 @@ class Content extends Model
     protected $table = 'contents';
 
     protected $fillable = [
-        'space_id', 'content_type_id', 'current_version_id',
+        'space_id', 'content_type_id', 'current_version_id', 'draft_version_id',
         'slug', 'status', 'locale', 'canonical_id',
         'taxonomy', 'metadata', 'hero_image_id',
-        'published_at', 'expires_at', 'refresh_at',
+        'published_at', 'expires_at', 'refresh_at', 'scheduled_publish_at',
     ];
 
     protected $casts = [
@@ -55,6 +62,7 @@ class Content extends Model
         'published_at' => 'datetime',
         'expires_at' => 'datetime',
         'refresh_at' => 'datetime',
+        'scheduled_publish_at' => 'datetime',
     ];
 
     // --- Scopes ---
@@ -89,6 +97,31 @@ class Content extends Model
     public function currentVersion(): BelongsTo
     {
         return $this->belongsTo(ContentVersion::class, 'current_version_id');
+    }
+
+    public function draftVersion(): BelongsTo
+    {
+        return $this->belongsTo(ContentVersion::class, 'draft_version_id');
+    }
+
+    /** @return HasOne<ContentDraft, $this> */
+    public function autosaveDraft(): HasOne
+    {
+        return $this->hasOne(ContentDraft::class);
+    }
+
+    /** @return HasMany<ScheduledPublish, $this> */
+    public function scheduledPublishes(): HasMany
+    {
+        return $this->hasMany(ScheduledPublish::class);
+    }
+
+    /** @return HasOne<ScheduledPublish, $this> */
+    public function nextScheduledPublish(): HasOne
+    {
+        return $this->hasOne(ScheduledPublish::class)
+            ->where('status', 'pending')
+            ->orderBy('publish_at');
     }
 
     /** @return HasMany<ContentVersion, $this> */
