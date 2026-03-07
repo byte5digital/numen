@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Agents\AgentFactory;
 use App\Models\Setting;
 use App\Services\AI\CostTracker;
+use App\Services\Authorization\PermissionRegistrar;
 use App\Services\AuthorizationService;
 use App\Services\AI\ImageManager;
 use App\Services\AI\ImageProviders\FalImageProvider;
@@ -23,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // ── Authorization ──────────────────────────────────────────────────
         $this->app->singleton(AuthorizationService::class);
+        $this->app->singleton(PermissionRegistrar::class);
 
         // ── New multi-provider AI layer ────────────────────────────────────
         $this->app->singleton(CostTracker::class);

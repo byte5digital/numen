@@ -6,6 +6,7 @@ use App\Exceptions\PermissionDeniedException;
 use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 
 class AuthorizationService
 {
@@ -16,6 +17,7 @@ class AuthorizationService
 
     /**
      * Check whether a user has the given permission, optionally scoped to a space.
+     * Also enforces token-level scoping when a Sanctum or ApiKey token is present.
      */
     public function check(User $user, string $permission, ?string $spaceId = null): bool
     {
@@ -25,7 +27,53 @@ class AuthorizationService
             $this->cache[$cacheKey] = $this->resolvePermissions($user, $spaceId);
         }
 
-        return $this->permissionMatches($permission, $this->cache[$cacheKey]);
+        // Role-based check first
+        if (! $this->permissionMatches($permission, $this->cache[$cacheKey])) {
+            return false;
+        }
+
+        // Token scope check (additive guard — only active when a token is present)
+        return $this->checkTokenScope(request(), $permission);
+    }
+
+    /**
+     * Check if the authenticated request's token scopes allow this permission.
+     * Called AFTER the user's role-based check passes.
+     *
+     * Returns true when:
+     *  - No token is present (session auth) → no restriction
+     *  - Token has wildcard ability '*' → allow all
+     *  - Token ability includes the required permission → allow
+     *
+     * Returns false when:
+     *  - Token is present and does NOT include the required permission
+     */
+    protected function checkTokenScope(Request $request, string $permission): bool
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return true;
+        }
+
+        // Sanctum personal access tokens
+        if (method_exists($user, 'currentAccessToken') && $user->currentAccessToken()) {
+            $token = $user->currentAccessToken();
+
+            // PAT tokens: use tokenCan() which handles wildcards
+            if (method_exists($user, 'tokenCan')) {
+                // Wildcard passes automatically via tokenCan
+                if (! $user->tokenCan($permission) && ! $user->tokenCan('*')) {
+                    return false;
+                }
+            } elseif (method_exists($token, 'cant')) {
+                if ($token->cant($permission)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /**

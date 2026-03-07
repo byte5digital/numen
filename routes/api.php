@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuditLogController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
@@ -68,6 +69,9 @@ Route::prefix('v1')->group(function () {
 
         // Audit logs
         Route::get('/audit-logs', [AuditLogController::class, 'index']);
+
+        // Permission taxonomy (read-only, for admin UI / role editor)
+        Route::get('/permissions', [PermissionController::class, 'index']);
 
         // Component type registration (AI agents register new block types here)
         Route::post('/component-types', [ComponentDefinitionController::class, 'store']);
