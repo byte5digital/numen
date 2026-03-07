@@ -66,7 +66,9 @@ function scoreColor(score) {
 
 function formatDate(dt) {
     if (!dt) return '';
-    return new Date(dt).toLocaleDateString('en-GB', {
+    const d = new Date(dt);
+    if (isNaN(d.getTime())) return dt; // fallback: show raw string (e.g. "2 hours ago")
+    return d.toLocaleDateString('en-GB', {
         day: '2-digit', month: 'short', year: '2-digit',
         hour: '2-digit', minute: '2-digit',
     });
