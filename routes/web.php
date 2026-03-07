@@ -97,6 +97,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/settings', [SettingsAdminController::class, 'index'])->name('admin.settings');
     Route::post('/settings/providers', [SettingsAdminController::class, 'updateProviders'])->name('admin.settings.providers');
     Route::post('/settings/models', [SettingsAdminController::class, 'updateModels'])->name('admin.settings.models');
+    Route::post('/settings/images', [SettingsAdminController::class, 'updateImages'])->name('admin.settings.images');
     Route::post('/settings/costs', [SettingsAdminController::class, 'updateCosts'])->name('admin.settings.costs');
 
     // Queue Monitor

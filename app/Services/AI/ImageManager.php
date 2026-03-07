@@ -48,6 +48,7 @@ class ImageManager
      * @param  string  $size  Image dimensions, e.g. "1792x1024"
      * @param  string  $style  Style hint, e.g. "vivid" (passed to provider)
      * @param  string  $quality  Quality setting, e.g. "standard" or "hd"
+     * @param  string|null  $model  Specific model to use (optional; provider default used if null)
      */
     public function generate(
         string $prompt,
@@ -56,6 +57,7 @@ class ImageManager
         string $size = '1792x1024',
         string $style = 'vivid',
         string $quality = 'standard',
+        ?string $model = null,
     ): MediaAsset {
         $provider = $this->resolveProvider($personaConfig);
         $providerName = $provider->name();
@@ -64,6 +66,11 @@ class ImageManager
             throw new \RuntimeException(
                 "Image provider '{$providerName}' is not available — check its API key in .env"
             );
+        }
+
+        // Set model override if provided
+        if ($model) {
+            $provider->setModel($model);
         }
 
         Log::info('ImageManager: generating image', [

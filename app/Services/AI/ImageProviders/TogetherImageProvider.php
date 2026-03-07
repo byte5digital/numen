@@ -15,9 +15,18 @@ use Illuminate\Support\Str;
  */
 class TogetherImageProvider implements ImageProviderInterface
 {
+    private ?string $modelOverride = null;
+
     public function name(): string
     {
         return 'together';
+    }
+
+    public function setModel(string $model): self
+    {
+        $this->modelOverride = $model;
+
+        return $this;
     }
 
     public function isAvailable(): bool
@@ -121,6 +130,10 @@ class TogetherImageProvider implements ImageProviderInterface
 
     private function defaultModel(): string
     {
+        if ($this->modelOverride) {
+            return $this->modelOverride;
+        }
+
         return (string) config('numen.image_providers.together.default_model', 'black-forest-labs/FLUX.1-schnell');
     }
 }

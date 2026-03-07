@@ -15,9 +15,18 @@ use Illuminate\Support\Str;
  */
 class OpenAIImageProvider implements ImageProviderInterface
 {
+    private ?string $modelOverride = null;
+
     public function name(): string
     {
         return 'openai';
+    }
+
+    public function setModel(string $model): self
+    {
+        $this->modelOverride = $model;
+
+        return $this;
     }
 
     public function isAvailable(): bool
@@ -35,9 +44,13 @@ class OpenAIImageProvider implements ImageProviderInterface
 
         $model = $this->defaultModel();
 
+        // Normalize size based on model support
+        $normalizedSize = $this->normalizeSizeForModel($model, $size);
+
         Log::info('OpenAIImageProvider: generating image', [
             'model' => $model,
-            'size' => $size,
+            'requested_size' => $size,
+            'normalized_size' => $normalizedSize,
             'style' => $style,
             'quality' => $quality,
             'prompt_preview' => Str::limit($prompt, 100),
@@ -47,16 +60,18 @@ class OpenAIImageProvider implements ImageProviderInterface
             'model' => $model,
             'prompt' => $prompt,
             'n' => 1,
-            'size' => $size,
+            'size' => $normalizedSize,
         ];
 
         // Quality/style support varies by model
-        if (str_starts_with($model, 'dall-e') || str_starts_with($model, 'gpt-image-1.5')) {
+        // Check more specific models first (gpt-image-1.5 contains gpt-image-1 as substring)
+        if (str_starts_with($model, 'gpt-image-1.5')) {
+            // gpt-image-1.5 supports quality and style directly
             $payload['quality'] = $quality;
             $payload['style'] = $style;
         } elseif (str_starts_with($model, 'gpt-image-1')) {
             // gpt-image-1 only supports: 'low', 'medium', 'high', 'auto'
-            // Map the standard Numen quality values
+            // Map standard Numen quality values to gpt-image-1 accepted values
             $gptImageQuality = match ($quality) {
                 'hd' => 'high',
                 default => 'medium', // 'standard' → 'medium'
@@ -64,6 +79,10 @@ class OpenAIImageProvider implements ImageProviderInterface
             $payload['quality'] = $gptImageQuality;
             // gpt-image-1 returns base64 by default; request it explicitly
             $payload['output_format'] = 'png';
+        } elseif (str_starts_with($model, 'dall-e')) {
+            // dall-e supports quality and style directly
+            $payload['quality'] = $quality;
+            $payload['style'] = $style;
         }
 
         $response = Http::withHeaders([
@@ -156,6 +175,53 @@ class OpenAIImageProvider implements ImageProviderInterface
 
     private function defaultModel(): string
     {
-        return (string) config('numen.image_providers.openai.default_model', 'gpt-image-1');
+        if ($this->modelOverride) {
+            return $this->modelOverride;
+        }
+
+        return (string) config('numen.image_providers.openai.default_model', 'gpt-image-1.5');
+    }
+
+    /**
+     * Normalize requested size to what the model supports.
+     *
+     * @param  string  $model  Model name (gpt-image-1, gpt-image-1.5, dall-e-3, etc.)
+     * @param  string  $requestedSize  Requested size (e.g., '1792x1024', '1024x1024')
+     * @return string Normalized size supported by the model
+     */
+    private function normalizeSizeForModel(string $model, string $requestedSize): string
+    {
+        // gpt-image-1 supports: 1024x1024, 1024x1536, 1536x1024, auto
+        if (str_starts_with($model, 'gpt-image-1') && ! str_starts_with($model, 'gpt-image-1.5')) {
+            $supported = ['1024x1024', '1024x1536', '1536x1024', 'auto'];
+            if (in_array($requestedSize, $supported)) {
+                return $requestedSize;
+            }
+
+            // Map unsupported sizes to closest match
+            return match ($requestedSize) {
+                '1792x1024' => '1536x1024',  // dall-e default → closest gpt-image-1 size
+                '1024x1792' => '1024x1536',  // dall-e widescreen → closest gpt-image-1 size
+                default => '1024x1024',       // fallback to square
+            };
+        }
+
+        // gpt-image-1.5 and dall-e-3 both support: 1024x1024, 1792x1024, 1024x1792, auto
+        if (str_starts_with($model, 'gpt-image-1.5') || str_starts_with($model, 'dall-e')) {
+            $supported = ['1024x1024', '1792x1024', '1024x1792', 'auto'];
+            if (in_array($requestedSize, $supported)) {
+                return $requestedSize;
+            }
+
+            // Map unsupported sizes to closest match
+            return match ($requestedSize) {
+                '1536x1024' => '1792x1024',  // gpt-image-1 → dall-e equivalent
+                '1024x1536' => '1024x1792',  // gpt-image-1 → dall-e equivalent
+                default => '1024x1024',       // fallback to square
+            };
+        }
+
+        // Unknown model — return as-is and let OpenAI error handle it
+        return $requestedSize;
     }
 }

@@ -18,9 +18,18 @@ use Illuminate\Support\Str;
  */
 class FalImageProvider implements ImageProviderInterface
 {
+    private ?string $modelOverride = null;
+
     public function name(): string
     {
         return 'fal';
+    }
+
+    public function setModel(string $model): self
+    {
+        $this->modelOverride = $model;
+
+        return $this;
     }
 
     public function isAvailable(): bool
@@ -147,6 +156,10 @@ class FalImageProvider implements ImageProviderInterface
 
     private function defaultModel(): string
     {
+        if ($this->modelOverride) {
+            return $this->modelOverride;
+        }
+
         return (string) config('numen.image_providers.fal.default_model', 'fal-ai/flux/schnell');
     }
 }
