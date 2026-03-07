@@ -130,10 +130,10 @@ class TokenScopingTest extends TestCase
         $user = User::factory()->create();
 
         $role = Role::create([
-            'name'        => 'Test Role',
-            'slug'        => 'test-role-' . uniqid(),
+            'name' => 'Test Role',
+            'slug' => 'test-role-'.uniqid(),
             'permissions' => $permissions,
-            'is_system'   => false,
+            'is_system' => false,
         ]);
 
         $user->roles()->attach($role->id, ['space_id' => null]);

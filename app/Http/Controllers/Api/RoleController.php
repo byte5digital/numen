@@ -42,18 +42,18 @@ class RoleController extends Controller
         $this->authz->authorize($request->user(), 'roles.manage');
 
         $data = $request->validate([
-            'name'        => ['required', 'string', 'max:255'],
-            'slug'        => ['sometimes', 'string', 'max:255', Rule::unique('roles', 'slug')],
+            'name' => ['required', 'string', 'max:255'],
+            'slug' => ['sometimes', 'string', 'max:255', Rule::unique('roles', 'slug')],
             'description' => ['nullable', 'string'],
-            'space_id'    => ['nullable', 'string', 'exists:spaces,id'],
+            'space_id' => ['nullable', 'string', 'exists:spaces,id'],
             'permissions' => ['sometimes', 'array'],
             'permissions.*' => ['string'],
-            'ai_limits'   => ['nullable', 'array'],
+            'ai_limits' => ['nullable', 'array'],
         ]);
 
-        $data['slug']        = $data['slug'] ?? Str::slug($data['name']);
+        $data['slug'] = $data['slug'] ?? Str::slug($data['name']);
         $data['permissions'] = $data['permissions'] ?? [];
-        $data['is_system']   = false;
+        $data['is_system'] = false;
 
         $role = Role::create($data);
 
@@ -103,11 +103,11 @@ class RoleController extends Controller
         }
 
         $data = $request->validate([
-            'name'        => ['sometimes', 'string', 'max:255'],
+            'name' => ['sometimes', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'permissions' => ['sometimes', 'array'],
             'permissions.*' => ['string'],
-            'ai_limits'   => ['nullable', 'array'],
+            'ai_limits' => ['nullable', 'array'],
         ]);
 
         $role->update($data);
@@ -130,8 +130,8 @@ class RoleController extends Controller
 
         if ($role->is_system) {
             return response()->json([
-                'error'   => 'System roles cannot be deleted.',
-                'role'    => $role->slug,
+                'error' => 'System roles cannot be deleted.',
+                'role' => $role->slug,
             ], 422);
         }
 

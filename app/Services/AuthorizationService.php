@@ -21,7 +21,7 @@ class AuthorizationService
      */
     public function check(User $user, string $permission, ?string $spaceId = null): bool
     {
-        $cacheKey = $user->id . '.' . ($spaceId ?? '__global__');
+        $cacheKey = $user->id.'.'.($spaceId ?? '__global__');
 
         if (! isset($this->cache[$cacheKey])) {
             $this->cache[$cacheKey] = $this->resolvePermissions($user, $spaceId);
@@ -79,7 +79,7 @@ class AuthorizationService
                 // Namespaced wildcard expansion: 'content.*' matches 'content.create', etc.
                 $parts = explode('.', $permission);
                 for ($i = count($parts) - 1; $i > 0; $i--) {
-                    $wildcard = implode('.', array_slice($parts, 0, $i)) . '.*';
+                    $wildcard = implode('.', array_slice($parts, 0, $i)).'.*';
                     if (in_array($wildcard, $abilities, true)) {
                         return true;
                     }
@@ -112,7 +112,7 @@ class AuthorizationService
      */
     public function userPermissions(User $user, ?string $spaceId = null): array
     {
-        $cacheKey = $user->id . '.' . ($spaceId ?? '__global__');
+        $cacheKey = $user->id.'.'.($spaceId ?? '__global__');
 
         if (! isset($this->cache[$cacheKey])) {
             $this->cache[$cacheKey] = $this->resolvePermissions($user, $spaceId);
@@ -131,15 +131,15 @@ class AuthorizationService
         array $metadata = [],
     ): void {
         AuditLog::create([
-            'user_id'       => $user->id,
-            'space_id'      => null,
-            'action'        => $action,
+            'user_id' => $user->id,
+            'space_id' => null,
+            'action' => $action,
             'resource_type' => $resource ? get_class($resource) : null,
-            'resource_id'   => $resource?->getKey(),
-            'metadata'      => $metadata,
-            'ip_address'    => request()->ip(),
-            'user_agent'    => request()->userAgent(),
-            'created_at'    => now(),
+            'resource_id' => $resource?->getKey(),
+            'metadata' => $metadata,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'created_at' => now(),
         ]);
     }
 
@@ -195,7 +195,7 @@ class AuthorizationService
         // Build increasingly broad wildcard variants and check if any match
         $parts = explode('.', $requested);
         for ($i = count($parts) - 1; $i >= 1; $i--) {
-            $wildcard = implode('.', array_slice($parts, 0, $i)) . '.*';
+            $wildcard = implode('.', array_slice($parts, 0, $i)).'.*';
             if (in_array($wildcard, $permissions, true)) {
                 return true;
             }

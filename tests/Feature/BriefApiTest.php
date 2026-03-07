@@ -271,7 +271,7 @@ class BriefApiTest extends TestCase
         $user = User::factory()->create();
         $role = Role::create([
             'name' => 'Space A Author',
-            'slug' => 'space-a-author-' . uniqid(),
+            'slug' => 'space-a-author-'.uniqid(),
             'permissions' => ['content.create', 'content.read'],
             'is_system' => false,
         ]);
@@ -305,7 +305,7 @@ class BriefApiTest extends TestCase
         $user = User::factory()->create();
         $role = Role::create([
             'name' => 'Space A Reader',
-            'slug' => 'space-a-reader-' . uniqid(),
+            'slug' => 'space-a-reader-'.uniqid(),
             'permissions' => ['content.read'],
             'is_system' => false,
         ]);
@@ -352,10 +352,10 @@ class BriefApiTest extends TestCase
         $user = User::factory()->create();
 
         $role = Role::create([
-            'name'        => 'Test Role',
-            'slug'        => 'test-role-' . uniqid(),
+            'name' => 'Test Role',
+            'slug' => 'test-role-'.uniqid(),
             'permissions' => $permissions,
-            'is_system'   => false,
+            'is_system' => false,
         ]);
 
         // Global role (space_id = null) — grants access to all spaces

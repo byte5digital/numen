@@ -13,18 +13,18 @@ class PermissionRegistrar
     {
         return [
             'content' => [
-                'content.read'    => 'Read published content',
-                'content.create'  => 'Create new content',
-                'content.update'  => 'Edit existing content',
-                'content.delete'  => 'Delete content',
+                'content.read' => 'Read published content',
+                'content.create' => 'Create new content',
+                'content.update' => 'Edit existing content',
+                'content.delete' => 'Delete content',
                 'content.publish' => 'Publish / unpublish content',
                 'content.restore' => 'Restore deleted content',
             ],
             'users' => [
-                'users.manage'       => 'Manage user accounts',
+                'users.manage' => 'Manage user accounts',
                 'users.roles.assign' => 'Assign and revoke roles',
-                'users.invite'       => 'Invite new users',
-                'users.delete'       => 'Delete user accounts',
+                'users.invite' => 'Invite new users',
+                'users.delete' => 'Delete user accounts',
             ],
             'roles' => [
                 'roles.manage' => 'Create, edit, and delete roles',
@@ -37,7 +37,7 @@ class PermissionRegistrar
                 'audit.view' => 'View audit logs',
             ],
             'settings' => [
-                'settings.general'    => 'Manage general settings',
+                'settings.general' => 'Manage general settings',
                 'settings.api_tokens' => 'Manage API tokens',
             ],
             'ai' => [
