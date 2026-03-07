@@ -32,9 +32,11 @@ class PipelineController extends Controller
      */
     public function approve(Request $request, string $id): JsonResponse
     {
-        $this->authz->authorize($request->user(), 'pipeline.approve');
+        $run = PipelineRun::with('pipeline')->findOrFail($id);
 
-        $run = PipelineRun::findOrFail($id);
+        // Verify the user has pipeline.approve permission scoped to the run's space.
+        $spaceId = $run->pipeline->space_id;
+        $this->authz->authorize($request->user(), 'pipeline.approve', $spaceId);
 
         if ($run->status !== 'paused_for_review') {
             return response()->json(['error' => 'Run is not awaiting review'], 422);
@@ -49,6 +51,7 @@ class PipelineController extends Controller
         $this->authz->log($request->user(), 'pipeline.approve', $run, [
             'pipeline_run_id' => $run->id,
             'stage' => $run->current_stage,
+            'space_id' => $spaceId,
         ]);
 
         return response()->json(['data' => ['status' => 'approved']]);
