@@ -32,10 +32,6 @@ components:
       type: http
       scheme: bearer
       description: Sanctum personal access token
-    bearerAuth:
-      type: http
-      scheme: bearer
-      description: Sanctum personal access token (alias for sanctumToken)
 
   schemas:
     Error:
@@ -418,39 +414,39 @@ components:
           format: float
           example: 0.87
 
-    Vocabulary:
+    Role:
       type: object
       properties:
         id:
           type: string
-          format: ulid
+          example: "018e1234-5678-7abc-def0-aaaaaaaaaaaa"
         space_id:
           type: string
-          format: ulid
+          nullable: true
+          example: null
         name:
           type: string
-          example: Categories
+          example: "Content Editor"
         slug:
           type: string
-          example: categories
+          example: "content-editor"
         description:
           type: string
-          nullable: true
-        hierarchy:
-          type: boolean
-          example: true
-        allow_multiple:
-          type: boolean
-          example: true
-        settings:
+          example: "Can create and publish content"
+        permissions:
+          type: array
+          items:
+            type: string
+          example: ["content.create", "content.publish", "pipeline.run"]
+        ai_limits:
           type: object
           nullable: true
-        sort_order:
-          type: integer
-          example: 0
-        terms_count:
-          type: integer
-          description: Included when explicitly counted
+          example:
+            daily_generations: 100
+            allowed_models: ["claude-sonnet-4-6", "claude-haiku-4-5-20251001"]
+        is_system:
+          type: boolean
+          example: false
         created_at:
           type: string
           format: date-time
@@ -458,63 +454,72 @@ components:
           type: string
           format: date-time
 
-    TaxonomyTerm:
+    UserRole:
+      type: object
+      properties:
+        user_id:
+          type: string
+          example: "018e1234-5678-7abc-def0-aaaaaaaaaaaa"
+        role_id:
+          type: string
+          example: "018e1234-5678-7abc-def0-bbbbbbbbbbbb"
+        space_id:
+          type: string
+          nullable: true
+          example: null
+        created_at:
+          type: string
+          format: date-time
+
+    AuditLog:
       type: object
       properties:
         id:
           type: string
-          format: ulid
-        vocabulary_id:
-          type: string
-          format: ulid
-        parent_id:
-          type: string
-          format: ulid
-          nullable: true
-        name:
-          type: string
-          example: Laravel
-        slug:
-          type: string
-          example: laravel
-        description:
+          example: "018e1234-5678-7abc-def0-cccccccccccc"
+        user_id:
           type: string
           nullable: true
-        path:
+          example: "018e1234-5678-7abc-def0-aaaaaaaaaaaa"
+        space_id:
           type: string
           nullable: true
-          description: Materialized path for ancestor queries
-          example: /01JKHP7Y3GGA/01JKHP7Y3GGB
-        depth:
-          type: integer
-          example: 1
-        sort_order:
-          type: integer
-          example: 0
+          example: "018e1234-5678-7abc-def0-bbbbbbbbbbbb"
+        action:
+          type: string
+          example: "content.publish"
+        resource_type:
+          type: string
+          nullable: true
+          example: "App\\Models\\Content"
+        resource_id:
+          type: string
+          nullable: true
+          example: "018e1234-5678-7abc-def0-dddddddddddd"
         metadata:
           type: object
           nullable: true
-        content_count:
-          type: integer
-          example: 42
-          description: Cached count of content items with this term
+          example:
+            version: 3
+            previous_status: "draft"
+        ip_address:
+          type: string
+          nullable: true
+          example: "192.168.1.100"
+        user_agent:
+          type: string
+          nullable: true
+          example: "Mozilla/5.0..."
         created_at:
           type: string
           format: date-time
-        updated_at:
-          type: string
-          format: date-time
 
-    TaxonomyTermTree:
-      allOf:
-        - $ref: '#/components/schemas/TaxonomyTerm'
-        - type: object
-          properties:
-            children:
-              type: array
-              items:
-                $ref: '#/components/schemas/TaxonomyTermTree'
-              description: Recursively nested child terms
+    Permission:
+      type: object
+      additionalProperties:
+        type: object
+        additionalProperties:
+          type: string
 
 paths:
   # ─── Content Delivery (Public, 60 req/min) ────────────────────────────────
@@ -1290,24 +1295,22 @@ paths:
         '401':
           description: Unauthenticated
 
-  # ─── Taxonomy (Public Reads, 60 req/min) ─────────────────────────────────
 
-  /taxonomies:
+  # ─── Roles (Auth, RBAC) ───────────────────────────────────────────────────
+
+  /roles:
     get:
-      operationId: listVocabularies
-      summary: List vocabularies for the current space
-      description: Returns all vocabularies for the space identified by X-Space header.
-      tags: [Taxonomies]
-      parameters:
-        - name: X-Space
-          in: header
-          schema:
-            type: string
-            example: my-space
-          description: Space slug (defaults to "default")
+      operationId: listRoles
+      summary: List roles in current space
+      description: |
+        Returns all roles in the current space, including system roles.
+        **Authentication required.**
+      tags: [RBAC - Roles]
+      security:
+        - sanctumToken: []
       responses:
         '200':
-          description: Vocabulary list
+          description: List of roles
           content:
             application/json:
               schema:
@@ -1316,605 +1319,174 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Vocabulary'
+                      $ref: '#/components/schemas/Role'
+        '401':
+          description: Unauthenticated
+
     post:
-      operationId: createVocabulary
-      summary: Create a vocabulary
-      tags: [Taxonomies]
+      operationId: createRole
+      summary: Create a custom role
+      tags: [RBAC - Roles]
       security:
-        - bearerAuth: []
+        - sanctumToken: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [space_id, name]
               properties:
-                space_id:
-                  type: string
-                  format: ulid
                 name:
                   type: string
-                  maxLength: 255
-                  example: Categories
+                  example: "Content Reviewer"
                 slug:
                   type: string
-                  maxLength: 255
-                  example: categories
-                description:
-                  type: string
-                  nullable: true
-                hierarchy:
-                  type: boolean
-                  default: true
-                allow_multiple:
-                  type: boolean
-                  default: true
-                sort_order:
-                  type: integer
-                  default: 0
-      responses:
-        '200':
-          description: Created vocabulary
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Vocabulary'
-        '401':
-          description: Unauthenticated
-
-  /taxonomies/{vocabSlug}:
-    get:
-      operationId: showVocabulary
-      summary: Show a vocabulary with its full term tree
-      tags: [Taxonomies]
-      parameters:
-        - name: vocabSlug
-          in: path
-          required: true
-          schema:
-            type: string
-          example: categories
-        - name: X-Space
-          in: header
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Vocabulary detail with term tree
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: object
-                    properties:
-                      vocabulary:
-                        $ref: '#/components/schemas/Vocabulary'
-                      tree:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/TaxonomyTermTree'
-        '404':
-          description: Vocabulary not found
-    put:
-      operationId: updateVocabulary
-      summary: Update a vocabulary
-      tags: [Taxonomies]
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: vocabSlug
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                description:
-                  type: string
-                  nullable: true
-                hierarchy:
-                  type: boolean
-                allow_multiple:
-                  type: boolean
-                sort_order:
-                  type: integer
-      responses:
-        '200':
-          description: Updated vocabulary
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Vocabulary'
-        '401':
-          description: Unauthenticated
-    delete:
-      operationId: deleteVocabulary
-      summary: Delete a vocabulary and all its terms
-      tags: [Taxonomies]
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: vocabSlug
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: object
-                    properties:
-                      deleted:
-                        type: boolean
-        '401':
-          description: Unauthenticated
-
-  /taxonomies/{vocabSlug}/terms:
-    get:
-      operationId: listTerms
-      summary: List terms for a vocabulary (flat or tree)
-      tags: [Taxonomy Terms]
-      parameters:
-        - name: vocabSlug
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: tree
-          in: query
-          schema:
-            type: boolean
-          description: If true, returns nested tree structure
-        - name: X-Space
-          in: header
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Term list
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/TaxonomyTerm'
-    post:
-      operationId: createTerm
-      summary: Create a term within a vocabulary
-      tags: [Taxonomy Terms]
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: vocabSlug
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [name]
-              properties:
-                name:
-                  type: string
-                  maxLength: 255
-                slug:
-                  type: string
-                  maxLength: 255
-                description:
-                  type: string
-                  nullable: true
-                parent_id:
-                  type: string
-                  format: ulid
-                  nullable: true
-                sort_order:
-                  type: integer
-                  default: 0
-                metadata:
-                  type: object
-                  nullable: true
-      responses:
-        '200':
-          description: Created term
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TaxonomyTerm'
-        '401':
-          description: Unauthenticated
-
-  /taxonomies/{vocabSlug}/terms/{termSlug}:
-    get:
-      operationId: showTerm
-      summary: Show a single term
-      tags: [Taxonomy Terms]
-      parameters:
-        - name: vocabSlug
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: termSlug
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: X-Space
-          in: header
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Term detail
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TaxonomyTerm'
-        '404':
-          description: Term not found
-
-  /taxonomies/{vocabSlug}/terms/{termSlug}/content:
-    get:
-      operationId: listContentByTerm
-      summary: List published content tagged with a term
-      tags: [Taxonomy Terms]
-      parameters:
-        - name: vocabSlug
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: termSlug
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: include_descendants
-          in: query
-          schema:
-            type: boolean
-          description: Include content tagged with descendant terms
-        - name: X-Space
-          in: header
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Paginated content list for the term
-
-  /terms/{id}:
-    put:
-      operationId: updateTerm
-      summary: Update a taxonomy term
-      tags: [Taxonomy Terms]
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: ulid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                slug:
-                  type: string
-                description:
-                  type: string
-                  nullable: true
-                parent_id:
-                  type: string
-                  format: ulid
-                  nullable: true
-                sort_order:
-                  type: integer
-                metadata:
-                  type: object
-                  nullable: true
-      responses:
-        '200':
-          description: Updated term
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TaxonomyTerm'
-        '401':
-          description: Unauthenticated
-    delete:
-      operationId: deleteTerm
-      summary: Delete a taxonomy term
-      tags: [Taxonomy Terms]
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: ulid
-        - name: child_strategy
-          in: query
-          schema:
-            type: string
-            enum: [reparent, cascade]
-            default: reparent
-          description: What to do with child terms (reparent = move up, cascade = delete subtree)
-      responses:
-        '200':
-          description: Deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: object
-                    properties:
-                      deleted:
-                        type: boolean
-        '401':
-          description: Unauthenticated
-
-  /terms/{id}/move:
-    post:
-      operationId: moveTerm
-      summary: Move a term to a new parent
-      tags: [Taxonomy Terms]
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: ulid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                parent_id:
-                  type: string
-                  format: ulid
-                  nullable: true
-                  description: New parent ID (null to make root)
-      responses:
-        '200':
-          description: Moved term
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TaxonomyTerm'
-        '401':
-          description: Unauthenticated
-
-  /terms/reorder:
-    post:
-      operationId: reorderTerms
-      summary: Batch reorder sibling terms
-      tags: [Taxonomy Terms]
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [ordering]
-              properties:
-                ordering:
-                  type: object
-                  description: Map of term_id to sort_order integer
-                  additionalProperties:
-                    type: integer
-                  example:
-                    "01JKHP7Y3GGFBRMA": 0
-                    "01JKHP7Y3GGFBRME": 1
-      responses:
-        '200':
-          description: Reordered
-        '401':
-          description: Unauthenticated
-
-  /content/{slug}/terms:
-    get:
-      operationId: listContentTerms
-      summary: List all taxonomy terms for a piece of content
-      tags: [Content Taxonomy]
-      parameters:
-        - name: slug
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Term list for the content
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/TaxonomyTerm'
-
-  /content/{id}/terms:
-    post:
-      operationId: assignTerms
-      summary: Assign terms to content (additive)
-      tags: [Content Taxonomy]
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: ulid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [assignments]
-              properties:
-                assignments:
-                  type: array
-                  items:
-                    type: object
-                    required: [term_id]
-                    properties:
-                      term_id:
-                        type: string
-                        format: ulid
-                      sort_order:
-                        type: integer
-                        default: 0
-                      auto_assigned:
-                        type: boolean
-                        default: false
-                      confidence:
-                        type: number
-                        format: float
-                        minimum: 0
-                        maximum: 1
-                        nullable: true
-      responses:
-        '200':
-          description: Terms assigned
-        '401':
-          description: Unauthenticated
-    put:
-      operationId: syncTerms
-      summary: Sync (replace) all terms on content
-      tags: [Content Taxonomy]
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: ulid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [term_ids]
-              properties:
-                term_ids:
+                  example: "content-reviewer"
+                permissions:
                   type: array
                   items:
                     type: string
-                    format: ulid
+                  example: ["content.read", "pipeline.approve"]
+              required: [name, slug, permissions]
       responses:
-        '200':
-          description: Terms synced
-        '401':
-          description: Unauthenticated
-
-  /content/{id}/terms/{termId}:
-    delete:
-      operationId: removeTerm
-      summary: Remove a term from content
-      tags: [Content Taxonomy]
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: ulid
-        - name: termId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: ulid
-      responses:
-        '200':
-          description: Term removed
-        '401':
-          description: Unauthenticated
-
-  /content/{id}/auto-categorize:
-    post:
-      operationId: autoCategorize
-      summary: Trigger AI auto-categorization for content
-      description: Dispatches an async job that uses LLM to suggest and assign taxonomy terms.
-      tags: [Content Taxonomy]
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: ulid
-      responses:
-        '200':
-          description: Categorization job queued
+        '201':
+          description: Role created
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   data:
-                    type: object
-                    properties:
-                      queued:
-                        type: boolean
-                        example: true
-                      content_id:
-                        type: string
-                        format: ulid
+                    $ref: '#/components/schemas/Role'
+        '403':
+          description: Insufficient permissions
+
+  /users/{userId}/roles:
+    get:
+      operationId: getUserRoles
+      summary: List roles assigned to a user
+      tags: [RBAC - User Roles]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of user roles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserRole'
+        '401':
+          description: Unauthenticated
+
+    post:
+      operationId: assignUserRole
+      summary: Assign a role to a user
+      tags: [RBAC - User Roles]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role_id:
+                  type: string
+                  example: "018e1234-5678-7abc-def0-bbbbbbbbbbbb"
+              required: [role_id]
+      responses:
+        '201':
+          description: Role assigned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserRole'
+
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      summary: Query audit logs
+      description: Retrieve audit logs with optional filtering.
+      tags: [RBAC - Audit Logs]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: string
+          description: Filter by user ID
+        - name: action
+          in: query
+          schema:
+            type: string
+          description: Filter by action
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Paginated audit logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Insufficient permissions
+
+  /permissions:
+    get:
+      operationId: listPermissions
+      summary: List all available permissions
+      description: Returns the canonical permission taxonomy grouped by domain.
+      tags: [RBAC - Permissions]
+      security:
+        - sanctumToken: []
+      responses:
+        '200':
+          description: Permission taxonomy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Permission'
         '401':
           description: Unauthenticated
 
@@ -1933,9 +1505,11 @@ tags:
     description: Audience personas for AI content generation (authenticated)
   - name: Analytics
     description: AI generation cost and usage analytics (authenticated)
-  - name: Taxonomies
-    description: Vocabulary and term management for content organization (public reads, authenticated writes)
-  - name: Taxonomy Terms
-    description: Hierarchical term CRUD, tree management, and drag-and-drop reordering (authenticated)
-  - name: Content Taxonomy
-    description: Content↔term assignments, AI auto-categorization (authenticated)
+  - name: RBAC - Roles
+    description: Role management and role-based authorization (authenticated)
+  - name: RBAC - User Roles
+    description: User role assignment and role revocation (authenticated)
+  - name: RBAC - Audit Logs
+    description: Immutable audit logs of all sensitive actions (authenticated)
+  - name: RBAC - Permissions
+    description: Permission taxonomy and available permissions (authenticated)

@@ -11,66 +11,96 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Planned
+### Planned for 0.3.0
+- Extract formal interfaces (`AgentContract`, `PipelineExecutorContract`)
+- Docker / docker-compose setup
 - Remove legacy `numen.anthropic` config block (duplicates `numen.providers.anthropic`)
-- `AgentContract` interface extracted from `Agent` abstract class
 
 ---
 
-## [0.2.1] — 2026-03-07
+## [0.5.0] — 2026-03-07
 
-### Fixed
-- **Production deploy fix:** `taxonomy_terms.path` index exceeded MySQL's 3072-byte max key length. Now uses a 768-char prefix index on MySQL (`768 × 4 = 3072 bytes`), fitting exactly within the limit.
-- **SQLite compatibility:** Prefix indexes are MySQL-specific. Migration now detects the DB driver — uses `rawIndex` with prefix on MySQL, plain `index` on SQLite/others.
-- **Taxonomy security hardening:** Fixed circular reference detection in term hierarchy, blocked cross-vocabulary parent assignments, added metadata size guards (max 64KB).
+**Role-Based Access Control (RBAC) & AI Governance**
 
-### Tests
-- Test suite expanded to 332 tests (752 assertions), all passing.
-
----
-
-## [0.2.0] — 2026-03-07
+This release introduces a full RBAC system for team collaboration: role and permission management, space-scoped authorization, budget limits on AI generation, and an immutable audit log.
 
 ### Added
 
-**Taxonomy & Content Organization** ([Discussion #8](https://github.com/byte5digital/numen/discussions/8))
-- **Vocabularies:** Flexible vocabulary system — create multiple taxonomy types per space (Categories, Tags, Topics, etc.). Configurable hierarchy and cardinality (`allow_multiple`).
-- **Taxonomy Terms:** Hierarchical terms with adjacency list (`parent_id`) + materialized path for fast ancestor queries. SEO-friendly slugs, descriptions, and custom metadata (icon, color, image).
-- **Content ↔ Term Relationships:** Many-to-many pivot table (`content_taxonomy`) with sort order, AI auto-assignment tracking, and confidence scores.
-- **AI Auto-Categorization:** `TaxonomyCategorizer` service integrates with the AI pipeline to automatically suggest and assign taxonomy terms to content during generation. Confidence scores stored per assignment.
-- **Taxonomy Admin UI:** Full CRUD for vocabularies and terms in the admin panel. Tree management with drag-and-drop reordering support.
-- **REST API:** Full taxonomy endpoints — CRUD for vocabularies (`/api/v1/taxonomies`), terms (`/api/v1/taxonomies/{id}/terms`), and content assignments (`/api/v1/content/{id}/terms`). OpenAPI spec updated.
-- **API Token Management:** Admin UI for creating/revoking Sanctum API tokens. All write API routes now require authentication.
+**Core RBAC System**
+- `Role` model with space-scoped and global role assignment via `role_user` pivot table
+- `AuditLog` model for append-only tracking of all sensitive actions (permission denials, content publishes, role assignments, etc.)
+- `AuthorizationService` — Per-request permission resolution with role aggregation, wildcard support (`*`, `content.*`), and token-level scoping
+- `PermissionRegistrar` — Canonical permission taxonomy (20+ permissions across 10 domains: content, users, roles, spaces, audit, settings, AI, components, pipelines, personas)
+- `RequirePermission` middleware (`permission:action,space-id`) — Declarative route protection with 403 JSON responses and denial audit logging
+
+**Permission Management**
+- 7 new API endpoints for role and permission management:
+  - `GET/POST/PUT/DELETE /api/v1/roles` — Create, read, update, delete roles
+  - `POST/DELETE /api/v1/users/{user}/roles` — Assign/revoke roles to/from users
+  - `GET /api/v1/permissions` — List all available permissions
+  - `GET /api/v1/audit-logs` — Query audit trail (filterable by user, action, resource, date)
+- 4 built-in roles (seeded): Admin, Editor, Author, Viewer — all editable, protected from deletion
+- Self-escalation prevention — users cannot assign roles with more permissions than they have
+
+**API Token Scoping**
+- Sanctum personal access tokens and API keys now support ability scoping
+- Token abilities use same wildcard expansion as roles (`*`, `content.*`)
+- Intersection guard — token must have ability AND user must have permission (both required)
+
+**AI Budget & Governance** (structure; enforcement in v0.6.0)
+- `ai_limits` JSON on roles for per-role budget controls (daily generations, monthly cost limit, allowed models, etc.)
+- Architecture for budget checking before AI API calls
+
+**Audit Logging**
+- Immutable audit logs tracking: permission denials, content publishes, role assignments, user creation/deletion
+- 90-day default retention with configurable `numen:audit:prune` command
+- Metadata support for context (version numbers, status changes, etc.)
+
+**Documentation**
+- New guide: `docs/RBAC_GUIDE.md` — Complete walkthrough of permission system, role assignment, token scoping, audit logs
+- Updated `openapi.yaml` — RBAC endpoints fully documented with request/response schemas
+- Inline PHPDoc for all public methods in `AuthorizationService`, `PermissionRegistrar`, `RequirePermission`
+
+**Security Hardening**
+- Added missing permission checks to: Analytics, Brief, ComponentDefinition, Persona, Pipeline, Role, User controllers
+- Token scope bug fix: namespace wildcard expansion (`content.*` matches `content.create`) now works correctly
+- Space isolation enforcement on all content queries
+
+### Changed
+- Test suite expanded to 193+ tests (up from 134 in 0.2.0), including token scoping and RBAC scenarios
+
+### Technical Details
+- 6 new migrations: roles table, role_user pivot, audit_logs table, permissions column on api_keys, data migration from legacy `user.role`, column cleanup
+- 2 new models: `Role`, `AuditLog`
+- 3 new service classes: `AuthorizationService`, `PermissionRegistrar`, plus middleware
+- No external RBAC package — Numen's own implementation for full control over AI-specific governance
+
+---
+
+## [0.2.0] — (unreleased)
+
+### Added
+- Larastan level 5 static analysis — CI job added (`d77decb`, `5b4ddd6`). All 199 errors fixed, 0 remaining.
 - Multi-provider image generation: OpenAI (GPT Image 1.5), Together AI (FLUX), fal.ai (FLUX/SD3.5/Recraft), Replicate (universal). `ImageManager` factory with per-persona provider config (`generator_provider` / `generator_model`).
 - User management (CRUD) with admin frontend pages — list, create, edit, delete users.
 - Self-service password change for logged-in users (profile settings page).
 - Permanent content deletion with full cascade cleanup (content blocks, versions, media assets, pipeline runs, AI logs).
-- Larastan level 5 static analysis — CI job added. All 199 errors fixed, 0 remaining.
-- Prominent Swagger UI links on start page.
-
-**New Database Tables:**
-- `vocabularies` — taxonomy vocabulary definitions, space-scoped
-- `taxonomy_terms` — hierarchical terms with materialized paths
-- `content_taxonomy` — polymorphic-ready pivot with AI metadata
-
-**New Models:** `Vocabulary`, `TaxonomyTerm`
-
-**New Services:** `TaxonomyService`, `TaxonomyCategorizer`
-
-**New Controllers:** `TaxonomyAdminController`, `TaxonomyController`, `TaxonomyTermController`
 
 ### Fixed
-- Cast `content_refresh_days` to `int` for PHP 8.4 strict typing compatibility
-- Cache table migration: corrected Laravel schema
-- Jobs table migration: corrected Laravel schema
-- Missing `DatabaseSeeder.php` — added to prevent bare `db:seed` failures
-- `DemoSeeder` synced with live DB: 5 personas, fully idempotent
-- Queue worker detection for Laravel Cloud
-- Visual Director persona config fields
+- Cast `content_refresh_days` to `int` for PHP 8.4 strict typing compatibility (`b143a22`)
+- Larastan level 5 — 199 errors fixed, 0 remaining across the full codebase.
+- Cache table migration: corrected Laravel schema (proper `cache` / `cache_locks` tables).
+- Jobs table migration: corrected Laravel schema (all required queue columns present).
+- Missing `DatabaseSeeder.php` — added to prevent bare `db:seed` failures.
+- `DemoSeeder` synced with live DB: 5 personas, fully idempotent (safe to re-run).
+- Queue worker detection for Laravel Cloud (handles missing `horizon` gracefully).
+- Visual Director persona: now correctly configured with `prompt_model` / `generator_model` / `generator_provider` fields.
 
 ### Changed
-- CI: removed PHP 8.3 from test matrix — Numen requires PHP ^8.4
-- Test suite expanded to 332 tests (up from 117 in 0.1.1)
+- CI: removed PHP 8.3 from test matrix — Numen requires PHP ^8.4 (`555f156`)
+- Docs: removed API key from Quick Start example (`b28dad0`)
+- Docs: updated Quick Start install steps (`1bc68de`)
+- Chore: `.gitignore` cleanup (`942d70f`)
 
 ---
 
@@ -171,8 +201,8 @@ Initial public release. This is the "here's what we have" release — solid arch
 
 ---
 
-[Unreleased]: https://github.com/byte5digital/numen/compare/v0.2.1...HEAD
-[0.2.1]: https://github.com/byte5digital/numen/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/byte5digital/numen/compare/v0.1.1...v0.2.0
-[0.1.1]: https://github.com/byte5digital/numen/compare/v0.1.0...v0.1.1
-[0.1.0]: https://github.com/byte5digital/numen/releases/tag/v0.1.0
+[Unreleased]: https://github.com/byte5labs/numen/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/byte5labs/numen/compare/v0.2.0...v0.5.0
+[0.2.0]: https://github.com/byte5labs/numen/compare/v0.1.1...v0.2.0
+[0.1.1]: https://github.com/byte5labs/numen/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/byte5labs/numen/releases/tag/v0.1.0
