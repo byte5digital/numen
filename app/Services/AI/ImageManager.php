@@ -80,7 +80,8 @@ class ImageManager
         $ulid = Str::ulid();
         $extension = $this->extensionForMime($result->mimeType);
         $relativePath = "media/{$spaceId}/{$ulid}.{$extension}";
-        $disk = Storage::disk('public');
+        $diskName = (string) config('numen.storage_disk', 'public');
+        $disk = Storage::disk($diskName);
         $disk->makeDirectory("media/{$spaceId}");
         $disk->put($relativePath, $result->imageData);
         $sizeBytes = $disk->size($relativePath);
@@ -92,7 +93,7 @@ class ImageManager
         $asset = MediaAsset::create([
             'space_id' => $spaceId,
             'filename' => "{$ulid}.{$extension}",
-            'disk' => 'public',
+            'disk' => $diskName,
             'path' => $relativePath,
             'mime_type' => $result->mimeType,
             'size_bytes' => $sizeBytes,

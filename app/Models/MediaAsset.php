@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @property string $id
@@ -47,5 +48,14 @@ class MediaAsset extends Model
     {
         return $this->belongsToMany(Content::class, 'content_media')
             ->withPivot('role', 'sort_order');
+    }
+
+    /**
+     * Disk-aware public URL for this asset.
+     * Works for both the local 'public' disk and S3-compatible disks (Laravel Cloud).
+     */
+    public function getUrlAttribute(): string
+    {
+        return Storage::disk($this->disk)->url($this->path);
     }
 }

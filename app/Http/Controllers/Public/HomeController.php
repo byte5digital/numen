@@ -64,7 +64,7 @@ class HomeController extends Controller
                 'excerpt' => $c->currentVersion?->excerpt,
                 'type' => $c->contentType->slug,
                 'seo_score' => $c->currentVersion?->seo_score,
-                'hero_image_url' => $c->heroImage ? '/storage/'.$c->heroImage->path : null,
+                'hero_image_url' => $c->heroImage ? $c->heroImage->url : null,
             ])
             ->toArray();
     }
