@@ -16,7 +16,7 @@ class ContentPolicy
     /**
      * Admins bypass all policy checks.
      */
-    public function before(User $user, string $ability): bool|null
+    public function before(User $user, string $ability): ?bool
     {
         if ($user->isAdmin()) {
             return true;

@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Agents\AgentFactory;
+use App\Models\Content;
 use App\Models\Setting;
+use App\Policies\ContentPolicy;
 use App\Services\AI\CostTracker;
 use App\Services\AI\ImageManager;
 use App\Services\AI\ImageProviders\FalImageProvider;
@@ -14,8 +16,6 @@ use App\Services\AI\LLMManager;
 use App\Services\AI\Providers\AnthropicProvider;
 use App\Services\AI\Providers\AzureOpenAIProvider;
 use App\Services\AI\Providers\OpenAIProvider;
-use App\Models\Content;
-use App\Policies\ContentPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 

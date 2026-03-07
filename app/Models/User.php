@@ -14,7 +14,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string $email
  * @property string $password
  * @property string $role
- * @property string|null $space_id  Space restriction for non-admin users (null = all spaces)
+ * @property string|null $space_id Space restriction for non-admin users (null = all spaces)
  * @property string|null $remember_token
  * @property \Carbon\Carbon|null $email_verified_at
  * @property \Carbon\Carbon $created_at

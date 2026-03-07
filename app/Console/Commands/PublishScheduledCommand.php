@@ -37,8 +37,8 @@ class PublishScheduledCommand extends Command
             if ($schedule->version->content_id !== $schedule->content->id) {
                 $this->error(
                     "Skipping schedule {$schedule->id}: version/content mismatch "
-                    . "(version.content_id={$schedule->version->content_id}, "
-                    . "schedule.content_id={$schedule->content->id})"
+                    ."(version.content_id={$schedule->version->content_id}, "
+                    ."schedule.content_id={$schedule->content->id})"
                 );
                 $schedule->update(['status' => 'failed']);
 
