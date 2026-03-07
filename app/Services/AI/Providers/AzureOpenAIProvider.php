@@ -33,8 +33,8 @@ class AzureOpenAIProvider extends OpenAIProvider
         // Map generic model names to Azure deployment names
         // Deployments can be named anything in Azure; configure in numen.providers.azure.deployments
         $this->deploymentMap = config('numen.providers.azure.deployments', [
-            'gpt-4o' => 'gpt-4o',
-            'gpt-4o-mini' => 'gpt-4o-mini',
+            'gpt-5-mini' => 'gpt-5-mini',
+            'gpt-5-nano' => 'gpt-5-nano',
         ]);
     }
 
@@ -57,7 +57,7 @@ class AzureOpenAIProvider extends OpenAIProvider
     public function complete(array $params): LLMResponse
     {
         // Resolve the Azure deployment name from the model name
-        $model = $params['model'] ?? 'gpt-4o';
+        $model = $params['model'] ?? 'gpt-5-mini';
         $deployment = $this->deploymentMap[$model] ?? $model;
 
         // Override base URL to Azure endpoint for this specific deployment

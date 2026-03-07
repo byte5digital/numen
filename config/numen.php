@@ -38,7 +38,7 @@ return [
         'openai' => [
             'api_key' => env('OPENAI_API_KEY'),
             'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
-            'default_model' => env('OPENAI_DEFAULT_MODEL', 'gpt-4o'),
+            'default_model' => env('OPENAI_DEFAULT_MODEL', 'gpt-5-mini'),
             'timeout' => env('OPENAI_TIMEOUT', 120),
         ],
 
@@ -47,12 +47,12 @@ return [
             'api_key' => env('AZURE_OPENAI_API_KEY'),
             'endpoint' => env('AZURE_OPENAI_ENDPOINT'),         // e.g. https://my-resource.openai.azure.com
             'api_version' => env('AZURE_OPENAI_API_VERSION', '2024-02-01'),
-            'default_model' => env('AZURE_OPENAI_DEFAULT_MODEL', 'gpt-4o'),
+            'default_model' => env('AZURE_OPENAI_DEFAULT_MODEL', 'gpt-5-mini'),
             'timeout' => env('AZURE_OPENAI_TIMEOUT', 120),
             // Map generic model names → Azure deployment names
             'deployments' => [
-                'gpt-4o' => env('AZURE_DEPLOYMENT_GPT4O', 'gpt-4o'),
-                'gpt-4o-mini' => env('AZURE_DEPLOYMENT_GPT4O_MINI', 'gpt-4o-mini'),
+                'gpt-5-mini' => env('AZURE_DEPLOYMENT_GPT5_MINI', 'gpt-5-mini'),
+                'gpt-5-nano' => env('AZURE_DEPLOYMENT_GPT5_NANO', 'gpt-5-nano'),
             ],
         ],
     ],

@@ -117,7 +117,7 @@ Always include practical examples, code snippets where relevant, and concrete ta
                     'temperature' => 0.8,
                     'max_tokens' => 8192,
                     'provider' => '',
-                    'fallback_model' => 'gpt-4o-mini',
+                    'fallback_model' => 'gpt-5-nano',
                     'fallback_provider' => 'openai',
                 ],
             ]
@@ -160,7 +160,7 @@ ORGANIZATION CONTEXT:
                     'temperature' => 0.3,
                     'max_tokens' => 4096,
                     'provider' => '',
-                    'fallback_model' => 'gpt-4o-mini',
+                    'fallback_model' => 'gpt-5-nano',
                     'fallback_provider' => 'openai',
                 ],
             ]
@@ -186,7 +186,7 @@ Score content 0-100 and be honest. A score of 60 is mediocre and should be revis
                     'temperature' => 0.2,
                     'max_tokens' => 4096,
                     'provider' => '',
-                    'fallback_model' => 'gpt-4o-mini',
+                    'fallback_model' => 'gpt-5-nano',
                     'fallback_provider' => 'openai',
                 ],
             ]
@@ -201,7 +201,7 @@ Score content 0-100 and be honest. A score of 60 is mediocre and should be revis
                 'model_config' => [
                     'model' => 'claude-sonnet-4-20250514',
                     'provider' => 'anthropic',
-                    'fallback_model' => 'gpt-4o-mini',
+                    'fallback_model' => 'gpt-5-nano',
                     'fallback_provider' => 'openai',
                     'temperature' => 0.3,
                     'max_tokens' => 8192,

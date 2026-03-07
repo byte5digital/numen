@@ -32,11 +32,15 @@ class LLMManager
 
     /** @var array<string, string> Model aliases for cross-provider fallback */
     private array $equivalents = [
-        // Anthropic → OpenAI equivalents
-        'claude-opus-4-6' => 'gpt-4o',
-        'claude-sonnet-4-6' => 'gpt-4o',
-        'claude-haiku-4-5-20251001' => 'gpt-4o-mini',
-        // OpenAI → Anthropic equivalents
+        // Anthropic → OpenAI equivalents (updated to GPT-5 family)
+        'claude-opus-4-6' => 'gpt-5',
+        'claude-sonnet-4-6' => 'gpt-5-mini',
+        'claude-haiku-4-5-20251001' => 'gpt-5-nano',
+        // OpenAI GPT-5 → Anthropic equivalents
+        'gpt-5' => 'claude-opus-4-6',
+        'gpt-5-mini' => 'claude-sonnet-4-6',
+        'gpt-5-nano' => 'claude-haiku-4-5-20251001',
+        // Legacy GPT-4o → Anthropic equivalents (kept for backward compat)
         'gpt-4o' => 'claude-sonnet-4-6',
         'gpt-4o-mini' => 'claude-haiku-4-5-20251001',
         'gpt-4-turbo' => 'claude-opus-4-6',
@@ -206,7 +210,11 @@ class LLMManager
         if (str_starts_with($modelStr, 'claude')) {
             return ['anthropic', $modelStr];
         }
-        if (str_starts_with($modelStr, 'gpt') || str_starts_with($modelStr, 'o1') || str_starts_with($modelStr, 'o3')) {
+        if (str_starts_with($modelStr, 'gpt')
+            || str_starts_with($modelStr, 'o1')
+            || str_starts_with($modelStr, 'o3')
+            || str_starts_with($modelStr, 'o4')
+        ) {
             return ['openai', $modelStr];
         }
 
@@ -221,9 +229,9 @@ class LLMManager
     {
         return match ($provider) {
             'anthropic' => config('numen.providers.anthropic.default_model', 'claude-sonnet-4-6'),
-            'openai' => config('numen.providers.openai.default_model', 'gpt-4o'),
-            'azure' => config('numen.providers.azure.default_model', 'gpt-4o'),
-            default => 'gpt-4o',
+            'openai' => config('numen.providers.openai.default_model', 'gpt-5-mini'),
+            'azure' => config('numen.providers.azure.default_model', 'gpt-5-mini'),
+            default => 'gpt-5-mini',
         };
     }
 

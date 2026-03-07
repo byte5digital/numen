@@ -21,9 +21,13 @@ class CostTracker
         'claude-haiku-4-5-20251001' => ['input' => 0.80,  'output' => 4.0,   'cache' => 0.08],
         'claude-3-5-haiku-20241022' => ['input' => 0.80,  'output' => 4.0,   'cache' => 0.08],
         'claude-3-5-sonnet-20241022' => ['input' => 3.0,   'output' => 15.0,  'cache' => 0.30],
-        // GPT-5 (2025)
+        // GPT-5 family (2025)
+        'gpt-5.4' => ['input' => 2.50,  'output' => 15.0,  'cache' => 0.25],
+        'gpt-5.2' => ['input' => 2.50,  'output' => 15.0,  'cache' => 0.25],
+        'gpt-5.1' => ['input' => 2.50,  'output' => 15.0,  'cache' => 0.25],
         'gpt-5' => ['input' => 75.0,  'output' => 300.0, 'cache' => 37.50],
-        'gpt-5-mini' => ['input' => 1.10,  'output' => 4.40,  'cache' => 0.275],
+        'gpt-5-mini' => ['input' => 0.25,  'output' => 1.50,  'cache' => 0.025],
+        'gpt-5-nano' => ['input' => 0.10,  'output' => 0.40,  'cache' => 0.01],
         // OpenAI — GPT-4.1 family (2025)
         'gpt-4.1' => ['input' => 2.00,  'output' => 8.0,   'cache' => 0.50],
         'gpt-4.1-mini' => ['input' => 0.40,  'output' => 1.60,  'cache' => 0.10],

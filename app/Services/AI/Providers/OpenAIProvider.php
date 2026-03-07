@@ -49,7 +49,7 @@ class OpenAIProvider implements LLMProvider
 
     public function complete(array $params): LLMResponse
     {
-        $model = $params['model'] ?? config('numen.providers.openai.default_model', 'gpt-4o');
+        $model = $params['model'] ?? config('numen.providers.openai.default_model', 'gpt-5-mini');
         $purpose = $params['_purpose'] ?? 'unknown';
         $start = microtime(true);
 
@@ -138,11 +138,13 @@ class OpenAIProvider implements LLMProvider
      */
     protected function usesMaxCompletionTokens(string $model): bool
     {
-        // o1, o3, gpt-4o (2024+), gpt-5 all use the new param
+        // o-series, gpt-4o (2024+), gpt-4.1, gpt-5 all use the new param
         return str_starts_with($model, 'o1')
             || str_starts_with($model, 'o3')
+            || str_starts_with($model, 'o4')
             || str_starts_with($model, 'gpt-5')
-            || str_starts_with($model, 'gpt-4o');
+            || str_starts_with($model, 'gpt-4o')
+            || str_starts_with($model, 'gpt-4.1');
     }
 
     protected function headers(): array

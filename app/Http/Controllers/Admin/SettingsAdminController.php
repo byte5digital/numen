@@ -22,32 +22,27 @@ class SettingsAdminController extends Controller
             'claude-haiku-4-5-20251001',
         ],
         'openai' => [
-            // GPT-5
-            'gpt-5',
-            'gpt-5-mini',
+            // GPT-5 family (2025)
+            'gpt-5.4', 'gpt-5.2', 'gpt-5.1', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano',
             // GPT-4.1 family (2025)
             'gpt-4.1',
             'gpt-4.1-mini',
             'gpt-4.1-nano',
-            // GPT-4.5
-            'gpt-4.5-preview',
-            // GPT-4o family
-            'gpt-4o',
-            'gpt-4o-mini',
             // o-series reasoning models
             'o4-mini',
             'o3',
-            'o3-mini',
             'o1',
-            'o1-mini',
-            // Legacy
-            'gpt-4-turbo',
+            // Legacy (kept for existing deployments)
+            'gpt-4o',
+            'gpt-4o-mini',
         ],
         'azure' => [
-            'gpt-5',
-            'gpt-5-mini',
+            // GPT-5 family
+            'gpt-5.4', 'gpt-5.2', 'gpt-5.1', 'gpt-5', 'gpt-5-mini',
+            // GPT-4.1 family
             'gpt-4.1',
             'gpt-4.1-mini',
+            // Legacy (kept for existing deployments)
             'gpt-4o',
             'gpt-4o-mini',
         ],
@@ -67,11 +62,11 @@ class SettingsAdminController extends Controller
                 'key_set' => ! empty(config('numen.providers.anthropic.api_key')),
             ],
             'openai' => [
-                'available' => $openai->isAvailable($current['ai.providers.openai.default_model'] ?? 'gpt-4o'),
+                'available' => $openai->isAvailable($current['ai.providers.openai.default_model'] ?? 'gpt-5-mini'),
                 'key_set' => ! empty(config('numen.providers.openai.api_key')),
             ],
             'azure' => [
-                'available' => $azure->isAvailable($current['ai.providers.azure.default_model'] ?? 'gpt-4o'),
+                'available' => $azure->isAvailable($current['ai.providers.azure.default_model'] ?? 'gpt-5-mini'),
                 'key_set' => ! empty(config('numen.providers.azure.api_key')) && ! empty(config('numen.providers.azure.endpoint')),
             ],
         ];
@@ -114,8 +109,8 @@ class SettingsAdminController extends Controller
             'ai.providers.azure.endpoint' => ['nullable', 'url'],
             'ai.providers.azure.api_version' => ['nullable', 'string'],
             'ai.providers.azure.default_model' => ['required', 'string'],
-            'ai.providers.azure.deployments.gpt-4o' => ['nullable', 'string'],
-            'ai.providers.azure.deployments.gpt-4o-mini' => ['nullable', 'string'],
+            'ai.providers.azure.deployments.gpt-5-mini' => ['nullable', 'string'],
+            'ai.providers.azure.deployments.gpt-5-nano' => ['nullable', 'string'],
         ])->validate();
 
         // Re-flatten to dot-notation keys for Setting::setMany()
@@ -200,15 +195,15 @@ class SettingsAdminController extends Controller
             // OpenAI
             'ai.providers.openai.api_key' => '',
             'ai.providers.openai.base_url' => config('numen.providers.openai.base_url', 'https://api.openai.com/v1'),
-            'ai.providers.openai.default_model' => config('numen.providers.openai.default_model', 'gpt-4o'),
+            'ai.providers.openai.default_model' => config('numen.providers.openai.default_model', 'gpt-5-mini'),
 
             // Azure
             'ai.providers.azure.api_key' => '',
             'ai.providers.azure.endpoint' => config('numen.providers.azure.endpoint', ''),
             'ai.providers.azure.api_version' => config('numen.providers.azure.api_version', '2024-02-01'),
-            'ai.providers.azure.default_model' => config('numen.providers.azure.default_model', 'gpt-4o'),
-            'ai.providers.azure.deployments.gpt-4o' => config('numen.providers.azure.deployments.gpt-4o', 'gpt-4o'),
-            'ai.providers.azure.deployments.gpt-4o-mini' => config('numen.providers.azure.deployments.gpt-4o-mini', 'gpt-4o-mini'),
+            'ai.providers.azure.default_model' => config('numen.providers.azure.default_model', 'gpt-5-mini'),
+            'ai.providers.azure.deployments.gpt-5-mini' => config('numen.providers.azure.deployments.gpt-5-mini', 'gpt-5-mini'),
+            'ai.providers.azure.deployments.gpt-5-nano' => config('numen.providers.azure.deployments.gpt-5-nano', 'gpt-5-nano'),
 
             // Model role assignments
             'ai.models.generation' => config('numen.models.generation', 'claude-sonnet-4-6'),
