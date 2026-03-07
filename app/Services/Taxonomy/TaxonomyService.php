@@ -72,6 +72,7 @@ class TaxonomyService
      * Update a term.
      *
      * @param  array<string, mixed>  $data
+     *
      * @throws \InvalidArgumentException if a parent_id change would create a circular reference.
      */
     public function updateTerm(TaxonomyTerm $term, array $data): TaxonomyTerm
