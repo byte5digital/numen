@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\PageController;
+use App\Http\Controllers\Api\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -69,6 +70,15 @@ Route::prefix('v1')->group(function () {
 
             return response()->json(['data' => ['status' => 'approved']]);
         });
+
+        // Webhooks — management CRUD + delivery log
+        Route::get('/webhooks', [WebhookController::class, 'index']);
+        Route::post('/webhooks', [WebhookController::class, 'store']);
+        Route::get('/webhooks/{id}', [WebhookController::class, 'show']);
+        Route::put('/webhooks/{id}', [WebhookController::class, 'update']);
+        Route::delete('/webhooks/{id}', [WebhookController::class, 'destroy']);
+        Route::post('/webhooks/{id}/rotate-secret', [WebhookController::class, 'rotateSecret']);
+        Route::get('/webhooks/{id}/deliveries', [WebhookController::class, 'deliveries']);
 
         // Personas
         Route::get('/personas', function () {
