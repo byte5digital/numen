@@ -134,7 +134,13 @@ class OpenAIImageProvider implements ImageProviderInterface
 
     private function apiKey(): string
     {
-        return (string) config('numen.image_providers.openai.api_key', '');
+        // Prefer the image-specific key; fall back to the shared LLM OpenAI key.
+        // This ensures that a key configured via the Admin Settings UI
+        // (stored under numen.providers.openai.api_key) also enables image generation.
+        return (string) (
+            config('numen.image_providers.openai.api_key')
+            ?: config('numen.providers.openai.api_key', '')
+        );
     }
 
     private function baseUrl(): string

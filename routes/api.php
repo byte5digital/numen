@@ -7,6 +7,9 @@ use App\Http\Controllers\Api\ContentTaxonomyController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\TaxonomyController;
 use App\Http\Controllers\Api\TaxonomyTermController;
+use App\Http\Controllers\Api\Versioning\AutoSaveController;
+use App\Http\Controllers\Api\Versioning\DiffController;
+use App\Http\Controllers\Api\Versioning\VersionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -102,6 +105,34 @@ Route::prefix('v1')->group(function () {
         // Personas
         Route::get('/personas', function () {
             return response()->json(['data' => \App\Models\Persona::where('is_active', true)->get()]);
+        });
+
+        // Content Versioning (read endpoints — standard rate limit)
+        Route::middleware('throttle:60,1')->prefix('content/{content}/versions')->group(function () {
+            Route::get('/', [VersionController::class, 'index']);
+            Route::get('/{version}', [VersionController::class, 'show']);
+        });
+
+        // Content Versioning (write/publish endpoints — tighter rate limit)
+        Route::middleware('throttle:30,1')->prefix('content/{content}/versions')->group(function () {
+            Route::post('/draft', [VersionController::class, 'createDraft']);
+            Route::patch('/{version}', [VersionController::class, 'update']);
+            Route::post('/{version}/label', [VersionController::class, 'label']);
+            Route::post('/{version}/publish', [VersionController::class, 'publish']);
+            Route::post('/{version}/schedule', [VersionController::class, 'schedule']);
+            Route::delete('/{version}/schedule', [VersionController::class, 'cancelSchedule']);
+            Route::post('/{version}/rollback', [VersionController::class, 'rollback']);
+            Route::post('/{version}/branch', [VersionController::class, 'branch']);
+        });
+
+        // Version diff
+        Route::middleware('throttle:30,1')->get('/content/{content}/diff', [DiffController::class, 'compare']);
+
+        // Auto-save drafts — Fix 3: 30 saves/minute per user to prevent abuse
+        Route::prefix('content/{content}/autosave')->group(function () {
+            Route::post('/', [AutoSaveController::class, 'save'])->middleware('throttle:30,1');
+            Route::get('/', [AutoSaveController::class, 'show']);
+            Route::delete('/', [AutoSaveController::class, 'discard']);
         });
 
         // Analytics
