@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -35,6 +36,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read MediaAsset|null $heroImage
  * @property-read \Illuminate\Database\Eloquent\Collection<int, MediaAsset> $mediaAssets
  * @property-read \Illuminate\Database\Eloquent\Collection<int, PipelineRun> $pipelineRuns
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, TaxonomyTerm> $taxonomyTerms
  */
 class Content extends Model
 {
@@ -112,6 +114,40 @@ class Content extends Model
     public function pipelineRuns(): HasMany
     {
         return $this->hasMany(PipelineRun::class);
+    }
+
+    /** @return BelongsToMany<TaxonomyTerm, $this> */
+    public function taxonomyTerms(): BelongsToMany
+    {
+        return $this->belongsToMany(TaxonomyTerm::class, 'content_taxonomy', 'content_id', 'term_id')
+            ->withPivot('sort_order', 'auto_assigned', 'confidence')
+            ->withTimestamps();
+    }
+
+    /** @return BelongsToMany<TaxonomyTerm, $this> */
+    public function termsInVocabulary(string $vocabularySlug): BelongsToMany
+    {
+        return $this->taxonomyTerms()
+            ->whereHas('vocabulary', fn (Builder $q) => $q->where('slug', $vocabularySlug));
+    }
+
+    /**
+     * @param  Builder<Content>  $query
+     */
+    public function scopeInTerm(Builder $query, string $termId): Builder
+    {
+        return $query->whereHas('taxonomyTerms', fn (Builder $q) => $q->where('taxonomy_terms.id', $termId));
+    }
+
+    /**
+     * @param  Builder<Content>  $query
+     */
+    public function scopeInTaxonomy(Builder $query, string $vocabSlug, string $termSlug): Builder
+    {
+        return $query->whereHas('taxonomyTerms', function (Builder $q) use ($vocabSlug, $termSlug): void {
+            $q->where('taxonomy_terms.slug', $termSlug)
+                ->whereHas('vocabulary', fn (Builder $v) => $v->where('slug', $vocabSlug));
+        });
     }
 
     // --- Helpers ---

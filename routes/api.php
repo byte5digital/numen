@@ -3,7 +3,10 @@
 use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
+use App\Http\Controllers\Api\ContentTaxonomyController;
 use App\Http\Controllers\Api\PageController;
+use App\Http\Controllers\Api\TaxonomyController;
+use App\Http\Controllers\Api\TaxonomyTermController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,10 +27,18 @@ Route::prefix('v1')->group(function () {
         Route::get('/content', [ContentController::class, 'index']);
         Route::get('/content/{slug}', [ContentController::class, 'show']);
         Route::get('/content/type/{type}', [ContentController::class, 'byType']);
+        Route::get('/content/{slug}/terms', [ContentTaxonomyController::class, 'terms']);
 
         // Pages API (read-only, public) — headless delivery
         Route::get('/pages', [PageController::class, 'index']);
         Route::get('/pages/{slug}', [PageController::class, 'show']);
+
+        // Taxonomy read (public)
+        Route::get('/taxonomies', [TaxonomyController::class, 'index']);
+        Route::get('/taxonomies/{vocabSlug}', [TaxonomyController::class, 'show']);
+        Route::get('/taxonomies/{vocabSlug}/terms', [TaxonomyTermController::class, 'index']);
+        Route::get('/taxonomies/{vocabSlug}/terms/{termSlug}', [TaxonomyTermController::class, 'show']);
+        Route::get('/taxonomies/{vocabSlug}/terms/{termSlug}/content', [TaxonomyTermController::class, 'content']);
     });
 
     // Component type definitions (public read, authenticated write) — tighter limit
@@ -38,6 +49,22 @@ Route::prefix('v1')->group(function () {
 
     // Management API (authenticated)
     Route::middleware('auth:sanctum')->group(function () {
+
+        // Taxonomy management
+        Route::post('/taxonomies', [TaxonomyController::class, 'store']);
+        Route::put('/taxonomies/{id}', [TaxonomyController::class, 'update']);
+        Route::delete('/taxonomies/{id}', [TaxonomyController::class, 'destroy']);
+
+        Route::post('/taxonomies/{vocabId}/terms', [TaxonomyTermController::class, 'store']);
+        Route::put('/terms/{id}', [TaxonomyTermController::class, 'update']);
+        Route::delete('/terms/{id}', [TaxonomyTermController::class, 'destroy']);
+        Route::post('/terms/{id}/move', [TaxonomyTermController::class, 'move']);
+        Route::post('/terms/reorder', [TaxonomyTermController::class, 'reorder']);
+
+        Route::post('/content/{id}/terms', [ContentTaxonomyController::class, 'assign']);
+        Route::put('/content/{id}/terms', [ContentTaxonomyController::class, 'sync']);
+        Route::delete('/content/{id}/terms/{termId}', [ContentTaxonomyController::class, 'remove']);
+        Route::post('/content/{id}/auto-categorize', [ContentTaxonomyController::class, 'autoCategorize']);
 
         // Component type registration (AI agents register new block types here)
         Route::post('/component-types', [ComponentDefinitionController::class, 'store']);

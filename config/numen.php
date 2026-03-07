@@ -132,4 +132,24 @@ return [
         'webhooks' => 'default',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Taxonomy Settings
+    |--------------------------------------------------------------------------
+    */
+    'taxonomy' => [
+        // AI auto-categorization settings
+        'auto_assign_threshold' => env('NUMEN_TAXONOMY_AUTO_ASSIGN_THRESHOLD', 0.7),
+        'auto_assign_max_terms' => env('NUMEN_TAXONOMY_AUTO_ASSIGN_MAX', 5),
+        'categorization_model' => env('NUMEN_TAXONOMY_MODEL', 'claude-haiku-4-5-20251001'),
+        'categorization_provider' => env('NUMEN_TAXONOMY_PROVIDER', 'anthropic'),
+
+        // Slug generation
+        'slug_separator' => '-',
+        'slug_max_length' => 255,
+
+        // Tree depth limits
+        'max_depth' => env('NUMEN_TAXONOMY_MAX_DEPTH', 10),
+    ],
+
 ];

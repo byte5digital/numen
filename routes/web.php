@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\PipelineAdminController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\QueueMonitorController;
 use App\Http\Controllers\Admin\SettingsAdminController;
+use App\Http\Controllers\Admin\TaxonomyAdminController;
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Public\BlogController;
@@ -119,4 +120,16 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::delete('/pages/{id}/components/{componentId}', [PageAdminController::class, 'deleteComponent'])->name('admin.pages.components.destroy');
     Route::post('/pages/{id}/components/reorder', [PageAdminController::class, 'reorderComponents'])->name('admin.pages.components.reorder');
     Route::post('/pages/{id}/components/{componentId}/generate', [PageAdminController::class, 'generateComponent'])->name('admin.pages.components.generate');
+
+    // Taxonomy management
+    Route::get('/taxonomy', [TaxonomyAdminController::class, 'index'])->name('admin.taxonomy.index');
+    Route::post('/taxonomy', [TaxonomyAdminController::class, 'store'])->name('admin.taxonomy.store');
+    Route::get('/taxonomy/{id}', [TaxonomyAdminController::class, 'show'])->name('admin.taxonomy.show');
+    Route::patch('/taxonomy/{id}', [TaxonomyAdminController::class, 'update'])->name('admin.taxonomy.update');
+    Route::delete('/taxonomy/{id}', [TaxonomyAdminController::class, 'destroy'])->name('admin.taxonomy.destroy');
+    Route::post('/taxonomy/{vocabId}/terms', [TaxonomyAdminController::class, 'storeTerm'])->name('admin.taxonomy.terms.store');
+    Route::patch('/taxonomy/terms/{termId}', [TaxonomyAdminController::class, 'updateTerm'])->name('admin.taxonomy.terms.update');
+    Route::delete('/taxonomy/terms/{termId}', [TaxonomyAdminController::class, 'destroyTerm'])->name('admin.taxonomy.terms.destroy');
+    Route::post('/taxonomy/terms/{termId}/move', [TaxonomyAdminController::class, 'moveTerm'])->name('admin.taxonomy.terms.move');
+    Route::post('/taxonomy/terms/reorder', [TaxonomyAdminController::class, 'reorderTerms'])->name('admin.taxonomy.terms.reorder');
 });

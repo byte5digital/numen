@@ -17,6 +17,7 @@ const navigation = [
     { name: 'Pipelines', href: '/admin/pipelines', icon: '⚡' },
     { name: 'Personas', href: '/admin/personas', icon: '🤖' },
     { name: 'Pages', href: '/admin/pages', icon: '🗂️' },
+    { name: 'Taxonomy', href: '/admin/taxonomy', icon: '🏷️' },
     { name: 'Analytics', href: '/admin/analytics', icon: '📈' },
     { name: 'Queue', href: '/admin/queue', icon: '⚙️' },
     { name: 'Users', href: '/admin/users', icon: '👥' },

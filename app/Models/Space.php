@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, ContentBrief> $briefs
  * @property-read \Illuminate\Database\Eloquent\Collection<int, ApiKey> $apiKeys
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Webhook> $webhooks
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Vocabulary> $vocabularies
  */
 class Space extends Model
 {
@@ -67,5 +68,11 @@ class Space extends Model
     public function webhooks(): HasMany
     {
         return $this->hasMany(Webhook::class);
+    }
+
+    /** @return HasMany<Vocabulary, $this> */
+    public function vocabularies(): HasMany
+    {
+        return $this->hasMany(Vocabulary::class)->orderBy('sort_order');
     }
 }
