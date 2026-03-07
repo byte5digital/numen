@@ -23,11 +23,19 @@ class PersonaAdminController extends Controller
         ],
     ];
 
+    private array $availableImageModels = [
+        'openai' => ['gpt-image-1.5', 'gpt-image-1', 'dall-e-3'],
+        'together' => ['black-forest-labs/FLUX.1-schnell', 'black-forest-labs/FLUX.1-pro'],
+        'fal' => ['fal-ai/flux/schnell', 'fal-ai/flux-pro'],
+        'replicate' => ['black-forest-labs/flux-2-max', 'black-forest-labs/flux-2-pro', 'openai/gpt-image-1.5', 'google/nano-banana-pro'],
+    ];
+
     public function index()
     {
         return Inertia::render('Personas/Index', [
             'personas' => Persona::where('is_active', true)->get(),
             'availableModels' => $this->availableModels,
+            'availableImageModels' => $this->availableImageModels,
         ]);
     }
 
@@ -37,12 +45,19 @@ class PersonaAdminController extends Controller
 
         $data = $request->validate([
             'model_config' => 'required|array',
-            'model_config.model' => 'required|string',
+            'model_config.model' => 'nullable|string',
             'model_config.provider' => 'nullable|string|in:anthropic,openai,azure',
             'model_config.fallback_model' => 'nullable|string',
             'model_config.fallback_provider' => 'nullable|string|in:anthropic,openai,azure',
-            'model_config.temperature' => 'required|numeric|min:0|max:2',
-            'model_config.max_tokens' => 'required|integer|min:256|max:32768',
+            'model_config.temperature' => 'nullable|numeric|min:0|max:2',
+            'model_config.max_tokens' => 'nullable|integer|min:256|max:32768',
+            'model_config.prompt_model' => 'nullable|string',
+            'model_config.prompt_provider' => 'nullable|string|in:anthropic,openai,azure',
+            'model_config.generator_model' => 'nullable|string',
+            'model_config.generator_provider' => 'nullable|string|in:openai,together,fal,replicate',
+            'model_config.size' => 'nullable|string',
+            'model_config.style' => 'nullable|string',
+            'model_config.quality' => 'nullable|string',
         ]);
 
         $persona->update([

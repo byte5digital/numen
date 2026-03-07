@@ -86,8 +86,9 @@ function deleteContent(id) {
                             {{ content.published_at || '—' }}
                         </td>
                         <td class="px-6 py-4 text-right">
-                            <button @click="deleteContent(content.id)" class="text-xs text-gray-600 hover:text-red-400">
-                                Archive
+                            <a :href="`/admin/content/${content.id}/edit`" class="text-xs text-indigo-500 hover:text-indigo-700 mr-3">Edit</a>
+                            <button @click="deleteContent(content.id)" class="text-xs text-red-500 hover:text-red-700 font-medium">
+                                Delete
                             </button>
                         </td>
                     </tr>
