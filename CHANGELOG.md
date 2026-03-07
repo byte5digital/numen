@@ -11,23 +11,80 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Planned for 0.3.0
+- Extract formal interfaces (`AgentContract`, `PipelineExecutorContract`)
+- Docker / docker-compose setup
+- Remove legacy `numen.anthropic` config block (duplicates `numen.providers.anthropic`)
+
+---
+
+## [0.5.0] — 2026-03-07
+
+**Role-Based Access Control (RBAC) & AI Governance**
+
+This release introduces a full RBAC system for team collaboration: role and permission management, space-scoped authorization, budget limits on AI generation, and an immutable audit log.
+
+### Added
+
+**Core RBAC System**
+- `Role` model with space-scoped and global role assignment via `role_user` pivot table
+- `AuditLog` model for append-only tracking of all sensitive actions (permission denials, content publishes, role assignments, etc.)
+- `AuthorizationService` — Per-request permission resolution with role aggregation, wildcard support (`*`, `content.*`), and token-level scoping
+- `PermissionRegistrar` — Canonical permission taxonomy (20+ permissions across 10 domains: content, users, roles, spaces, audit, settings, AI, components, pipelines, personas)
+- `RequirePermission` middleware (`permission:action,space-id`) — Declarative route protection with 403 JSON responses and denial audit logging
+
+**Permission Management**
+- 7 new API endpoints for role and permission management:
+  - `GET/POST/PUT/DELETE /api/v1/roles` — Create, read, update, delete roles
+  - `POST/DELETE /api/v1/users/{user}/roles` — Assign/revoke roles to/from users
+  - `GET /api/v1/permissions` — List all available permissions
+  - `GET /api/v1/audit-logs` — Query audit trail (filterable by user, action, resource, date)
+- 4 built-in roles (seeded): Admin, Editor, Author, Viewer — all editable, protected from deletion
+- Self-escalation prevention — users cannot assign roles with more permissions than they have
+
+**API Token Scoping**
+- Sanctum personal access tokens and API keys now support ability scoping
+- Token abilities use same wildcard expansion as roles (`*`, `content.*`)
+- Intersection guard — token must have ability AND user must have permission (both required)
+
+**AI Budget & Governance** (structure; enforcement in v0.6.0)
+- `ai_limits` JSON on roles for per-role budget controls (daily generations, monthly cost limit, allowed models, etc.)
+- Architecture for budget checking before AI API calls
+
+**Audit Logging**
+- Immutable audit logs tracking: permission denials, content publishes, role assignments, user creation/deletion
+- 90-day default retention with configurable `numen:audit:prune` command
+- Metadata support for context (version numbers, status changes, etc.)
+
+**Documentation**
+- New guide: `docs/RBAC_GUIDE.md` — Complete walkthrough of permission system, role assignment, token scoping, audit logs
+- Updated `openapi.yaml` — RBAC endpoints fully documented with request/response schemas
+- Inline PHPDoc for all public methods in `AuthorizationService`, `PermissionRegistrar`, `RequirePermission`
+
+**Security Hardening**
+- Added missing permission checks to: Analytics, Brief, ComponentDefinition, Persona, Pipeline, Role, User controllers
+- Token scope bug fix: namespace wildcard expansion (`content.*` matches `content.create`) now works correctly
+- Space isolation enforcement on all content queries
+
+### Changed
+- Test suite expanded to 193+ tests (up from 134 in 0.2.0), including token scoping and RBAC scenarios
+
+### Technical Details
+- 6 new migrations: roles table, role_user pivot, audit_logs table, permissions column on api_keys, data migration from legacy `user.role`, column cleanup
+- 2 new models: `Role`, `AuditLog`
+- 3 new service classes: `AuthorizationService`, `PermissionRegistrar`, plus middleware
+- No external RBAC package — Numen's own implementation for full control over AI-specific governance
+
+---
+
+## [0.2.0] — (unreleased)
+
 ### Added
 - Larastan level 5 static analysis — CI job added (`d77decb`, `5b4ddd6`). All 199 errors fixed, 0 remaining.
 - Multi-provider image generation: OpenAI (GPT Image 1.5), Together AI (FLUX), fal.ai (FLUX/SD3.5/Recraft), Replicate (universal). `ImageManager` factory with per-persona provider config (`generator_provider` / `generator_model`).
 - User management (CRUD) with admin frontend pages — list, create, edit, delete users.
 - Self-service password change for logged-in users (profile settings page).
 - Permanent content deletion with full cascade cleanup (content blocks, versions, media assets, pipeline runs, AI logs).
-- **Role-Based Access Control (RBAC)** — Complete permission system for v0.5.0:
-  - `Role` model with space-scoped and global role assignment via `role_user` pivot table (with `updated_at` tracking)
-  - `Space` model for multi-tenant space isolation with `HasMany` relationships to content types and content
-  - `AuthorizationService` — Per-request permission resolution with role aggregation, wildcard support (`*`, `content.*`), and token-level scoping guards
-  - `RBACMiddleware` (`RequirePermission`) — Route middleware for declarative permission gates (`->middleware('permission:content.publish,spaceId')`) with 403 JSON responses and denial logging
-  - `PermissionRegistrar` — Single source of truth for permission catalog (20+ permissions grouped by category: content, users, roles, spaces, audit, settings, AI, components, pipelines, personas)
-  - API token scoping — `ApiKey` and Sanctum `PersonalAccessToken` abilities with wildcard expansion and exact matching
-  - Permission catalog endpoint (`GET /api/permissions`) — Returns all available permissions for role editor UI
-  - `AuditLog` model and logging — Tracks all permission checks, denials, and sensitive operations with user ID, action, resource type/ID, IP, user agent
-  - Comprehensive test suite — Token scoping tests, brief API tests with auth gates, all controllers protected with appropriate permission checks
-  - Security hardening — Missing auth gates added to Analytics, Brief, ComponentDefinition, Persona, Pipeline, Role, User controllers; token scope bug fixes; space isolation enforcement
 
 ### Fixed
 - Cast `content_refresh_days` to `int` for PHP 8.4 strict typing compatibility (`b143a22`)
@@ -44,11 +101,6 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Docs: removed API key from Quick Start example (`b28dad0`)
 - Docs: updated Quick Start install steps (`1bc68de`)
 - Chore: `.gitignore` cleanup (`942d70f`)
-- Test suite expanded to 134+ tests (up from 117 in 0.1.1).
-
-### Planned for 0.2.0
-- Remove legacy `numen.anthropic` config block (duplicates `numen.providers.anthropic`)
-- `AgentContract` interface extracted from `Agent` abstract class
 
 ---
 
@@ -149,6 +201,8 @@ Initial public release. This is the "here's what we have" release — solid arch
 
 ---
 
-[Unreleased]: https://github.com/byte5labs/numen/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/byte5labs/numen/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/byte5labs/numen/compare/v0.2.0...v0.5.0
+[0.2.0]: https://github.com/byte5labs/numen/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/byte5labs/numen/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/byte5labs/numen/releases/tag/v0.1.0

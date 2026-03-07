@@ -149,7 +149,18 @@ class AuthorizationService
      * Resolve the user's effective permissions by collecting permissions from all
      * applicable roles (global + space-scoped), then flattening and deduplicating.
      *
-     * @return array<string>
+     * Permission resolution:
+     *  1. Load all roles assigned to the user (if not already loaded)
+     *  2. For each role, check the space_id in the pivot:
+     *     - If pivot.space_id is null (global) → include this role's permissions
+     *     - If pivot.space_id matches the requested $spaceId → include this role's permissions
+     *     - Otherwise → skip this role
+     *  3. Flatten and deduplicate the permission list
+     *  4. Return as a simple array (no keys)
+     *
+     * @param User $user The user
+     * @param string|null $spaceId The space context (null = global only)
+     * @return array<string> Flat, deduplicated permission array
      */
     private function resolvePermissions(User $user, ?string $spaceId): array
     {
@@ -175,12 +186,21 @@ class AuthorizationService
     }
 
     /**
-     * Check if $requested is satisfied by the $permissions array, supporting wildcards.
+     * Check if a requested permission is satisfied by the given permission array.
+     * Supports full wildcard and namespace wildcard expansion.
      *
-     * Wildcard rules:
-     *  - '*' in permissions → grants everything
-     *  - 'content.*' in permissions → grants 'content.create', 'content.update', etc.
-     *  - 'ai.model.*' in permissions → grants 'ai.model.opus', etc.
+     * Matching order:
+     *  1. Check for `*` (everything) → match
+     *  2. Check for exact permission match → match
+     *  3. Check for namespace wildcards (increasingly broad):
+     *     - `content.*` matches `content.create`, `content.publish`, etc.
+     *     - `ai.model.*` matches `ai.model.opus`, `ai.model.sonnet`, etc.
+     *     - `content.type.*` matches `content.type.manage`, etc.
+     *  4. No match found → deny
+     *
+     * @param string $requested The requested permission (e.g. 'content.publish')
+     * @param array<string> $permissions The user's permission array (may include wildcards)
+     * @return bool True if $requested matches any permission or wildcard in the array
      */
     private function permissionMatches(string $requested, array $permissions): bool
     {

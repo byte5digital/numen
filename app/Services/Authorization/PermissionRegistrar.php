@@ -2,12 +2,46 @@
 
 namespace App\Services\Authorization;
 
+/**
+ * Centralized permission taxonomy — single source of truth for all valid permissions.
+ *
+ * The PermissionRegistrar defines the canonical list of available permissions,
+ * grouped by domain (content, users, roles, audit, etc.). This list is used for:
+ *  - Validating permission strings when creating/updating roles
+ *  - Populating the role editor UI (permission checkboxes)
+ *  - API endpoint GET /permissions that returns the full taxonomy
+ *
+ * Adding new permissions:
+ *  1. Update the all() method to add the new domain.action pair
+ *  2. Update RBAC_GUIDE.md with the new permission description
+ *  3. Update openapi.yaml to document the endpoint
+ *  4. No database migration needed — permissions are strings
+ */
 class PermissionRegistrar
 {
     /**
-     * Returns the full canonical permission taxonomy.
-     * This is the single source of truth for all valid permissions.
-     * Used by admin UI, role editor, and validation.
+     * Returns the full canonical permission taxonomy grouped by domain.
+     * This is the single source of truth for all valid permissions in the system.
+     *
+     * Format: domain => [permission => description, ...]
+     * Structure:
+     *  - 'content' → content creation, reading, publishing, etc.
+     *  - 'users' → user management, role assignment, invitations
+     *  - 'roles' → role CRUD operations
+     *  - 'spaces' → space management and deletion
+     *  - 'audit' → audit log viewing
+     *  - 'settings' → system and API token settings
+     *  - 'ai' → AI generation and model access
+     *  - 'components' → component type management
+     *  - 'pipelines' → pipeline execution and approval
+     *  - 'personas' → persona viewing
+     *
+     * Used by:
+     *  - Role editor (permission checkboxes)
+     *  - Permission validation (on role create/update)
+     *  - API endpoint GET /api/v1/permissions
+     *
+     * @return array<string, array<string, string>> Domain => [permission => description]
      */
     public function all(): array
     {
@@ -56,7 +90,14 @@ class PermissionRegistrar
     }
 
     /**
-     * Returns a flat list of all permission slugs (for validation etc.)
+     * Returns a flat list of all valid permission slugs (for validation, etc).
+     *
+     * This is useful for:
+     *  - Validating permission strings in role create/update requests
+     *  - Building permission selector dropdowns
+     *  - Checking if a given string is a valid permission
+     *
+     * @return array<string> Flat array of permission strings, e.g. ['content.create', 'content.read', ...]
      */
     public function allFlat(): array
     {
@@ -64,7 +105,17 @@ class PermissionRegistrar
     }
 
     /**
-     * Returns true if the given permission slug is valid.
+     * Check if a given permission string is valid.
+     *
+     * A permission is valid if:
+     *  - It's the wildcard `*` (grants everything)
+     *  - It's in the canonical list returned by allFlat()
+     *
+     * Used in role validation — when creating or updating a role, all permissions in
+     * the request must pass this check. Invalid permissions are rejected.
+     *
+     * @param string $permission The permission to validate (e.g. 'content.publish')
+     * @return bool True if the permission is valid
      */
     public function isValid(string $permission): bool
     {

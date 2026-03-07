@@ -414,6 +414,113 @@ components:
           format: float
           example: 0.87
 
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "018e1234-5678-7abc-def0-aaaaaaaaaaaa"
+        space_id:
+          type: string
+          nullable: true
+          example: null
+        name:
+          type: string
+          example: "Content Editor"
+        slug:
+          type: string
+          example: "content-editor"
+        description:
+          type: string
+          example: "Can create and publish content"
+        permissions:
+          type: array
+          items:
+            type: string
+          example: ["content.create", "content.publish", "pipeline.run"]
+        ai_limits:
+          type: object
+          nullable: true
+          example:
+            daily_generations: 100
+            allowed_models: ["claude-sonnet-4-6", "claude-haiku-4-5-20251001"]
+        is_system:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UserRole:
+      type: object
+      properties:
+        user_id:
+          type: string
+          example: "018e1234-5678-7abc-def0-aaaaaaaaaaaa"
+        role_id:
+          type: string
+          example: "018e1234-5678-7abc-def0-bbbbbbbbbbbb"
+        space_id:
+          type: string
+          nullable: true
+          example: null
+        created_at:
+          type: string
+          format: date-time
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "018e1234-5678-7abc-def0-cccccccccccc"
+        user_id:
+          type: string
+          nullable: true
+          example: "018e1234-5678-7abc-def0-aaaaaaaaaaaa"
+        space_id:
+          type: string
+          nullable: true
+          example: "018e1234-5678-7abc-def0-bbbbbbbbbbbb"
+        action:
+          type: string
+          example: "content.publish"
+        resource_type:
+          type: string
+          nullable: true
+          example: "App\\Models\\Content"
+        resource_id:
+          type: string
+          nullable: true
+          example: "018e1234-5678-7abc-def0-dddddddddddd"
+        metadata:
+          type: object
+          nullable: true
+          example:
+            version: 3
+            previous_status: "draft"
+        ip_address:
+          type: string
+          nullable: true
+          example: "192.168.1.100"
+        user_agent:
+          type: string
+          nullable: true
+          example: "Mozilla/5.0..."
+        created_at:
+          type: string
+          format: date-time
+
+    Permission:
+      type: object
+      additionalProperties:
+        type: object
+        additionalProperties:
+          type: string
+
 paths:
   # ─── Content Delivery (Public, 60 req/min) ────────────────────────────────
 
@@ -1188,6 +1295,201 @@ paths:
         '401':
           description: Unauthenticated
 
+
+  # ─── Roles (Auth, RBAC) ───────────────────────────────────────────────────
+
+  /roles:
+    get:
+      operationId: listRoles
+      summary: List roles in current space
+      description: |
+        Returns all roles in the current space, including system roles.
+        **Authentication required.**
+      tags: [RBAC - Roles]
+      security:
+        - sanctumToken: []
+      responses:
+        '200':
+          description: List of roles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Role'
+        '401':
+          description: Unauthenticated
+
+    post:
+      operationId: createRole
+      summary: Create a custom role
+      tags: [RBAC - Roles]
+      security:
+        - sanctumToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Content Reviewer"
+                slug:
+                  type: string
+                  example: "content-reviewer"
+                permissions:
+                  type: array
+                  items:
+                    type: string
+                  example: ["content.read", "pipeline.approve"]
+              required: [name, slug, permissions]
+      responses:
+        '201':
+          description: Role created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Role'
+        '403':
+          description: Insufficient permissions
+
+  /users/{userId}/roles:
+    get:
+      operationId: getUserRoles
+      summary: List roles assigned to a user
+      tags: [RBAC - User Roles]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of user roles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserRole'
+        '401':
+          description: Unauthenticated
+
+    post:
+      operationId: assignUserRole
+      summary: Assign a role to a user
+      tags: [RBAC - User Roles]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role_id:
+                  type: string
+                  example: "018e1234-5678-7abc-def0-bbbbbbbbbbbb"
+              required: [role_id]
+      responses:
+        '201':
+          description: Role assigned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserRole'
+
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      summary: Query audit logs
+      description: Retrieve audit logs with optional filtering.
+      tags: [RBAC - Audit Logs]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: string
+          description: Filter by user ID
+        - name: action
+          in: query
+          schema:
+            type: string
+          description: Filter by action
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Paginated audit logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Insufficient permissions
+
+  /permissions:
+    get:
+      operationId: listPermissions
+      summary: List all available permissions
+      description: Returns the canonical permission taxonomy grouped by domain.
+      tags: [RBAC - Permissions]
+      security:
+        - sanctumToken: []
+      responses:
+        '200':
+          description: Permission taxonomy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Permission'
+        '401':
+          description: Unauthenticated
+
 tags:
   - name: Content
     description: Public content delivery endpoints (60 req/min)
@@ -1203,3 +1505,11 @@ tags:
     description: Audience personas for AI content generation (authenticated)
   - name: Analytics
     description: AI generation cost and usage analytics (authenticated)
+  - name: RBAC - Roles
+    description: Role management and role-based authorization (authenticated)
+  - name: RBAC - User Roles
+    description: User role assignment and role revocation (authenticated)
+  - name: RBAC - Audit Logs
+    description: Immutable audit logs of all sensitive actions (authenticated)
+  - name: RBAC - Permissions
+    description: Permission taxonomy and available permissions (authenticated)
