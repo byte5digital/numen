@@ -14,6 +14,7 @@ use App\Services\AI\LLMManager;
 use App\Services\AI\Providers\AnthropicProvider;
 use App\Services\AI\Providers\AzureOpenAIProvider;
 use App\Services\AI\Providers\OpenAIProvider;
+use App\Services\AuditLogger;
 use App\Services\Authorization\AuthorizationService;
 use App\Services\Authorization\BudgetGuard;
 use App\Services\Authorization\PermissionRegistrar;
@@ -26,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
         // ── Authorization / RBAC layer ─────────────────────────────────────
         $this->app->singleton(PermissionRegistrar::class);
         $this->app->singleton(AuthorizationService::class);
+        $this->app->bind(AuditLogger::class, fn ($app) => new AuditLogger($app->make('request')));
         $this->app->singleton(BudgetGuard::class, fn ($app) => new BudgetGuard(
             $app->make(AuthorizationService::class),
         ));

@@ -1,10 +1,14 @@
 <script setup>
 import { Link, useForm } from '@inertiajs/vue3';
 
+const props = defineProps({
+    roles: { type: Array, default: () => [] },
+});
+
 const form = useForm({
     name:     '',
     email:    '',
-    role:     'editor',
+    role_id:  '',
     password: '',
 });
 
@@ -57,16 +61,17 @@ function submit() {
 
                 <!-- Role -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Role <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Role</label>
                     <select
-                        v-model="form.role"
+                        v-model="form.role_id"
                         class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
                     >
-                        <option value="admin">Admin — Full access</option>
-                        <option value="editor">Editor — Create & edit content</option>
-                        <option value="viewer">Viewer — Read-only</option>
+                        <option value="">— No role —</option>
+                        <option v-for="role in roles" :key="role.id" :value="role.id">
+                            {{ role.name }}
+                        </option>
                     </select>
-                    <p v-if="form.errors.role" class="mt-1 text-xs text-red-400">{{ form.errors.role }}</p>
+                    <p v-if="form.errors.role_id" class="mt-1 text-xs text-red-400">{{ form.errors.role_id }}</p>
                 </div>
 
                 <!-- Password -->

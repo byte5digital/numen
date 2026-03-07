@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\PersonaAdminController;
 use App\Http\Controllers\Admin\PipelineAdminController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\QueueMonitorController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingsAdminController;
 use App\Http\Controllers\Admin\TaxonomyAdminController;
 use App\Http\Controllers\Admin\TokenAdminController;
@@ -103,6 +104,14 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/queue', [QueueMonitorController::class, 'index'])->name('admin.queue');
     Route::post('/queue/retry/{id}', [QueueMonitorController::class, 'retryFailed'])->name('admin.queue.retry');
     Route::post('/queue/flush', [QueueMonitorController::class, 'flushFailed'])->name('admin.queue.flush');
+
+    // Roles
+    Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
+    Route::get('/roles/create', [RoleController::class, 'create'])->name('admin.roles.create');
+    Route::post('/roles', [RoleController::class, 'store'])->name('admin.roles.store');
+    Route::get('/roles/{role}/edit', [RoleController::class, 'edit'])->name('admin.roles.edit');
+    Route::put('/roles/{role}', [RoleController::class, 'update'])->name('admin.roles.update');
+    Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('admin.roles.destroy');
 
     // Users
     Route::get('/users', [UserAdminController::class, 'index'])->name('admin.users.index');

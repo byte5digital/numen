@@ -63,9 +63,9 @@ class UserAdminController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'roles' => $user->roles->pluck('id')->toArray(),
+                'role_ids' => $user->roles->pluck('id')->toArray(),
             ],
-            'roles' => Role::whereNull('space_id')->orderBy('name')->get(['id', 'name', 'slug']),
+            'roles' => Role::whereNull('space_id')->orderBy('name')->get(['id', 'name', 'slug', 'description']),
         ]);
     }
 
