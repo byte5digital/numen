@@ -86,10 +86,11 @@ class GenerateImage implements ShouldQueue
             // Resolve persona config — prefer stage agent_role, fall back to space's illustrator persona
             $personaConfig = $this->resolvePersonaConfig($spaceId);
 
-            // Stage config overrides (size/style/quality can be set per-stage or come from persona)
+            // Stage config overrides (size/style/quality/model can be set per-stage or come from persona)
             $size = $this->stage['config']['size'] ?? $personaConfig['size'] ?? '1792x1024';
             $style = $this->stage['config']['style'] ?? $personaConfig['style'] ?? 'vivid';
             $quality = $this->stage['config']['quality'] ?? $personaConfig['quality'] ?? 'standard';
+            $model = $this->stage['config']['model'] ?? $personaConfig['model'] ?? null;
 
             // Step 1: Build an optimized prompt using persona's prompt LLM
             $promptStart = microtime(true);
@@ -103,7 +104,7 @@ class GenerateImage implements ShouldQueue
 
             // Step 2: Generate and save the image via the resolved provider
             $imageStart = microtime(true);
-            $asset = $imageManager->generate($prompt, $spaceId, $personaConfig, $size, $style, $quality);
+            $asset = $imageManager->generate($prompt, $spaceId, $personaConfig, $size, $style, $quality, $model);
             $imageLatency = (int) ((microtime(true) - $imageStart) * 1000);
 
             // Step 3: Attach to content as hero image

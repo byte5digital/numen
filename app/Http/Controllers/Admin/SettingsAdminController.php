@@ -48,6 +48,27 @@ class SettingsAdminController extends Controller
         ],
     ];
 
+    /** Available image generation models per provider */
+    private array $imageModels = [
+        'openai' => [
+            'gpt-image-1',
+            'gpt-image-1.5',
+            'dall-e-3',
+        ],
+        'together' => [
+            'black-forest-labs/FLUX.1-pro',
+            'black-forest-labs/FLUX.1-schnell',
+        ],
+        'fal' => [
+            'fal-ai/flux-pro',
+            'fal-ai/flux-realism',
+        ],
+        'replicate' => [
+            'black-forest-labs/flux-pro',
+            'black-forest-labs/flux-schnell',
+        ],
+    ];
+
     public function index(
         AnthropicProvider $anthropic,
         OpenAIProvider $openai,
@@ -75,6 +96,7 @@ class SettingsAdminController extends Controller
             'current' => $current,
             'providerStatus' => $providerStatus,
             'availableModels' => $this->availableModels,
+            'availableImageModels' => $this->imageModels,
             // Separate flags so the Vue knows a key is set without exposing the value
             'keySet' => [
                 'anthropic' => ! empty(config('numen.providers.anthropic.api_key')),
@@ -170,6 +192,25 @@ class SettingsAdminController extends Controller
         return back()->with('success', 'Cost limits saved.');
     }
 
+    public function updateImages(Request $request)
+    {
+        $nested = Arr::undot($request->all());
+
+        $data = validator($nested, [
+            'ai.image_providers.openai.default_model' => ['required', 'string'],
+            'ai.image_providers.together.default_model' => ['required', 'string'],
+            'ai.image_providers.fal.default_model' => ['required', 'string'],
+            'ai.image_providers.replicate.default_model' => ['required', 'string'],
+        ])->validate();
+
+        Setting::setMany(Arr::dot($data), 'image_providers');
+
+        Cache::forget('settings:all');
+        Setting::loadIntoConfig();
+
+        return back()->with('success', 'Image generation models saved.');
+    }
+
     // ── Private helpers ──────────────────────────────────────────────────────
 
     /**
@@ -212,6 +253,12 @@ class SettingsAdminController extends Controller
             'ai.models.review' => config('numen.models.review', 'claude-opus-4-6'),
             'ai.models.planning' => config('numen.models.planning', 'claude-opus-4-6'),
             'ai.models.classification' => config('numen.models.classification', 'claude-haiku-4-5-20251001'),
+
+            // Image generation models
+            'ai.image_providers.openai.default_model' => config('numen.image_providers.openai.default_model', 'gpt-image-1.5'),
+            'ai.image_providers.together.default_model' => config('numen.image_providers.together.default_model', 'black-forest-labs/FLUX.1-schnell'),
+            'ai.image_providers.fal.default_model' => config('numen.image_providers.fal.default_model', 'fal-ai/flux-pro'),
+            'ai.image_providers.replicate.default_model' => config('numen.image_providers.replicate.default_model', 'black-forest-labs/flux-pro'),
 
             // Cost limits
             'ai.cost_limits.daily_usd' => config('numen.cost_limits.daily_usd', 50),

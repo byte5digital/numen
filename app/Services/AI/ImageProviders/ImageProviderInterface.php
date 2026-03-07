@@ -16,6 +16,15 @@ interface ImageProviderInterface
     public function generate(string $prompt, string $size, string $style, string $quality): ImageResult;
 
     /**
+     * Set the model to use for the next generate() call.
+     * If not called, the provider's default model is used.
+     *
+     * @param  string  $model  Model identifier (provider-specific)
+     * @return self For method chaining
+     */
+    public function setModel(string $model): self;
+
+    /**
      * Whether this provider is available (API key present, not rate-limited).
      */
     public function isAvailable(): bool;

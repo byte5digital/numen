@@ -30,9 +30,18 @@ class ReplicateImageProvider implements ImageProviderInterface
     /** Seconds between poll attempts */
     private const POLL_INTERVAL_SECONDS = 2;
 
+    private ?string $modelOverride = null;
+
     public function name(): string
     {
         return 'replicate';
+    }
+
+    public function setModel(string $model): self
+    {
+        $this->modelOverride = $model;
+
+        return $this;
     }
 
     public function isAvailable(): bool
@@ -280,6 +289,10 @@ class ReplicateImageProvider implements ImageProviderInterface
 
     private function defaultModel(): string
     {
+        if ($this->modelOverride) {
+            return $this->modelOverride;
+        }
+
         return (string) config('numen.image_providers.replicate.default_model', 'black-forest-labs/flux-2-max');
     }
 }

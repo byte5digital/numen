@@ -15,9 +15,18 @@ use Illuminate\Support\Str;
  */
 class OpenAIImageProvider implements ImageProviderInterface
 {
+    private ?string $modelOverride = null;
+
     public function name(): string
     {
         return 'openai';
+    }
+
+    public function setModel(string $model): self
+    {
+        $this->modelOverride = $model;
+
+        return $this;
     }
 
     public function isAvailable(): bool
@@ -166,7 +175,11 @@ class OpenAIImageProvider implements ImageProviderInterface
 
     private function defaultModel(): string
     {
-        return (string) config('numen.image_providers.openai.default_model', 'gpt-image-1');
+        if ($this->modelOverride) {
+            return $this->modelOverride;
+        }
+
+        return (string) config('numen.image_providers.openai.default_model', 'gpt-image-1.5');
     }
 
     /**
