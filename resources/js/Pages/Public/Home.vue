@@ -14,7 +14,7 @@ const features = [
     {
         icon: '🎨',
         title: 'AI Image Generation',
-        desc: 'DALL-E 3 generates hero images automatically. An AI prompt builder crafts optimized prompts from your content metadata.',
+        desc: 'AI-powered hero images via OpenAI, Replicate, Together AI, or fal.ai. The Visual Director picks the right model for your brand.',
     },
     {
         icon: '🔌',
@@ -24,7 +24,7 @@ const features = [
     {
         icon: '🔄',
         title: 'Provider Agnostic',
-        desc: 'Swap between Anthropic, OpenAI, and Azure without touching code. Auto-fallback on rate limits.',
+        desc: 'Swap between Anthropic, OpenAI, Together AI, Replicate, and fal.ai — for both text and images — without touching code. Auto-fallback on rate limits.',
     },
     {
         icon: '📊',
@@ -42,7 +42,7 @@ const stack = [
     { label: 'Backend', value: 'PHP 8.4 · Laravel 12' },
     { label: 'Frontend', value: 'Inertia.js · Vue 3' },
     { label: 'Auth', value: 'Laravel Sanctum' },
-    { label: 'AI', value: 'Anthropic · OpenAI · Azure' },
+    { label: 'AI', value: 'Anthropic · OpenAI · Together · Replicate · fal.ai' },
     { label: 'Database', value: 'SQLite / MySQL' },
     { label: 'License', value: 'MIT' },
 ];
@@ -118,7 +118,7 @@ const stack = [
                         <span class="text-lg">🎨</span>
                     </div>
                     <h3 class="font-bold text-slate-900 text-sm mb-1">AI Illustrator</h3>
-                    <p class="text-xs text-pink-500 font-medium mb-1">dall-e-3</p>
+                    <p class="text-xs text-pink-500 font-medium mb-1">multi-provider</p>
                     <p class="text-xs text-slate-500">Generates hero image</p>
                 </div>
 

@@ -94,7 +94,7 @@ php artisan test tests/Feature/ContentApiTest.php
 
 ### Code Style & Static Analysis
 
-We use [Laravel Pint](https://laravel.com/docs/pint) for code formatting and [Larastan](https://github.com/larastan/larastan) (PHPStan level 5) for static analysis. Both are already in `composer.json`.
+We use [Laravel Pint](https://laravel.com/docs/pint) for code formatting and [Larastan](https://github.com/larastan/larastan) (PHPStan **level 5**) for static analysis. Both are already in `composer.json`. The project currently has **134+ tests** — all new behaviour requires tests.
 
 ```bash
 # Check for style issues
@@ -107,7 +107,10 @@ We use [Laravel Pint](https://laravel.com/docs/pint) for code formatting and [La
 ./vendor/bin/phpstan analyse
 ```
 
-Pint runs against the `laravel` preset. **Both Pint and Larastan must pass** before submitting a PR — CI enforces both and will fail if either reports errors.
+Pint runs against the `laravel` preset. **All three gates must pass** before submitting a PR — CI enforces them and will fail if any reports errors:
+1. `./vendor/bin/phpstan analyse` — PHPStan/Larastan level 5, zero errors
+2. `./vendor/bin/pint --test` — zero style issues
+3. `php artisan test` — all tests green
 
 ---
 
@@ -147,7 +150,7 @@ A few guidelines:
 
 ### 3. Before You Push
 
-Both Pint (code style) **and** Larastan (static analysis) must pass before opening a PR. CI enforces both.
+All three gates — PHPStan (level 5), Pint (code style), and Tests — must pass before opening a PR. CI enforces all three.
 
 ```bash
 # Run tests

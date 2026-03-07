@@ -23,7 +23,7 @@ Numen: you submit a brief → pipeline runs in the background → content appear
 ```
 Brief
   └─► Content Creator (claude-sonnet-4-6)     — writes the article
-        └─► AI Illustrator (dall-e-3)         — generates hero image from content
+        └─► AI Illustrator (multi-provider)   — generates hero image from content
               └─► SEO Expert (claude-haiku-4-5-20251001)   — optimizes metadata & keywords
                     └─► Editorial Director (claude-opus-4-6) — quality gate (score ≥ 80 → publish)
                           └─► Auto-Publish              — goes live automatically
@@ -52,8 +52,11 @@ Each stage is a queued job. The pipeline is event-driven. Stages are defined in 
 │                    ┌───────▼──────┐   ┌─────────▼────────┐ │
 │                    │  Queue Jobs  │   │  Provider Layer  │ │
 │                    │  (Redis)     │   │  Anthropic       │ │
-│                    └──────────────┘   │  OpenAI (+ DALL-E│ │
+│                    └──────────────┘   │  OpenAI          │ │
 │                                       │  Azure OpenAI    │ │
+│                                       │  Together AI     │ │
+│                                       │  fal.ai          │ │
+│                                       │  Replicate       │ │
 │  ┌──────────────┐  ┌───────────────┐  └──────────────────┘ │
 │  │  SQLite/MySQL│  │  Media Assets │                        │
 │  │  (content DB)│  │  (AI images)  │                        │
@@ -64,7 +67,7 @@ Each stage is a queued job. The pipeline is event-driven. Stages are defined in 
 **Key design decisions:**
 
 - **Provider abstraction** — swap Anthropic ↔ OpenAI ↔ Azure without touching pipeline code. Fallback chain auto-retries on rate limits.
-- **AI image generation** — DALL-E 3 integration generates hero images automatically. An `ImagePromptBuilder` (powered by Haiku) crafts optimized prompts from content metadata; images are downloaded, stored as `MediaAsset` records, and attached to content.
+- **Multi-provider image generation** — Four image providers supported: OpenAI (GPT Image 1.5 / DALL-E 3), Together AI (FLUX models), fal.ai (FLUX / SD3.5 / Recraft), and Replicate (any model). An `ImagePromptBuilder` (powered by Haiku) crafts optimized prompts from content metadata; images are downloaded, stored as `MediaAsset` records, and attached to content. The active provider is configured per-persona via `generator_provider` / `generator_model`.
 - **Pipeline-as-config** — stages defined in DB, not hardcoded. Add/remove/reorder stages without deploying code. Supports `human_gate` stages for manual review checkpoints.
 - **Block-based content** — every piece of content is a collection of typed `ContentBlock` records. Flexible for headless delivery.
 - **Full provenance** — every AI call logged (`AIGenerationLog`) with model, tokens, cost, and which pipeline stage triggered it. Image generation costs tracked per asset.
@@ -80,7 +83,8 @@ Each stage is a queued job. The pipeline is event-driven. Stages are defined in 
 | Auth | Laravel Sanctum (API tokens) |
 | Queue | Redis (or database for dev) |
 | Database | SQLite (dev), MySQL (prod) |
-| AI providers | Anthropic, OpenAI, Azure OpenAI |
+| AI providers (text) | Anthropic, OpenAI, Azure OpenAI |
+| AI providers (image) | OpenAI, Together AI, fal.ai, Replicate |
 
 ---
 
@@ -237,15 +241,15 @@ Each pipeline stage uses the right model for the job — balance cost vs. capabi
 | Stage | Default Model | Role | Est. Cost/Article |
 |---|---|---|---|
 | Content Generation | `claude-sonnet-4-6` | Full article writing | ~$0.05–0.15 |
-| Image Prompt | `claude-haiku-4-5-20251001` | Crafts DALL-E prompts from metadata | ~$0.001–0.005 |
-| Image Generation | `dall-e-3` | Hero image (1792×1024, vivid) | ~$0.08 |
+| Image Prompt | `claude-haiku-4-5-20251001` | Crafts image prompts from content metadata | ~$0.001–0.005 |
+| Image Generation | multi-provider | Hero image via OpenAI / Together AI / fal.ai / Replicate | ~$0.04–0.08 |
 | SEO Optimization | `claude-haiku-4-5-20251001` | Meta, keywords, slug | ~$0.005–0.02 |
 | Editorial Review | `claude-opus-4-6` | Quality scoring & feedback | ~$0.10–0.30 |
 | Planning / Strategy | `claude-opus-4-6` | Brief analysis, outlines | ~$0.05–0.15 |
 | Classification | `claude-haiku-4-5-20251001` | Tagging, categorization | ~$0.001–0.005 |
 | Premium Generation | `claude-opus-4-6` | High-stakes content | ~$0.20–0.50 |
 
-**All model assignments are configurable via env vars** — see Configuration below. You can route any role to OpenAI or Azure with `AI_MODEL_GENERATION=openai:gpt-4o`. Image generation requires `OPENAI_API_KEY` (DALL-E 3); the stage gracefully skips if not configured.
+**All model assignments are configurable via env vars** — see Configuration below. You can route any role to OpenAI or Azure with `AI_MODEL_GENERATION=openai:gpt-4o`. Image generation supports four providers (OpenAI, Together AI, fal.ai, Replicate); the active provider is configured per-persona and gracefully skips if no key is configured.
 
 Rough running cost: **~$35/month for 100 articles with images** with the default setup.
 
@@ -356,8 +360,13 @@ Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before openin
 
 See [CHANGELOG.md](CHANGELOG.md) for what's in each release.
 
-**Shipped (post-0.1.1, in progress):**
-- Larastan level 5 static analysis — CI job added, code fixes in progress
+**Shipped (post-0.1.1):**
+- Larastan level 5 static analysis — 199 errors fixed, 0 remaining ✅
+- Multi-provider image generation (OpenAI, Together AI, fal.ai, Replicate) ✅
+- User management (CRUD) with admin frontend pages ✅
+- Self-service password change ✅
+- Permanent content deletion with cascade cleanup ✅
+- 134+ tests (up from 117 in 0.1.1) ✅
 
 **Near-term (0.2.0):**
 - Deduplicate config `numen.anthropic` block (duplicates `numen.providers.anthropic`)

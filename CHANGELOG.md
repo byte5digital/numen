@@ -12,16 +12,28 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
-- Larastan level 5 static analysis — CI job added (`d77decb`, `5b4ddd6`). Fixes in progress (tracked by Chisel).
+- Larastan level 5 static analysis — CI job added (`d77decb`, `5b4ddd6`). All 199 errors fixed, 0 remaining.
+- Multi-provider image generation: OpenAI (GPT Image 1.5), Together AI (FLUX), fal.ai (FLUX/SD3.5/Recraft), Replicate (universal). `ImageManager` factory with per-persona provider config (`generator_provider` / `generator_model`).
+- User management (CRUD) with admin frontend pages — list, create, edit, delete users.
+- Self-service password change for logged-in users (profile settings page).
+- Permanent content deletion with full cascade cleanup (content blocks, versions, media assets, pipeline runs, AI logs).
 
 ### Fixed
 - Cast `content_refresh_days` to `int` for PHP 8.4 strict typing compatibility (`b143a22`)
+- Larastan level 5 — 199 errors fixed, 0 remaining across the full codebase.
+- Cache table migration: corrected Laravel schema (proper `cache` / `cache_locks` tables).
+- Jobs table migration: corrected Laravel schema (all required queue columns present).
+- Missing `DatabaseSeeder.php` — added to prevent bare `db:seed` failures.
+- `DemoSeeder` synced with live DB: 5 personas, fully idempotent (safe to re-run).
+- Queue worker detection for Laravel Cloud (handles missing `horizon` gracefully).
+- Visual Director persona: now correctly configured with `prompt_model` / `generator_model` / `generator_provider` fields.
 
 ### Changed
 - CI: removed PHP 8.3 from test matrix — Numen requires PHP ^8.4 (`555f156`)
 - Docs: removed API key from Quick Start example (`b28dad0`)
 - Docs: updated Quick Start install steps (`1bc68de`)
 - Chore: `.gitignore` cleanup (`942d70f`)
+- Test suite expanded to 134+ tests (up from 117 in 0.1.1).
 
 ### Planned for 0.2.0
 - Remove legacy `numen.anthropic` config block (duplicates `numen.providers.anthropic`)
@@ -95,10 +107,12 @@ Initial public release. This is the "here's what we have" release — solid arch
 
 **Admin UI**
 - Inertia.js + Vue 3 SPA
-- Content management (list, view, approve pipeline runs)
+- Content management (list, view, approve pipeline runs, permanent deletion)
 - Brief creation with keyword and priority controls
 - Pipeline run monitoring per content piece
 - Persona management
+- User management (CRUD) with admin frontend pages
+- Self-service password change for logged-in users
 - Settings (AI provider config, cost limits, pipeline behavior)
 - Cost analytics dashboard
 
