@@ -70,10 +70,19 @@ class VersionController extends Controller
         abort_unless($version->content_id === $content->id, 404);
         abort_unless($version->status === 'draft', 422, 'Only draft versions can be edited.');
 
+        // Check optimistic lock: if locked by another user within 15 minutes, reject
+        if ($version->locked_by !== null
+            && (string) $version->locked_by !== (string) $request->user()?->getKey()
+            && $version->locked_at !== null
+            && $version->locked_at->gt(now()->subMinutes(15))
+        ) {
+            abort(423, 'This version is currently being edited by another user.');
+        }
+
         $validated = $request->validate([
             'title' => 'sometimes|string|max:500',
             'excerpt' => 'nullable|string|max:2000',
-            'body' => 'sometimes|string|max:1048576', // Fix 4: cap body at 1 MB
+            'body' => 'sometimes|string|max:1000000', // Fix 4: cap body at 1 MB (1 000 000 chars)
             'body_format' => 'sometimes|in:markdown,html,blocks',
             'structured_fields' => 'nullable|array',
             'seo_data' => 'nullable|array',

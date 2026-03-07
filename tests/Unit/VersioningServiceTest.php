@@ -133,13 +133,16 @@ class VersioningServiceTest extends TestCase
         $this->assertEquals('human', $draft->author_type);
     }
 
-    public function test_create_draft_uses_system_as_author_when_not_authenticated(): void
+    public function test_create_draft_stores_empty_author_id_when_not_authenticated(): void
     {
+        // Fix 9: 'system' fallback removed — unauthenticated callers store empty string.
+        // API endpoints are always authenticated; direct service calls (e.g. jobs) must
+        // set author context explicitly.
         Auth::logout();
 
         $draft = $this->service->createDraft($this->content);
 
-        $this->assertEquals('system', $draft->author_id);
+        $this->assertEmpty($draft->author_id);
     }
 
     // ─── branch ──────────────────────────────────────────────────────────────
@@ -258,8 +261,9 @@ class VersioningServiceTest extends TestCase
         $this->assertEquals($expectedHash, $draft->content_hash);
     }
 
-    public function test_save_version_clears_auto_save_buffer(): void
+    public function test_save_version_clears_auto_save_buffer_for_authenticated_user(): void
     {
+        // Fix 7: saveVersion only clears the CALLING user's draft, not all users' drafts.
         ContentDraft::create([
             'content_id' => $this->content->id,
             'user_id' => $this->user->id,
@@ -270,9 +274,13 @@ class VersioningServiceTest extends TestCase
 
         $draft = $this->makeVersion(1, 'draft', 'Title');
 
+        // Simulate authenticated user context
+        Auth::login($this->user);
         $this->service->saveVersion($draft, 'v1.0');
 
-        $this->assertEquals(0, ContentDraft::where('content_id', $this->content->id)->count());
+        $this->assertEquals(0, ContentDraft::where('content_id', $this->content->id)
+            ->where('user_id', $this->user->id)
+            ->count());
     }
 
     // ─── publish ─────────────────────────────────────────────────────────────
@@ -431,17 +439,23 @@ class VersioningServiceTest extends TestCase
         $this->assertStringContainsString('v1', $newVersion->change_reason ?? '');
     }
 
-    public function test_rollback_auto_publishes_new_version(): void
+    public function test_rollback_creates_draft_for_review(): void
     {
+        // Fix 5: rollback is now two-step — creates a draft for editor review.
+        // The editor must explicitly call publish() after reviewing.
         Event::fake();
         $v1 = $this->makeVersion(1, 'published', 'V1');
         $this->content->update(['current_version_id' => $v1->id]);
 
         $newVersion = $this->service->rollback($this->content, $v1);
 
-        $this->assertEquals('published', $newVersion->status);
+        // New version is a DRAFT, not auto-published
+        $this->assertEquals('draft', $newVersion->status);
+        // Content's draft_version_id points to the new rollback draft
         $this->content->refresh();
-        $this->assertEquals($newVersion->id, $this->content->current_version_id);
+        $this->assertEquals($newVersion->id, $this->content->draft_version_id);
+        // The live version is unchanged
+        $this->assertEquals($v1->id, $this->content->current_version_id);
     }
 
     public function test_rollback_clones_blocks(): void

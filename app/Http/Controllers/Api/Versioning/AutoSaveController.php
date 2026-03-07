@@ -26,7 +26,7 @@ class AutoSaveController extends Controller
         $validated = $request->validate([
             'title' => 'sometimes|string|max:500',
             'excerpt' => 'nullable|string|max:2000',
-            'body' => 'sometimes|string|max:1048576', // Fix 4: cap body at 1 MB
+            'body' => 'sometimes|string|max:1000000', // Fix 4: cap body at 1 MB (1 000 000 chars)
             'body_format' => 'sometimes|in:markdown,html,blocks',
             'structured_fields' => 'nullable|array',
             'seo_data' => 'nullable|array',

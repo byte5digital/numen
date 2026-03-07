@@ -35,7 +35,8 @@ class ContentPolicy
             return true;
         }
 
-        return $user->space_id === $content->space_id;
+        // Cast both to string for safe comparison across int/string type boundaries
+        return (string) $user->space_id === (string) $content->space_id;
     }
 
     /**

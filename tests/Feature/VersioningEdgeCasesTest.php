@@ -112,9 +112,10 @@ class VersioningEdgeCasesTest extends TestCase
         $this->assertEquals($draft2->id, $this->content->draft_version_id);
     }
 
-    public function test_save_version_clears_all_users_autosave_for_content(): void
+    public function test_save_version_only_clears_current_users_autosave(): void
     {
-        $user2 = User::factory()->create();
+        // Fix 7: saveVersion should only clear the CALLING user's draft, not other users' drafts
+        $user2 = User::factory()->create(['role' => 'editor', 'space_id' => $this->space->id]);
 
         ContentDraft::create([
             'content_id' => $this->content->id,
@@ -132,9 +133,23 @@ class VersioningEdgeCasesTest extends TestCase
         ]);
 
         $draft = $this->makeVersion(1, 'draft', 'Title');
-        $this->service->saveVersion($draft, 'v1.0');
 
-        $this->assertEquals(0, ContentDraft::where('content_id', $this->content->id)->count());
+        // Call saveVersion via the label API endpoint (so Auth::id() is set to $this->user)
+        $this->actingAs($this->user)
+            ->postJson("/api/v1/content/{$this->content->id}/versions/{$draft->id}/label", [
+                'label' => 'v1.0',
+            ])
+            ->assertOk();
+
+        // Only the calling user's draft should be cleared
+        $this->assertEquals(0, ContentDraft::where('content_id', $this->content->id)
+            ->where('user_id', $this->user->id)
+            ->count());
+
+        // Other users' drafts must remain untouched
+        $this->assertEquals(1, ContentDraft::where('content_id', $this->content->id)
+            ->where('user_id', $user2->id)
+            ->count());
     }
 
     // ─── Scheduling edge cases ────────────────────────────────────────────────
