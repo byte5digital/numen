@@ -42,13 +42,13 @@ class PermissionControllerTest extends TestCase
 
         $data = $response->json('data');
 
-        $this->assertArrayHasKey('content',  $data);
-        $this->assertArrayHasKey('users',    $data);
-        $this->assertArrayHasKey('roles',    $data);
-        $this->assertArrayHasKey('spaces',   $data);
-        $this->assertArrayHasKey('audit',    $data);
+        $this->assertArrayHasKey('content', $data);
+        $this->assertArrayHasKey('users', $data);
+        $this->assertArrayHasKey('roles', $data);
+        $this->assertArrayHasKey('spaces', $data);
+        $this->assertArrayHasKey('audit', $data);
         $this->assertArrayHasKey('settings', $data);
-        $this->assertArrayHasKey('ai',       $data);
+        $this->assertArrayHasKey('ai', $data);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -63,10 +63,10 @@ class PermissionControllerTest extends TestCase
         $user = User::factory()->create();
 
         $role = Role::create([
-            'name'        => 'Test Role',
-            'slug'        => 'test-role-' . uniqid(),
+            'name' => 'Test Role',
+            'slug' => 'test-role-'.uniqid(),
             'permissions' => $permissions,
-            'is_system'   => false,
+            'is_system' => false,
         ]);
 
         $user->roles()->attach($role->id, ['space_id' => null]);

@@ -26,15 +26,15 @@ class UserRoleController extends Controller
 
         return response()->json([
             'data' => $users->map(fn (User $u) => [
-                'id'         => $u->id,
-                'name'       => $u->name,
-                'email'      => $u->email,
-                'space_id'   => $u->pivot->space_id,
+                'id' => $u->id,
+                'name' => $u->name,
+                'email' => $u->email,
+                'space_id' => $u->pivot->space_id,
                 'created_at' => $u->created_at,
             ]),
             'meta' => [
-                'total'        => $users->total(),
-                'per_page'     => $users->perPage(),
+                'total' => $users->total(),
+                'per_page' => $users->perPage(),
                 'current_page' => $users->currentPage(),
             ],
         ]);
@@ -51,11 +51,11 @@ class UserRoleController extends Controller
         $this->authz->authorize($actor, 'users.roles.assign');
 
         $data = $request->validate([
-            'role_id'  => ['required', 'string', 'exists:roles,id'],
+            'role_id' => ['required', 'string', 'exists:roles,id'],
             'space_id' => ['nullable', 'string', 'exists:spaces,id'],
         ]);
 
-        $role    = Role::findOrFail($data['role_id']);
+        $role = Role::findOrFail($data['role_id']);
         $spaceId = $data['space_id'] ?? null;
 
         // Anti-escalation: unless actor has *, they cannot assign a role
@@ -83,15 +83,15 @@ class UserRoleController extends Controller
         $user->roles()->attach($role->id, ['space_id' => $spaceId]);
 
         $this->authz->log($actor, 'role.assign', $user, [
-            'role_id'  => $role->id,
-            'role'     => $role->slug,
+            'role_id' => $role->id,
+            'role' => $role->slug,
             'space_id' => $spaceId,
         ]);
 
         return response()->json([
-            'message'  => 'Role assigned',
-            'user_id'  => $user->id,
-            'role_id'  => $role->id,
+            'message' => 'Role assigned',
+            'user_id' => $user->id,
+            'role_id' => $role->id,
             'space_id' => $spaceId,
         ], 201);
     }
@@ -115,7 +115,7 @@ class UserRoleController extends Controller
 
         $this->authz->log($actor, 'role.revoke', $user, [
             'role_id' => $role->id,
-            'role'    => $role->slug,
+            'role' => $role->slug,
         ]);
 
         return response()->json(['message' => 'Role revoked']);
@@ -140,11 +140,11 @@ class UserRoleController extends Controller
         }
 
         $roles = $query->get()->map(fn (Role $r) => [
-            'id'          => $r->id,
-            'name'        => $r->name,
-            'slug'        => $r->slug,
+            'id' => $r->id,
+            'name' => $r->name,
+            'slug' => $r->slug,
             'permissions' => $r->permissions,
-            'space_id'    => $r->pivot->space_id,
+            'space_id' => $r->pivot->space_id,
         ]);
 
         return response()->json(['data' => $roles]);

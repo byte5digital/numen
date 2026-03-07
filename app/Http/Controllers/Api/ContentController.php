@@ -95,11 +95,11 @@ class ContentController extends Controller
         $this->authz->authorize($request->user(), 'content.create');
 
         $data = $request->validate([
-            'slug'             => ['required', 'string', 'unique:contents,slug'],
-            'content_type_id'  => ['required', 'string', 'exists:content_types,id'],
-            'space_id'         => ['required', 'string', 'exists:spaces,id'],
-            'locale'           => ['sometimes', 'string', 'max:10'],
-            'status'           => ['sometimes', 'string', 'in:draft,published,archived'],
+            'slug' => ['required', 'string', 'unique:contents,slug'],
+            'content_type_id' => ['required', 'string', 'exists:content_types,id'],
+            'space_id' => ['required', 'string', 'exists:spaces,id'],
+            'locale' => ['sometimes', 'string', 'max:10'],
+            'status' => ['sometimes', 'string', 'in:draft,published,archived'],
         ]);
 
         $content = Content::create(array_merge(['status' => 'draft', 'locale' => 'en'], $data));
@@ -119,7 +119,7 @@ class ContentController extends Controller
         $content = Content::findOrFail($id);
 
         $data = $request->validate([
-            'slug'   => ['sometimes', 'string', 'unique:contents,slug,' . $id],
+            'slug' => ['sometimes', 'string', 'unique:contents,slug,'.$id],
             'status' => ['sometimes', 'string', 'in:draft,published,archived'],
             'locale' => ['sometimes', 'string', 'max:10'],
         ]);

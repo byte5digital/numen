@@ -114,7 +114,7 @@ class PermissionRegistrar
      * Used in role validation — when creating or updating a role, all permissions in
      * the request must pass this check. Invalid permissions are rejected.
      *
-     * @param string $permission The permission to validate (e.g. 'content.publish')
+     * @param  string  $permission  The permission to validate (e.g. 'content.publish')
      * @return bool True if the permission is valid
      */
     public function isValid(string $permission): bool

@@ -52,8 +52,8 @@ class AuditLogController extends Controller
         return response()->json([
             'data' => $paginated->items(),
             'meta' => [
-                'total'        => $paginated->total(),
-                'per_page'     => $paginated->perPage(),
+                'total' => $paginated->total(),
+                'per_page' => $paginated->perPage(),
                 'current_page' => $paginated->currentPage(),
             ],
         ]);

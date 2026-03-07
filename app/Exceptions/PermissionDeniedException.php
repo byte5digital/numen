@@ -26,7 +26,7 @@ class PermissionDeniedException extends AuthorizationException
     public function render(): \Illuminate\Http\JsonResponse
     {
         return response()->json([
-            'error'    => 'Forbidden',
+            'error' => 'Forbidden',
             'required' => $this->permission,
         ], 403);
     }
