@@ -6,6 +6,10 @@ return [
         'sync' => [
             'driver' => 'sync',
         ],
+
+        'array' => [
+            'driver' => 'null',
+        ],
         'database' => [
             'driver' => 'database',
             'connection' => env('DB_CONNECTION'),
