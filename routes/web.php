@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BriefAdminController;
 use App\Http\Controllers\Admin\ContentAdminController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\LocaleAdminController;
 use App\Http\Controllers\Admin\PageAdminController;
 use App\Http\Controllers\Admin\PersonaAdminController;
 use App\Http\Controllers\Admin\PipelineAdminController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Admin\QueueMonitorController;
 use App\Http\Controllers\Admin\SettingsAdminController;
 use App\Http\Controllers\Admin\TaxonomyAdminController;
 use App\Http\Controllers\Admin\TokenAdminController;
+use App\Http\Controllers\Admin\TranslationAdminController;
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Public\BlogController;
@@ -144,4 +146,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::delete('/taxonomy/terms/{termId}', [TaxonomyAdminController::class, 'destroyTerm'])->name('admin.taxonomy.terms.destroy');
     Route::post('/taxonomy/terms/{termId}/move', [TaxonomyAdminController::class, 'moveTerm'])->name('admin.taxonomy.terms.move');
     Route::post('/taxonomy/terms/reorder', [TaxonomyAdminController::class, 'reorderTerms'])->name('admin.taxonomy.terms.reorder');
+
+    // i18n / Locale management
+    Route::get('/settings/locales', [LocaleAdminController::class, 'index'])->name('admin.settings.locales');
+    Route::get('/content/{content}/translations', [TranslationAdminController::class, 'show'])->name('admin.content.translations');
 });
