@@ -191,4 +191,17 @@ return [
         'queue' => env('GRAPH_QUEUE', 'graph'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Competitor Analysis
+    |--------------------------------------------------------------------------
+    | Controls the competitor-aware content differentiation pipeline stage.
+    */
+    'competitor_analysis' => [
+        'enabled' => env('COMPETITOR_ANALYSIS_ENABLED', true),
+        'similarity_threshold' => (float) env('COMPETITOR_SIMILARITY_THRESHOLD', 0.25),
+        'max_competitors_to_analyze' => (int) env('COMPETITOR_MAX_ANALYZE', 5),
+        'auto_enrich_briefs' => env('COMPETITOR_AUTO_ENRICH_BRIEFS', true),
+    ],
+
 ];
