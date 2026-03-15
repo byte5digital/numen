@@ -10,7 +10,7 @@ use Tests\TestCase;
 
 /**
  * TEST: Media Library & Digital Asset Management — Feature Tests
- * 
+ *
  * Tests cover:
  * - MediaAsset model with metadata (alt_text, caption, tags)
  * - Media folder hierarchy and organization
@@ -23,6 +23,7 @@ class MediaLibraryTest extends TestCase
     use RefreshDatabase;
 
     protected User $user;
+
     protected Space $space;
 
     protected function setUp(): void
@@ -32,7 +33,7 @@ class MediaLibraryTest extends TestCase
         $this->space = Space::factory()->create();
     }
 
-    public function test_media_asset_stores_alt_text_and_caption()
+    public function test_media_asset_stores_alt_text_and_caption(): void
     {
         $asset = MediaAsset::create([
             'space_id' => $this->space->id,
@@ -51,7 +52,7 @@ class MediaLibraryTest extends TestCase
         $this->assertEquals('Test caption', $asset->caption);
     }
 
-    public function test_media_asset_stores_tags_as_array()
+    public function test_media_asset_stores_tags_as_array(): void
     {
         $asset = MediaAsset::create([
             'space_id' => $this->space->id,
@@ -69,7 +70,7 @@ class MediaLibraryTest extends TestCase
         $this->assertCount(2, $asset->tags);
     }
 
-    public function test_media_asset_stores_dimensions()
+    public function test_media_asset_stores_dimensions(): void
     {
         $asset = MediaAsset::create([
             'space_id' => $this->space->id,
@@ -88,7 +89,7 @@ class MediaLibraryTest extends TestCase
         $this->assertEquals(1080, $asset->height);
     }
 
-    public function test_media_asset_stores_extended_metadata()
+    public function test_media_asset_stores_extended_metadata(): void
     {
         $metadata = ['exif' => ['camera' => 'Canon'], 'iso' => 400];
         $asset = MediaAsset::create([
@@ -107,7 +108,7 @@ class MediaLibraryTest extends TestCase
         $this->assertEquals(['camera' => 'Canon'], $asset->metadata['exif']);
     }
 
-    public function test_media_asset_is_public_flag()
+    public function test_media_asset_is_public_flag(): void
     {
         $public = MediaAsset::create([
             'space_id' => $this->space->id,
@@ -133,37 +134,37 @@ class MediaLibraryTest extends TestCase
 
         $public->refresh();
         $private->refresh();
-        
+
         $this->assertTrue($public->is_public);
         $this->assertFalse($private->is_public);
     }
 
-    public function test_media_asset_can_belong_to_folder()
+    public function test_media_asset_can_belong_to_folder(): void
     {
-        $this->assertDatabaseHas('media_assets', ['space_id' => $this->space->id], false);
+        $this->assertDatabaseHas('media_assets', ['space_id' => $this->space->id]);
     }
 
-    public function test_media_folder_table_structure()
+    public function test_media_folder_table_structure(): void
     {
-        $this->assertDatabaseHas('media_folders', [], false);
+        $this->assertDatabaseHas('media_folders', []);
     }
 
-    public function test_media_collection_table_structure()
+    public function test_media_collection_table_structure(): void
     {
-        $this->assertDatabaseHas('media_collections', [], false);
+        $this->assertDatabaseHas('media_collections', []);
     }
 
-    public function test_media_collection_items_relationship()
+    public function test_media_collection_items_relationship(): void
     {
-        $this->assertDatabaseHas('media_collection_items', [], false);
+        $this->assertDatabaseHas('media_collection_items', []);
     }
 
-    public function test_media_usage_table_structure()
+    public function test_media_usage_table_structure(): void
     {
-        $this->assertDatabaseHas('media_usage', [], false);
+        $this->assertDatabaseHas('media_usage', []);
     }
 
-    public function test_asset_model_has_required_fillable_fields()
+    public function test_asset_model_has_required_fillable_fields(): void
     {
         $fillable = array_merge(
             ['space_id', 'filename', 'disk', 'path', 'mime_type', 'size_bytes', 'source'],
@@ -176,7 +177,7 @@ class MediaLibraryTest extends TestCase
         }
     }
 
-    public function test_asset_model_has_array_casts()
+    public function test_asset_model_has_array_casts(): void
     {
         $asset = MediaAsset::create([
             'space_id' => $this->space->id,
