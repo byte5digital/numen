@@ -20,6 +20,13 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $alt_text
  * @property string|null $caption
  * @property array|null $tags
+ * @property int|null $width
+ * @property int|null $height
+ * @property int|null $duration
+ * @property int|null $file_size
+ * @property array|null $metadata
+ * @property bool $is_public
+ * @property int|null $folder_id
  * @property string|null $url
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at

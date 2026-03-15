@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('media_folders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('space_id')->constrained()->cascadeOnDelete();
+            $table->string('space_id', 26)->index();
             $table->unsignedBigInteger('parent_id')->nullable(); // adjacency list (self-referential FK added below)
             $table->string('name', 255);
             $table->string('slug', 255);
@@ -18,7 +18,6 @@ return new class extends Migration
             $table->integer('sort_order')->default(0);
             $table->timestamps();
 
-            $table->index(['space_id', 'parent_id']);
             $table->index(['space_id', 'slug', 'parent_id']); // uniqueness enforced at app layer (SQLite-safe)
         });
 

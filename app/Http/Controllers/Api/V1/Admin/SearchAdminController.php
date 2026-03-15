@@ -7,6 +7,7 @@ use App\Jobs\IndexContentForSearchJob;
 use App\Models\ContentEmbedding;
 use App\Models\PromotedResult;
 use App\Models\SearchSynonym;
+use App\Services\AuthorizationService;
 use App\Services\Search\SearchAnalyticsService;
 use App\Services\Search\SearchCapabilityDetector;
 use App\Services\Search\SynonymSyncService;
@@ -24,12 +25,15 @@ class SearchAdminController extends Controller
         private readonly SearchAnalyticsService $analyticsService,
         private readonly SynonymSyncService $synonymSync,
         private readonly SearchCapabilityDetector $capabilityDetector,
+        private readonly AuthorizationService $authz,
     ) {}
 
     // ── Analytics ────────────────────────────────────────────────────────────
 
     public function analytics(Request $request): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'search.admin');
+
         $spaceId = (string) ($request->input('space_id') ?? 'default');
         $period = (string) ($request->input('period', '7d'));
 

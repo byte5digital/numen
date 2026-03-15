@@ -288,4 +288,55 @@ class ApiTokenPermissionsTest extends TestCase
             'name' => 'One Time Token',
         ]);
     }
+
+    // ── Issue #28 regression: admin without RBAC role ────────────────
+
+    /**
+     * Regression test for issue #28.
+     *
+     * An admin user (legacy role column = 'admin') without any RBAC role attached
+     * via the role_user pivot must still be able to create API tokens.
+     * AuthorizationService::resolvePermissions() now grants ['*'] as a fallback
+     * when role='admin' is present but no RBAC roles are assigned.
+     */
+    public function test_admin_without_rbac_role_can_create_api_token(): void
+    {
+        // Create an admin user with ONLY the legacy role column — no RBAC pivot entry
+        $admin = User::factory()->admin()->create();
+        // Assert no RBAC roles are attached (simulates pre-RBAC admin account)
+        $this->assertCount(0, $admin->roles);
+
+        $this->actingAs($admin)
+            ->post('/admin/tokens', ['name' => 'Admin Token'])
+            ->assertRedirect(route('admin.tokens.index'));
+
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'name' => 'Admin Token',
+            'tokenable_id' => $admin->id,
+        ]);
+    }
+
+    public function test_admin_without_rbac_role_can_list_api_tokens(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $admin->createToken('Existing Token');
+
+        $this->actingAs($admin)
+            ->get('/admin/tokens')
+            ->assertOk();
+    }
+
+    public function test_admin_without_rbac_role_can_delete_api_token(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $token = $admin->createToken('Token To Delete');
+
+        $this->actingAs($admin)
+            ->delete("/admin/tokens/{$token->accessToken->id}")
+            ->assertRedirect(route('admin.tokens.index'));
+
+        $this->assertDatabaseMissing('personal_access_tokens', [
+            'id' => $token->accessToken->id,
+        ]);
+    }
 }

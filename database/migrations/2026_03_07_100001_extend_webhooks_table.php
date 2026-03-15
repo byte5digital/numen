@@ -38,14 +38,32 @@ return new class extends Migration
             }
         });
 
-        // SQLite-compatible unique index (no url(500) prefix — SQLite doesn't support it)
-        // For MySQL: the full url column is used; enforce at app layer if key length is an issue
-        \DB::statement('CREATE UNIQUE INDEX IF NOT EXISTS webhooks_space_id_url_unique ON webhooks (space_id, url)');
+        // Add unique index — cross-database compatible (works on MySQL and SQLite)
+        if (! Schema::hasIndex('webhooks', 'webhooks_space_id_url_unique')) {
+            $driver = \DB::getDriverName();
+            if ($driver === 'mysql') {
+                // MySQL requires a column prefix for long varchar columns to stay within key length limit
+                \DB::statement('CREATE UNIQUE INDEX webhooks_space_id_url_unique ON webhooks (space_id, url(500))');
+            } else {
+                Schema::table('webhooks', function (Blueprint $table) {
+                    $table->unique(['space_id', 'url'], 'webhooks_space_id_url_unique');
+                });
+            }
+        }
     }
 
     public function down(): void
     {
-        \DB::statement('DROP INDEX IF EXISTS webhooks_space_id_url_unique');
+        if (Schema::hasIndex('webhooks', 'webhooks_space_id_url_unique')) {
+            $driver = \DB::getDriverName();
+            if ($driver === 'mysql') {
+                \DB::statement('ALTER TABLE webhooks DROP INDEX webhooks_space_id_url_unique');
+            } else {
+                Schema::table('webhooks', function (Blueprint $table) {
+                    $table->dropUnique('webhooks_space_id_url_unique');
+                });
+            }
+        }
 
         Schema::table('webhooks', function (Blueprint $table) {
             if (Schema::hasColumn('webhooks', 'deleted_at')) {

@@ -14,8 +14,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('media_collection_items', function (Blueprint $table) {
-            // Drop the wrong FK constraint and column
+            // Drop the wrong FK constraint and indexes first (SQLite requires index drop before column drop)
             $table->dropForeign(['media_asset_id']);
+            $table->dropIndex('media_collection_items_media_asset_id_index');
             $table->dropUnique(['collection_id', 'media_asset_id']);
             $table->dropColumn('media_asset_id');
         });
@@ -40,7 +41,7 @@ return new class extends Migration
         });
 
         Schema::table('media_collection_items', function (Blueprint $table) {
-            $table->foreignId('media_asset_id')->constrained()->cascadeOnDelete();
+            $table->string('media_asset_id', 26)->index();
             $table->unique(['collection_id', 'media_asset_id']);
         });
     }

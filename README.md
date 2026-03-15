@@ -33,6 +33,35 @@ Each stage is a queued job. The pipeline is event-driven. Stages are defined in 
 
 ---
 
+---
+
+## Features
+
+### Content Generation Pipeline
+Submit a brief → AI agents generate, illustrate, optimize, and quality-gate content → auto-publish or human review.
+
+### AI Content Repurposing Engine
+**New in v0.8.0.** One-click content repurposing to 8 formats:
+- **Twitter thread**, LinkedIn post, Newsletter section, Instagram caption
+- **Podcast script outline**, Product page copy, FAQ section, YouTube description
+- Tone-aware & brand-consistent via Persona/LLM system
+- Batch repurposing (50 items) + cost estimation
+- Staleness detection (auto-repurpose when source updates)
+- Custom format templates per space
+
+### Multi-Provider AI
+Swap between Anthropic, OpenAI, Azure OpenAI, Together AI — no code changes. Fallback chain auto-retries on rate limits.
+
+### Multi-Provider Image Generation
+OpenAI, Together AI, fal.ai, Replicate — choose the best model for your brand. Images auto-download and link to content.
+
+### RBAC with AI Governance
+Role-based access control (Admin, Editor, Author, Viewer) with space-scoped permissions, AI budget limits, and immutable audit logs.
+
+### CLI for Automation
+8 commands for content, briefs, and pipeline management — perfect for CI/CD hooks and server-side workflows.
+
+
 ## Architecture
 
 ```
@@ -768,6 +797,7 @@ config/
 
 ## Documentation
 
+- **[Multi-Language & i18n Support](docs/features/i18n.md)** — content localization, AI-powered translation, locale management, and fallback chains
 - **[Role-Based Access Control (RBAC)](docs/features/permissions.md)** — team access management, roles, permissions, space scoping, and audit logs
 - **[RBAC Technical Guide](docs/RBAC_GUIDE.md)** — detailed API reference and implementation guide
 - **[Permissions Architecture](docs/architecture/permissions-architecture.md)** — system design, data model, and security considerations
@@ -798,6 +828,7 @@ See [CHANGELOG.md](CHANGELOG.md) for what's in each release.
 - Role-Based Access Control (RBAC) with space-scoped roles, AI budget governance, and audit logs ✅
 - 134+ tests (up from 117 in 0.1.1) ✅
 - **Taxonomy & Content Organization** — hierarchical vocabularies, drag-and-drop term trees, AI auto-categorization, full REST API ([docs](docs/features/taxonomy.md)) ✅
+- **Multi-Language & i18n Support** — content localization, AI-powered translation, locale management, intelligent fallback chains, and translation workflow ([docs](docs/features/i18n.md)) ✅
 
 **Near-term (0.2.0):**
 - Deduplicate config `numen.anthropic` block (duplicates `numen.providers.anthropic`)
