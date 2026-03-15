@@ -217,7 +217,7 @@ class RepurposingTest extends TestCase
     {
         $repurposed = RepurposedContent::factory()
             ->for($this->content, 'sourceContent')
-            ->create(['space_id' => \$this->space->id, 'status' => 'completed']);
+            ->create(['space_id' => $this->space->id, 'status' => 'completed']);
 
         $this->assertEquals($this->content->id, $repurposed->source_content_id);
         $this->assertNotNull($repurposed->id);
@@ -247,7 +247,7 @@ class RepurposingTest extends TestCase
     {
         $repurposed = RepurposedContent::factory()
             ->for($this->content, 'sourceContent')
-            ->create(['space_id' => \$this->space->id, 'status' => 'pending']);
+            ->create(['space_id' => $this->space->id, 'status' => 'pending']);
 
         $this->assertEquals('pending', $repurposed->status);
 

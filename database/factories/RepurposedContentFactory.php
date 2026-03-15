@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Models\Content;
-use App\Models\Space;
 use App\Models\RepurposedContent;
+use App\Models\Space;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class RepurposedContentFactory extends Factory
