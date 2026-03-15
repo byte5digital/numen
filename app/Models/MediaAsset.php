@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -19,6 +20,17 @@ use Illuminate\Support\Facades\Storage;
  * @property string $source
  * @property array|null $ai_metadata
  * @property array|null $variants
+ * @property string|null $alt_text
+ * @property string|null $caption
+ * @property array|null $tags
+ * @property int|null $width
+ * @property int|null $height
+ * @property int|null $duration
+ * @property int|null $file_size
+ * @property array|null $metadata
+ * @property bool $is_public
+ * @property int|null $folder_id
+ * @property string|null $url
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  * @property-read Space $space
@@ -27,16 +39,21 @@ use Illuminate\Support\Facades\Storage;
  */
 class MediaAsset extends Model
 {
-    use HasUlids;
+    use HasFactory, HasUlids;
 
     protected $fillable = [
         'space_id', 'filename', 'disk', 'path', 'mime_type',
         'size_bytes', 'source', 'ai_metadata', 'variants',
+        'alt_text', 'caption', 'tags', 'file_size', 'width',
+        'height', 'duration', 'metadata', 'is_public', 'folder_id',
     ];
 
     protected $casts = [
         'ai_metadata' => 'array',
         'variants' => 'array',
+        'tags' => 'array',
+        'metadata' => 'array',
+        'is_public' => 'boolean',
     ];
 
     public function space(): BelongsTo
