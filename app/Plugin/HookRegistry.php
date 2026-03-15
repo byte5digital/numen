@@ -179,6 +179,17 @@ class HookRegistry
         }
     }
 
+    /**
+     * Fire a content event, passing multiple arguments to each listener.
+     * Alias for variadic content event dispatching (used by content hooks).
+     */
+    public function fireContentEvent(string $event, mixed ...$args): void
+    {
+        foreach ($this->getContentEventListeners($event) as $listener) {
+            $listener(...$args);
+        }
+    }
+
     // ── Admin menu items ───────────────────────────────────────────────────────
 
     /**
