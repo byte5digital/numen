@@ -18,6 +18,7 @@ const navigation = [
     { name: 'Personas', href: '/admin/personas', icon: '🤖' },
     { name: 'Pages', href: '/admin/pages', icon: '🗂️' },
     { name: 'Taxonomy', href: '/admin/taxonomy', icon: '🏷️' },
+    { name: 'Media', href: '/admin/media', icon: '🖼️' },
     { name: 'Analytics', href: '/admin/analytics', icon: '📈' },
     { name: 'Queue', href: '/admin/queue', icon: '⚙️' },
     { name: 'Users', href: '/admin/users', icon: '👥' },

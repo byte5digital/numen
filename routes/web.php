@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BriefAdminController;
 use App\Http\Controllers\Admin\ContentAdminController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\MediaAdminController;
 use App\Http\Controllers\Admin\PageAdminController;
 use App\Http\Controllers\Admin\PersonaAdminController;
 use App\Http\Controllers\Admin\PipelineAdminController;
@@ -144,4 +145,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::delete('/taxonomy/terms/{termId}', [TaxonomyAdminController::class, 'destroyTerm'])->name('admin.taxonomy.terms.destroy');
     Route::post('/taxonomy/terms/{termId}/move', [TaxonomyAdminController::class, 'moveTerm'])->name('admin.taxonomy.terms.move');
     Route::post('/taxonomy/terms/reorder', [TaxonomyAdminController::class, 'reorderTerms'])->name('admin.taxonomy.terms.reorder');
+
+    // Media Library
+    Route::get('/media', [MediaAdminController::class, 'index'])->name('admin.media');
+    Route::get('/media/{id}', [MediaAdminController::class, 'show'])->name('admin.media.show');
+    Route::delete('/media/{id}', [MediaAdminController::class, 'destroy'])->name('admin.media.destroy');
 });
