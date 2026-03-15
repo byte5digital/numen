@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MediaAsset;
 use App\Models\Space;
 use App\Services\MediaUploadService;
+use App\Services\MediaUsageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -14,6 +15,7 @@ class MediaController extends Controller
 {
     public function __construct(
         private readonly MediaUploadService $uploadService,
+        private readonly MediaUsageService $usageService,
     ) {}
 
     /**
@@ -175,6 +177,19 @@ class MediaController extends Controller
         return response()->json(['data' => $asset->fresh()]);
     }
 
+    /**
+     * Get content items that use a specific media asset.
+     */
+    public function usage(MediaAsset $asset): JsonResponse
+    {
+        $usages = $this->usageService->getUsagesForAsset($asset);
+
+        return response()->json([
+            'data' => $usages->values(),
+            'meta' => ['total' => $usages->count()],
+        ]);
+    }
+
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
@@ -185,20 +200,6 @@ class MediaController extends Controller
      * @param  string[]  $mimes
      * @return string[]
      */
-    /**
-     * Get content items that use a specific media asset.
-     *
-     * TODO(chunk-6): implement real usage tracking via media_asset_usages pivot table.
-     */
-    public function usage(MediaAsset $asset): JsonResponse
-    {
-        // Stub — real implementation comes in Chunk 6 (usage tracking system)
-        return response()->json([
-            'data' => [],
-            'meta' => ['total' => 0],
-        ]);
-    }
-
     private function mimeTypesToExtensions(array $mimes): array
     {
         $map = [
