@@ -13,7 +13,7 @@ class RepurposedContentFactory extends Factory
     public function definition(): array
     {
         return [
-            'content_id' => Content::factory(),
+            'source_content_id' => Content::factory(),
             'format_key' => $this->faker->word(),
             'status' => 'pending',
             'output' => null,

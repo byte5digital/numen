@@ -15,6 +15,7 @@ class FormatTemplateFactory extends Factory
         return [
             'space_id' => null,
             'format_key' => $this->faker->word(),
+            'name' => $this->faker->words(3, true),
             'system_prompt' => $this->faker->sentence(),
             'user_prompt_template' => 'Convert to format: {{body}}',
         ];
