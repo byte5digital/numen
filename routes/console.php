@@ -17,7 +17,14 @@ Schedule::command('numen:publish-scheduled')
     ->everyMinute()
     ->withoutOverlapping();
 
-// Prune old chat conversations daily at 3am
-Schedule::command('chat:prune --days=90')
-    ->dailyAt('03:00')
+// Knowledge graph clustering: re-compute clusters every 6 hours
+Schedule::call(fn () => app(\App\Services\Graph\ClusteringService::class)->computeAllClusters())
+    ->everySixHours()
+    ->name('graph:compute-clusters')
     ->withoutOverlapping();
+
+// Knowledge graph prune: remove orphaned nodes/edges weekly
+Schedule::command('graph:prune')
+    ->weekly()
+    ->withoutOverlapping()
+    ->runInBackground();
