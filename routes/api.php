@@ -1,15 +1,15 @@
 <?php
 
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
-use App\Http\Controllers\Api\PageController;
-use App\Http\Controllers\Api\AuditLogController;
-use App\Http\Controllers\Api\UserRoleController;
 use App\Http\Controllers\Api\ContentTaxonomyController;
-use App\Http\Controllers\Api\TaxonomyTermController;
-use App\Http\Controllers\Api\TaxonomyController;
+use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\TaxonomyController;
+use App\Http\Controllers\Api\TaxonomyTermController;
+use App\Http\Controllers\Api\UserRoleController;
 use App\Http\Controllers\Api\Versioning\AutoSaveController;
 use App\Http\Controllers\Api\Versioning\DiffController;
 use App\Http\Controllers\Api\Versioning\VersionController;
