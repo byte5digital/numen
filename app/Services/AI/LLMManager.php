@@ -3,6 +3,7 @@
 namespace App\Services\AI;
 
 use App\Models\Persona;
+use App\Plugin\Contracts\LLMProviderContract;
 use App\Services\AI\Contracts\LLMProvider;
 use App\Services\AI\Exceptions\AllProvidersFailedException;
 use App\Services\AI\Exceptions\CostLimitExceededException;
@@ -265,5 +266,54 @@ class LLMManager
 
             return [$provider, $equivalent];
         })->all();
+    }
+
+    /**
+     * Register a plugin-provided LLM provider into the routing table.
+     *
+     * Called by AppServiceProvider after PluginLoader boots, for each provider
+     * registered via HookRegistry::registerLLMProviderInstance().
+     *
+     * The $provider is wrapped in an adapter closure so it integrates with
+     * the existing LLMProvider (Contracts\LLMProvider) interface expected by
+     * ::complete().  For plugin providers we use a lightweight proxy that
+     * delegates complete() calls to LLMProviderContract::generateChat().
+     */
+    public function registerProvider(string $name, LLMProviderContract $provider): void
+    {
+        $this->providers[$name] = new class($provider) implements LLMProvider
+        {
+            public function __construct(private readonly LLMProviderContract $inner) {}
+
+            public function complete(array $params): \App\Services\AI\LLMResponse
+            {
+                $messages = $params['messages'] ?? [];
+                if (! empty($params['system'])) {
+                    array_unshift($messages, ['role' => 'system', 'content' => $params['system']]);
+                }
+                $text = $this->inner->generateChat($messages, $params);
+
+                return new \App\Services\AI\LLMResponse(
+                    content: $text,
+                    model: $params['model'] ?? $this->inner->name(),
+                    provider: $this->inner->name(),
+                    inputTokens: 0,
+                    outputTokens: 0,
+                    latencyMs: 0,
+                    stopReason: 'stop',
+                    costUsd: 0.0,
+                );
+            }
+
+            public function isAvailable(string $model): bool
+            {
+                return true;
+            }
+
+            public function getName(): string
+            {
+                return $this->inner->name();
+            }
+        };
     }
 }

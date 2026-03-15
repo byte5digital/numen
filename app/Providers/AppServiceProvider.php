@@ -120,6 +120,13 @@ class AppServiceProvider extends ServiceProvider
         // Boot plugin system
         $this->app->make(PluginLoader::class)->boot();
 
+        // Wire plugin-registered LLM providers into LLMManager
+        $hookRegistry = $this->app->make(HookRegistry::class);
+        $llmManager = $this->app->make(LLMManager::class);
+        foreach ($hookRegistry->getLLMProviders() as $name => $provider) {
+            $llmManager->registerProvider($name, $provider);
+        }
+
         // Register search event listeners
         Event::listen(ContentPublished::class, IndexContentForSearch::class);
         Event::listen(ContentUnpublished::class, RemoveFromSearchIndex::class);

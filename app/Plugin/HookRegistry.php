@@ -2,21 +2,25 @@
 
 namespace App\Plugin;
 
+use App\Plugin\Contracts\LLMProviderContract;
+use App\Plugin\Contracts\PipelineStageContract;
 use Closure;
+use InvalidArgumentException;
 
-/**
- * Central hook bus for the Numen plugin system.
- *
- * Plugins register their extensions here; the core calls them at the
- * appropriate extension points.
- */
+/** Central hook bus for the Numen plugin system. */
 class HookRegistry
 {
     /** @var array<string, array<Closure>> */
     private array $pipelineStages = [];
 
+    /** @var array<string, class-string<PipelineStageContract>> */
+    private array $pipelineStageClasses = [];
+
     /** @var array<string, Closure> */
     private array $llmProviders = [];
+
+    /** @var array<string, LLMProviderContract> */
+    private array $llmProviderInstances = [];
 
     /** @var array<string, Closure> */
     private array $imageProviders = [];
@@ -35,91 +39,121 @@ class HookRegistry
 
     // ── Pipeline stages ────────────────────────────────────────────────────────
 
-    /**
-     * Register a named pipeline stage processor.
-     *
-     * The Closure receives (array $context, array $stageConfig): array $context.
-     */
     public function registerPipelineStage(string $stageName, Closure $handler): void
     {
         $this->pipelineStages[$stageName][] = $handler;
     }
 
     /**
-     * Get all handlers registered for a pipeline stage name.
+     * Register a class-based pipeline stage handler.
+     * Handler must implement PipelineStageContract.
      *
-     * @return array<Closure>
+     * @param  class-string  $handlerClass
+     *
+     * @throws InvalidArgumentException
      */
+    public function registerPipelineStageClass(string $stageType, string $handlerClass): void
+    {
+        if (! is_a($handlerClass, PipelineStageContract::class, true)) {
+            throw new InvalidArgumentException(
+                "Pipeline stage handler [{$handlerClass}] must implement ".PipelineStageContract::class.'.'
+            );
+        }
+        $this->pipelineStageClasses[$stageType] = $handlerClass;
+    }
+
+    /** @return array<Closure> */
     public function getPipelineStageHandlers(string $stageName): array
     {
         return $this->pipelineStages[$stageName] ?? [];
     }
 
-    /**
-     * Get all registered pipeline stage names.
-     *
-     * @return array<string>
-     */
+    /** @return class-string<PipelineStageContract>|null */
+    public function getPipelineStageHandler(string $stageType): ?string
+    {
+        return $this->pipelineStageClasses[$stageType] ?? null;
+    }
+
+    public function hasPipelineStageHandler(string $stageType): bool
+    {
+        return isset($this->pipelineStageClasses[$stageType]);
+    }
+
+    /** @return array<string> */
     public function getRegisteredPipelineStages(): array
     {
         return array_keys($this->pipelineStages);
     }
 
+    /** @return array<string> */
+    public function getRegisteredPipelineStageTypes(): array
+    {
+        return array_keys($this->pipelineStageClasses);
+    }
+
     // ── LLM providers ──────────────────────────────────────────────────────────
 
-    /**
-     * Register a custom LLM provider factory.
-     *
-     * The Closure receives (array $config): LLMProviderInterface.
-     */
     public function registerLLMProvider(string $providerName, Closure $factory): void
     {
         $this->llmProviders[$providerName] = $factory;
     }
 
     /**
-     * Get the factory for an LLM provider, or null if not registered.
+     * Register an LLMProviderContract instance directly.
+     * Used by AppServiceProvider after PluginLoader boots.
+     *
+     * @throws InvalidArgumentException
      */
+    public function registerLLMProviderInstance(string $providerName, mixed $provider): void
+    {
+        if (! ($provider instanceof LLMProviderContract)) {
+            throw new InvalidArgumentException(
+                "LLM provider [{$providerName}] must implement ".LLMProviderContract::class.'.'
+            );
+        }
+        $this->llmProviderInstances[$providerName] = $provider;
+    }
+
     public function getLLMProviderFactory(string $providerName): ?Closure
     {
         return $this->llmProviders[$providerName] ?? null;
     }
 
-    /**
-     * Get all registered LLM provider names.
-     *
-     * @return array<string>
-     */
+    public function getLLMProviderInstance(string $providerName): ?LLMProviderContract
+    {
+        return $this->llmProviderInstances[$providerName] ?? null;
+    }
+
+    /** @return array<string> */
     public function getRegisteredLLMProviders(): array
     {
         return array_keys($this->llmProviders);
     }
 
+    /**
+     * Get all registered LLMProviderContract instances.
+     * Used by AppServiceProvider to wire plugin LLM providers into LLMManager.
+     *
+     * @return array<string, LLMProviderContract>
+     */
+    public function getLLMProviders(): array
+    {
+        return $this->llmProviderInstances;
+    }
+
     // ── Image providers ────────────────────────────────────────────────────────
 
-    /**
-     * Register a custom image generation provider factory.
-     *
-     * The Closure receives (array $config): ImageProviderInterface.
-     */
     public function registerImageProvider(string $providerName, Closure $factory): void
     {
         $this->imageProviders[$providerName] = $factory;
     }
 
-    /**
-     * Get the factory for an image provider, or null if not registered.
-     */
     public function getImageProviderFactory(string $providerName): ?Closure
     {
         return $this->imageProviders[$providerName] ?? null;
     }
 
-    /**
-     * Get all registered image provider names.
-     *
-     * @return array<string>
-     */
+    /** @return array<string> */
     public function getRegisteredImageProviders(): array
     {
         return array_keys($this->imageProviders);
@@ -127,30 +161,17 @@ class HookRegistry
 
     // ── Content events ─────────────────────────────────────────────────────────
 
-    /**
-     * Listen to a content lifecycle event.
-     *
-     * $eventName examples: 'content.created', 'content.published', 'content.deleted'
-     * The Closure receives (mixed $payload): void.
-     */
     public function onContentEvent(string $eventName, Closure $listener): void
     {
         $this->contentEventListeners[$eventName][] = $listener;
     }
 
-    /**
-     * Get all listeners for a content event.
-     *
-     * @return array<Closure>
-     */
+    /** @return array<Closure> */
     public function getContentEventListeners(string $eventName): array
     {
         return $this->contentEventListeners[$eventName] ?? [];
     }
 
-    /**
-     * Dispatch a content event to all registered listeners.
-     */
     public function dispatchContentEvent(string $eventName, mixed $payload): void
     {
         foreach ($this->getContentEventListeners($eventName) as $listener) {
@@ -161,8 +182,6 @@ class HookRegistry
     // ── Admin menu items ───────────────────────────────────────────────────────
 
     /**
-     * Add an item to the admin navigation menu.
-     *
      * @param  array{id: string, label: string, route: string, icon?: string|null, weight?: int}  $item
      */
     public function addAdminMenuItem(array $item): void
@@ -177,8 +196,6 @@ class HookRegistry
     }
 
     /**
-     * Get all registered admin menu items, sorted by weight.
-     *
      * @return array<array{id: string, label: string, route: string, icon: string|null, weight: int}>
      */
     public function getAdminMenuItems(): array
@@ -192,8 +209,6 @@ class HookRegistry
     // ── Admin widgets ──────────────────────────────────────────────────────────
 
     /**
-     * Add a Vue widget to the admin dashboard.
-     *
      * @param  array{id: string, component: string, props?: array<string, mixed>}  $widget
      */
     public function addAdminWidget(array $widget): void
@@ -206,8 +221,6 @@ class HookRegistry
     }
 
     /**
-     * Get all registered admin dashboard widgets.
-     *
      * @return array<array{id: string, component: string, props: array<string, mixed>}>
      */
     public function getAdminWidgets(): array
@@ -217,22 +230,12 @@ class HookRegistry
 
     // ── Vue components ─────────────────────────────────────────────────────────
 
-    /**
-     * Register a Vue component that should be globally available in the frontend.
-     *
-     * @param  string  $name  Vue component name (e.g. 'MyPluginWidget')
-     * @param  string  $importPath  Absolute path or NPM package reference to the .vue file
-     */
     public function registerVueComponent(string $name, string $importPath): void
     {
         $this->vueComponents[$name] = $importPath;
     }
 
-    /**
-     * Get all registered Vue component definitions.
-     *
-     * @return array<string, string>
-     */
+    /** @return array<string, string> */
     public function getVueComponents(): array
     {
         return $this->vueComponents;
