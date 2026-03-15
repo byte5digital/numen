@@ -26,6 +26,11 @@ use App\Services\AI\Providers\AzureOpenAIProvider;
 use App\Services\AI\Providers\OpenAIProvider;
 use App\Services\Authorization\PermissionRegistrar;
 use App\Services\AuthorizationService;
+use App\Services\Competitor\Crawlers\ApiCrawler;
+use App\Services\Competitor\Crawlers\RssCrawler;
+use App\Services\Competitor\Crawlers\ScrapeCrawler;
+use App\Services\Competitor\Crawlers\SitemapCrawler;
+use App\Services\Competitor\CrawlerService;
 use App\Services\Search\ConversationalDriver;
 use App\Services\Search\EmbeddingService;
 use App\Services\Search\InstantSearchDriver;
@@ -110,6 +115,14 @@ class AppServiceProvider extends ServiceProvider
             $app->make(SearchAnalyticsRecorder::class),
             $app->make(SearchCapabilityDetector::class),
         ));
+        // ── Competitor Crawler Infrastructure ─────────────────────────────
+        $this->app->singleton(CrawlerService::class, fn ($app) => new CrawlerService([
+            $app->make(RssCrawler::class),
+            $app->make(SitemapCrawler::class),
+            $app->make(ScrapeCrawler::class),
+            $app->make(ApiCrawler::class),
+        ]));
+
     }
 
     public function boot(): void
