@@ -36,7 +36,7 @@ class CliImportAndStatusTest extends TestCase
     {
         $this->artisan('numen:content:import --file=/nonexistent/path/to/file.json')
             ->assertFailed()
-            ->expectsOutput('File not found: /nonexistent/path/to/file.json');
+            ->expectsOutput('File not found or unresolvable path: /nonexistent/path/to/file.json');
     }
 
     public function test_import_fails_with_invalid_json(): void
