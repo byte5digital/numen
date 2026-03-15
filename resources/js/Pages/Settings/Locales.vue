@@ -32,7 +32,7 @@ function selectLocale(s) { addingLocale.value = s; }
 function confirmAdd() {
     if (!addingLocale.value) return;
     adding.value = true;
-    router.post("/v1/locales", {
+    router.post("/api/v1/locales", {
         locale: addingLocale.value.code,
         label:  addingLocale.value.label,
     }, {
@@ -42,10 +42,10 @@ function confirmAdd() {
 }
 
 function toggleActive(locale) {
-    router.patch("/v1/locales/" + locale.id, { is_active: !locale.is_active }, { preserveScroll: true });
+    router.patch("/api/v1/locales/" + locale.id, { is_active: !locale.is_active }, { preserveScroll: true });
 }
 function setDefault(locale) {
-    router.patch("/v1/locales/" + locale.id, { is_default: true }, { preserveScroll: true });
+    router.patch("/api/v1/locales/" + locale.id, { is_default: true }, { preserveScroll: true });
 }
 
 const dragging     = ref(null);
@@ -65,7 +65,7 @@ function onDrop(index) {
     arr.splice(index, 0, moved);
     localLocales.value = arr;
     dragging.value = null; dragOver.value = null;
-    router.patch("/v1/locales/reorder", {
+    router.patch("/api/v1/locales/reorder", {
         order: arr.map((l, i) => ({ id: l.id, sort_order: i + 1 })),
     }, { preserveScroll: true });
 }
@@ -76,7 +76,7 @@ const deleting    = ref(null);
 function deleteLocale(locale) {
     if (!confirm("Delete " + locale.label + " locale? This cannot be undone.")) return;
     deleting.value = locale.id;
-    router.delete("/v1/locales/" + locale.id, {
+    router.delete("/api/v1/locales/" + locale.id, {
         onError:  (e) => { deleteError.value = e.locale ?? "Cannot delete: content may exist in this locale."; },
         onFinish: () => { deleting.value = null; },
         preserveScroll: true,
