@@ -9,15 +9,23 @@ use App\Models\ContentTranslationJob;
 use App\Models\Persona;
 use App\Models\Space;
 use App\Services\AITranslationService;
+use App\Services\AuthorizationService;
+use App\Services\LocaleService;
 use App\Services\TranslationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TranslationController extends Controller
 {
+    // Maximum number of pending/processing translation jobs per space to
+    // prevent abuse and runaway AI costs.
+    private const MAX_PENDING_JOBS_PER_SPACE = 50;
+
     public function __construct(
         private readonly TranslationService $translationService,
         private readonly AITranslationService $aiTranslationService,
+        private readonly AuthorizationService $authz,
+        private readonly LocaleService $localeService,
     ) {}
 
     /**
@@ -32,7 +40,10 @@ class TranslationController extends Controller
             'space_id' => ['required', 'integer', 'exists:spaces,id'],
         ]);
 
-        $space = Space::findOrFail($request->integer('space_id'));
+        $spaceId = (string) $request->integer('space_id');
+        $this->authz->authorize($request->user(), 'content.read', $spaceId);
+
+        $space = Space::findOrFail($spaceId);
 
         $matrix = $this->translationService->getTranslationMatrix($space);
 
@@ -83,14 +94,40 @@ class TranslationController extends Controller
      */
     public function translate(Request $request, Content $content): JsonResponse
     {
+        // Verify the authenticated user has access to this content's space
+        $this->authz->authorize($request->user(), 'content.update', (string) $content->space_id);
+
         $validated = $request->validate([
-            'target_locale' => ['required', 'string', 'max:10'],
-            'persona_id' => ['sometimes', 'nullable', 'integer', 'exists:personas,id'],
+            'target_locale' => ['required', 'string', 'max:10', 'regex:/^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8})*$/'],
+            'persona_id'    => ['sometimes', 'nullable', 'integer', 'exists:personas,id'],
         ]);
 
-        $persona = isset($validated['persona_id'])
-            ? Persona::find($validated['persona_id'])
-            : null;
+        // Validate persona belongs to the same space as the content (IDOR guard)
+        $persona = null;
+        if (! empty($validated['persona_id'])) {
+            $persona = Persona::where('id', $validated['persona_id'])
+                ->where('space_id', $content->space_id)
+                ->first();
+
+            if (! $persona) {
+                return response()->json([
+                    'error'   => 'Validation Error',
+                    'message' => 'The selected persona does not belong to this space.',
+                ], 422);
+            }
+        }
+
+        // AI cost guard: cap the number of queued jobs per space
+        $pendingCount = ContentTranslationJob::where('space_id', $content->space_id)
+            ->whereIn('status', ['pending', 'processing'])
+            ->count();
+
+        if ($pendingCount >= self::MAX_PENDING_JOBS_PER_SPACE) {
+            return response()->json([
+                'error'   => 'Too Many Requests',
+                'message' => 'Maximum concurrent translation jobs per space reached. Please wait for existing jobs to complete.',
+            ], 429);
+        }
 
         $job = $this->translationService->createTranslationJob(
             $content,
@@ -115,6 +152,8 @@ class TranslationController extends Controller
      */
     public function status(Request $request, Content $content): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'content.read', (string) $content->space_id);
+
         $jobs = ContentTranslationJob::where('source_content_id', $content->id)
             ->orderByDesc('created_at')
             ->get();
@@ -129,8 +168,10 @@ class TranslationController extends Controller
      *
      * Cancel a pending or processing translation job.
      */
-    public function cancel(ContentTranslationJob $job): JsonResponse
+    public function cancel(Request $request, ContentTranslationJob $job): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'content.update', (string) $job->space_id);
+
         $this->translationService->cancelJob($job);
 
         return response()->json([
@@ -143,8 +184,22 @@ class TranslationController extends Controller
      *
      * Retry a failed translation job.
      */
-    public function retry(ContentTranslationJob $job): JsonResponse
+    public function retry(Request $request, ContentTranslationJob $job): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'content.update', (string) $job->space_id);
+
+        // AI cost guard: cap the number of queued jobs per space before retrying
+        $pendingCount = ContentTranslationJob::where('space_id', $job->space_id)
+            ->whereIn('status', ['pending', 'processing'])
+            ->count();
+
+        if ($pendingCount >= self::MAX_PENDING_JOBS_PER_SPACE) {
+            return response()->json([
+                'error'   => 'Too Many Requests',
+                'message' => 'Maximum concurrent translation jobs per space reached. Please wait for existing jobs to complete.',
+            ], 429);
+        }
+
         $this->translationService->retryJob($job);
 
         $job->refresh();
@@ -163,8 +218,10 @@ class TranslationController extends Controller
      */
     public function estimateCost(Request $request, Content $content): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'content.read', (string) $content->space_id);
+
         $request->validate([
-            'target_locale' => ['required', 'string', 'max:10'],
+            'target_locale' => ['required', 'string', 'max:10', 'regex:/^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8})*$/'],
         ]);
 
         $estimate = $this->aiTranslationService->estimateCost($content);
@@ -185,19 +242,19 @@ class TranslationController extends Controller
     private function formatJob(ContentTranslationJob $job): array
     {
         return [
-            'id' => $job->id,
-            'space_id' => $job->space_id,
+            'id'                => $job->id,
+            'space_id'          => $job->space_id,
             'source_content_id' => $job->source_content_id,
             'target_content_id' => $job->target_content_id,
-            'source_locale' => $job->source_locale,
-            'target_locale' => $job->target_locale,
-            'status' => $job->status,
-            'persona_id' => $job->persona_id,
-            'error_message' => $job->error_message,
-            'started_at' => $job->started_at?->toIso8601String(),
-            'completed_at' => $job->completed_at?->toIso8601String(),
-            'created_at' => $job->created_at->toIso8601String(),
-            'updated_at' => $job->updated_at->toIso8601String(),
+            'source_locale'     => $job->source_locale,
+            'target_locale'     => $job->target_locale,
+            'status'            => $job->status,
+            'persona_id'        => $job->persona_id,
+            'error_message'     => $job->error_message,
+            'started_at'        => $job->started_at?->toIso8601String(),
+            'completed_at'      => $job->completed_at?->toIso8601String(),
+            'created_at'        => $job->created_at->toIso8601String(),
+            'updated_at'        => $job->updated_at->toIso8601String(),
         ];
     }
 }

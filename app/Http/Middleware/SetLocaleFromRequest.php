@@ -10,6 +10,12 @@ use Symfony\Component\HttpFoundation\Response;
 
 class SetLocaleFromRequest
 {
+    /** Maximum locale string length to accept — prevents oversized header abuse. */
+    private const MAX_LOCALE_LENGTH = 20;
+
+    /** Allowed IETF BCP 47 format: lang[-region[-variant]] */
+    private const LOCALE_PATTERN = '/^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8})*$/';
+
     public function __construct(
         private readonly LocaleService $localeService,
     ) {}
@@ -44,7 +50,7 @@ class SetLocaleFromRequest
 
     /**
      * Extract a raw locale string from query param, header, or Accept-Language.
-     * Returns null when nothing is specified.
+     * Returns null when nothing is specified or when the value fails basic sanitization.
      */
     private function detectRequested(Request $request): ?string
     {
@@ -53,7 +59,7 @@ class SetLocaleFromRequest
             $locale = (string) $request->query->get('locale');
 
             if ($locale !== '') {
-                return $locale;
+                return $this->sanitize($locale);
             }
         }
 
@@ -61,7 +67,7 @@ class SetLocaleFromRequest
         $xLocale = $request->header('X-Locale');
 
         if (is_string($xLocale) && $xLocale !== '') {
-            return $xLocale;
+            return $this->sanitize($xLocale);
         }
 
         // 3. Accept-Language header (use first tag, strip quality values)
@@ -71,11 +77,34 @@ class SetLocaleFromRequest
             $parsed = $this->parseAcceptLanguage($acceptLanguage);
 
             if ($parsed !== null) {
-                return $parsed;
+                return $this->sanitize($parsed);
             }
         }
 
         return null;
+    }
+
+    /**
+     * Sanitize a raw locale string:
+     * - Enforce max length
+     * - Validate against IETF BCP 47 pattern
+     * - Normalise separator (underscore → hyphen)
+     *
+     * Returns null if the value is invalid.
+     */
+    private function sanitize(string $raw): ?string
+    {
+        $normalised = str_replace('_', '-', trim($raw));
+
+        if (strlen($normalised) > self::MAX_LOCALE_LENGTH) {
+            return null;
+        }
+
+        if (! preg_match(self::LOCALE_PATTERN, $normalised)) {
+            return null;
+        }
+
+        return $normalised;
     }
 
     /**
@@ -102,7 +131,8 @@ class SetLocaleFromRequest
             );
         }
 
-        // No space context — honour the detected value or fall back to app default
+        // No space context — honour the sanitized value or fall back to app default.
+        // At this point $requested has already been sanitized via sanitize().
         return $requested ?? config('app.locale', 'en');
     }
 

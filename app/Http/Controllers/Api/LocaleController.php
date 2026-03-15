@@ -8,13 +8,17 @@ use App\Http\Requests\UpdateLocaleRequest;
 use App\Http\Resources\SpaceLocaleResource;
 use App\Models\Space;
 use App\Models\SpaceLocale;
+use App\Services\AuthorizationService;
 use App\Services\LocaleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class LocaleController extends Controller
 {
-    public function __construct(private readonly LocaleService $localeService) {}
+    public function __construct(
+        private readonly LocaleService $localeService,
+        private readonly AuthorizationService $authz,
+    ) {}
 
     /**
      * List all space locales.
@@ -26,6 +30,8 @@ class LocaleController extends Controller
         $validated = $request->validate([
             'space_id' => ['required', 'string', 'exists:spaces,id'],
         ]);
+
+        $this->authz->authorize($request->user(), 'content.read', $validated['space_id']);
 
         $space = Space::findOrFail($validated['space_id']);
         $locales = $this->localeService->getLocalesForSpace($space);
@@ -41,6 +47,8 @@ class LocaleController extends Controller
     public function store(CreateLocaleRequest $request): JsonResponse
     {
         $validated = $request->validated();
+
+        $this->authz->authorize($request->user(), 'content.create', $validated['space_id']);
 
         $space = Space::findOrFail($validated['space_id']);
 
@@ -65,6 +73,8 @@ class LocaleController extends Controller
      */
     public function update(UpdateLocaleRequest $request, SpaceLocale $locale): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'content.update', (string) $locale->space_id);
+
         $validated = $request->validated();
 
         $locale->update($validated);
@@ -77,8 +87,10 @@ class LocaleController extends Controller
      *
      * DELETE /v1/locales/{locale}
      */
-    public function destroy(SpaceLocale $locale): JsonResponse
+    public function destroy(Request $request, SpaceLocale $locale): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'content.delete', (string) $locale->space_id);
+
         $space = Space::findOrFail($locale->space_id);
 
         try {
@@ -97,6 +109,8 @@ class LocaleController extends Controller
      */
     public function setDefault(Request $request, SpaceLocale $locale): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'content.update', (string) $locale->space_id);
+
         $space = Space::findOrFail($locale->space_id);
 
         try {

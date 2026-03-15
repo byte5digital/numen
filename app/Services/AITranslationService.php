@@ -8,6 +8,13 @@ use App\Services\AI\LLMManager;
 
 class AITranslationService
 {
+    /**
+     * Maximum total character count across all content fields before rejecting the
+     * translation request. ~100k chars ≈ 25k tokens input, well within model limits
+     * but prevents accidental or intentional cost explosions with huge content bodies.
+     */
+    private const MAX_CONTENT_CHARS = 100_000;
+
     public function __construct(
         private readonly LLMManager $llm,
     ) {}
@@ -19,6 +26,8 @@ class AITranslationService
      */
     public function translate(Content $source, string $targetLocale, ?Persona $persona = null): array
     {
+        $this->assertContentSizeWithinLimit($source);
+
         $prompt = $this->buildTranslationPrompt($source, $targetLocale, $persona);
 
         $response = $this->llm->complete([
@@ -46,9 +55,9 @@ class AITranslationService
         }
 
         return [
-            'title' => $decoded['title'] ?? '',
-            'body' => $decoded['body'] ?? '',
-            'excerpt' => $decoded['excerpt'] ?? null,
+            'title'            => $decoded['title'] ?? '',
+            'body'             => $decoded['body'] ?? '',
+            'excerpt'          => $decoded['excerpt'] ?? null,
             'meta_description' => $decoded['meta_description'] ?? null,
         ];
     }
@@ -77,9 +86,9 @@ class AITranslationService
         $version = $source->currentVersion;
 
         $payload = [
-            'title' => $version?->title ?? '',
-            'body' => $version?->body ?? '',
-            'excerpt' => $version?->excerpt ?? null,
+            'title'            => $version?->title ?? '',
+            'body'             => $version?->body ?? '',
+            'excerpt'          => $version?->excerpt ?? null,
             'meta_description' => $version?->meta_description ?? null,
         ];
 
@@ -111,8 +120,31 @@ class AITranslationService
         $estimatedOutputTokens = (int) ceil($inputTokens * 1.1);
 
         return [
-            'input_tokens' => $inputTokens,
+            'input_tokens'           => $inputTokens,
             'estimated_output_tokens' => $estimatedOutputTokens,
         ];
+    }
+
+    /**
+     * Guard against very large content bodies to prevent runaway AI costs.
+     *
+     * @throws \RuntimeException if combined content length exceeds MAX_CONTENT_CHARS
+     */
+    private function assertContentSizeWithinLimit(Content $content): void
+    {
+        $version = $content->currentVersion;
+
+        $totalChars = mb_strlen($version?->title ?? '')
+            + mb_strlen($version?->body ?? '')
+            + mb_strlen($version?->excerpt ?? '')
+            + mb_strlen($version?->meta_description ?? '');
+
+        if ($totalChars > self::MAX_CONTENT_CHARS) {
+            throw new \RuntimeException(
+                "Content #{$content->id} exceeds the maximum translation size limit "
+                .'('.number_format($totalChars).' chars > '.number_format(self::MAX_CONTENT_CHARS).' chars). '
+                .'Please reduce the content size before translating.',
+            );
+        }
     }
 }
