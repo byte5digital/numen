@@ -11,7 +11,7 @@ return new class extends Migration
         if (! Schema::hasTable('space_locales')) {
             Schema::create('space_locales', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('space_id')->constrained()->cascadeOnDelete();
+            $table->string('space_id', 26)->index();
             $table->string('locale', 10); // e.g. en, fr, de, zh-TW
             $table->string('label', 100); // e.g. "English", "Français"
             $table->boolean('is_default')->default(false);

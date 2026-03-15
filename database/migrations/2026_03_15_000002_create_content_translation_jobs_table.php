@@ -11,13 +11,13 @@ return new class extends Migration
         if (! Schema::hasTable('content_translation_jobs')) {
             Schema::create('content_translation_jobs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('space_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('source_content_id')->constrained('contents')->cascadeOnDelete();
-            $table->foreignId('target_content_id')->nullable()->constrained('contents')->nullOnDelete();
+            $table->string('space_id', 26)->index();
+            $table->string('source_content_id', 26)->index();
+            $table->string('target_content_id', 26)->nullable()->index();
             $table->string('source_locale', 10);
             $table->string('target_locale', 10);
             $table->string('status', 20)->default('pending'); // pending, processing, completed, failed
-            $table->foreignId('persona_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('persona_id', 26)->nullable();
             $table->text('error_message')->nullable();
             $table->timestamp('started_at')->nullable();
             $table->timestamp('completed_at')->nullable();

@@ -11,14 +11,14 @@ return new class extends Migration
         if (! Schema::hasTable('repurposing_batches')) {
             Schema::create('repurposing_batches', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('space_id')->constrained()->cascadeOnDelete();
+            $table->string('space_id', 26)->index();
             $table->string('format_key', 50);
             $table->string('status', 20)->default('pending'); // pending, processing, completed, failed, cancelled
             $table->unsignedInteger('total_items')->default(0);
             $table->unsignedInteger('completed_items')->default(0);
             $table->unsignedInteger('failed_items')->default(0);
             $table->unsignedInteger('total_tokens_used')->nullable();
-            $table->foreignId('persona_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('persona_id', 26)->nullable();
             $table->timestamp('started_at')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();

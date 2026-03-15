@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('media_usage', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('space_id')->constrained()->cascadeOnDelete();
+            $table->string('space_id', 26)->index();
             $table->string('media_asset_id', 26); // ULID — no FK constraint (SQLite compatible)
             $table->string('useable_type', 255); // e.g. App\Models\Content
             $table->string('useable_id', 26); // ULID or bigint as string

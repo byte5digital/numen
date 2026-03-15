@@ -40,7 +40,7 @@ return new class extends Migration
         });
 
         Schema::table('media_collection_items', function (Blueprint $table) {
-            $table->foreignId('media_asset_id')->constrained()->cascadeOnDelete();
+            $table->string('media_asset_id', 26)->index();
             $table->unique(['collection_id', 'media_asset_id']);
         });
     }
