@@ -17,11 +17,11 @@ class EnsureUserIsAdmin
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-        
+
         if (! $user) {
             abort(403, 'Unauthorized. Authentication required.');
         }
-        
+
         // Dashboard requires admin role
         if ($request->path() === 'admin' || $request->path() === 'admin/') {
             if (! $user->isAdmin()) {
