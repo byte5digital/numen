@@ -14,8 +14,6 @@ class AutoTagMediaJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public string $queue = 'ai-pipeline';
-
     public int $tries = 1;
 
     public int $timeout = 60;

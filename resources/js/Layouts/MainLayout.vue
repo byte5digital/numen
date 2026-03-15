@@ -19,11 +19,14 @@ const navigation = [
     { name: 'Personas', href: '/admin/personas', icon: '🤖' },
     { name: 'Pages', href: '/admin/pages', icon: '🗂️' },
     { name: 'Taxonomy', href: '/admin/taxonomy', icon: '🏷️' },
+    { name: 'Media', href: '/admin/media', icon: '🖼️' },
     { name: 'Analytics', href: '/admin/analytics', icon: '📈' },
+    { name: 'Knowledge Graph', href: '/admin/graph', icon: '🕸️' },
     { name: 'Queue', href: '/admin/queue', icon: '⚙️' },
     { name: 'Users', href: '/admin/users', icon: '👥' },
     { name: 'API Tokens', href: '/admin/tokens', icon: '🔑' },
     { name: 'Settings', href: '/admin/settings', icon: '⚙️' },
+    { name: 'Plugins', href: '/admin/plugins', icon: '🧩' },
 ];
 </script>
 

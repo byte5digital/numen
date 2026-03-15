@@ -6,12 +6,14 @@ use App\Events\Pipeline\PipelineCompleted;
 use App\Events\Pipeline\PipelineStageCompleted;
 use App\Events\Pipeline\PipelineStarted;
 use App\Jobs\GenerateImage;
+use App\Jobs\PluginStageJob;
 use App\Jobs\PublishContent;
 use App\Jobs\RunAgentStage;
 use App\Models\Content;
 use App\Models\ContentBrief;
 use App\Models\ContentPipeline;
 use App\Models\PipelineRun;
+use App\Plugin\HookRegistry;
 use Illuminate\Support\Facades\Log;
 
 class PipelineExecutor
@@ -94,6 +96,23 @@ class PipelineExecutor
      */
     private function dispatchStage(PipelineRun $run, array $stage): void
     {
+        // Check plugin-registered stage types first
+        $registry = app(HookRegistry::class);
+        if ($registry->hasPipelineStageHandler($stage['type'])) {
+            PluginStageJob::dispatch($run, $stage);
+
+            return;
+        }
+
+        // Core stage types
+        $this->dispatchCoreStage($run, $stage);
+    }
+
+    /**
+     * Dispatch core (built-in) pipeline stage jobs.
+     */
+    private function dispatchCoreStage(PipelineRun $run, array $stage): void
+    {
         $queue = match ($stage['type']) {
             'ai_generate' => config('numen.queues.generation'),
             'ai_transform' => config('numen.queues.transform'),
@@ -122,6 +141,13 @@ class PipelineExecutor
             GenerateImage::dispatch($run, $stage)->onQueue($queue);
 
             return;
+        }
+
+        if (! in_array($stage['type'], ['ai_generate', 'ai_transform', 'ai_review'], true)) {
+            Log::warning('Unknown pipeline stage type, falling back to RunAgentStage', [
+                'run_id' => $run->id,
+                'type' => $stage['type'],
+            ]);
         }
 
         RunAgentStage::dispatch($run, $stage)->onQueue($queue);

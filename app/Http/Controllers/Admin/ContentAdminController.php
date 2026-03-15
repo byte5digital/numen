@@ -9,6 +9,7 @@ use App\Models\ContentBrief;
 use App\Models\ContentPipeline;
 use App\Models\TaxonomyTerm;
 use App\Pipelines\PipelineExecutor;
+use App\Plugin\HookRegistry;
 use App\Services\Taxonomy\TaxonomyService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -68,6 +69,7 @@ class ContentAdminController extends Controller
             'content' => [
                 'id' => $content->id,
                 'slug' => $content->slug,
+                'space_id' => $content->space_id,
                 'status' => $content->status,
                 'locale' => $content->locale,
                 'type' => $content->contentType->slug,
@@ -134,6 +136,7 @@ class ContentAdminController extends Controller
 
                 return $groups;
             })($content->taxonomyTerms),
+            'graphEnabled' => (bool) config('numen.graph.enabled', true),
         ]);
     }
 
@@ -278,6 +281,9 @@ class ContentAdminController extends Controller
         }
 
         $content->update($updates);
+
+        // Fire plugin content event hooks
+        app(HookRegistry::class)->fireContentEvent('content.'.$validated['status'], $content);
 
         return back()->with('success', "Status updated to {$validated['status']}.");
     }

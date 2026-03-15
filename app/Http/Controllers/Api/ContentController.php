@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ContentResource;
 use App\Models\Content;
+use App\Plugin\HookRegistry;
 use App\Services\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -105,6 +106,8 @@ class ContentController extends Controller
         $content = Content::create(array_merge(['status' => 'draft', 'locale' => 'en'], $data));
 
         $this->authz->log($request->user(), 'content.create', $content);
+
+        app(HookRegistry::class)->fireContentEvent('content.created', $content);
 
         return response()->json(['data' => $content], 201);
     }

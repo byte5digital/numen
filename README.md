@@ -59,6 +59,17 @@ Submit a brief → AI agents generate, illustrate, optimize, and quality-gate co
 - Staleness detection (auto-repurpose when source updates)
 - Custom format templates per space
 
+### AI-Powered Content Knowledge Graph
+**New in v0.9.0.** Automatically maps relationships between content items into an interactive knowledge graph:
+- **5 edge types:** Semantic similarity, shared tags, co-author, series order, shared named entities
+- **Topic clustering:** Groups content into named topic clusters using AI embeddings
+- **Content gap analysis:** Surfaces under-covered topics with opportunity scores and suggested titles
+- **D3.js visualization:** Force-directed interactive graph in Numen Studio — nodes by cluster, edges by weight
+- **Related content widget:**  for headless frontend sidebars
+- **7 REST endpoints:** Related, clusters, cluster contents, gaps, path, node metadata, reindex
+
+
+
 ### Multi-Provider AI
 Swap between Anthropic, OpenAI, Azure OpenAI, Together AI — no code changes. Fallback chain auto-retries on rate limits.
 
@@ -71,6 +82,19 @@ Role-based access control (Admin, Editor, Author, Viewer) with space-scoped perm
 ### CLI for Automation
 8 commands for content, briefs, and pipeline management — perfect for CI/CD hooks and server-side workflows.
 
+### GraphQL API Layer
+**New in v0.9.0.** A full-featured GraphQL API powered by Lighthouse PHP.
+- **Endpoint:** `POST /graphql` — all Numen resources in one schema
+- **20+ types** with cursor-based pagination (Relay-spec)
+- **Mutations** for content, briefs, media, and pipeline operations
+- **Real-time subscriptions** for content events and pipeline progress
+- **Automatic Persisted Queries (APQ)**, complexity scoring, field-level caching
+- **GraphiQL explorer** at `/graphiql` for interactive development
+- See [docs/graphql-api.md](docs/graphql-api.md) for the full guide
+
+
+### Plugin & Extension System
+First-class plugin architecture. Extend pipelines, register custom LLM providers, add admin UI, and react to content events — all from a self-contained plugin package.
 
 ## Architecture
 

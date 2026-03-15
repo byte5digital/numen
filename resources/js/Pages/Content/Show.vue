@@ -9,6 +9,7 @@ import VersionHistory from '../../Components/Versioning/VersionHistory.vue';
 import DiffViewer from '../../Components/Versioning/DiffViewer.vue';
 import SchedulePublish from '../../Components/Versioning/SchedulePublish.vue';
 import DraftEditor from '../../Components/Versioning/DraftEditor.vue';
+import RelatedContentWidget from '../../Components/Graph/RelatedContentWidget.vue';
 
 const props = defineProps({
     content:       { type: Object, required: true },
@@ -17,6 +18,7 @@ const props = defineProps({
     blocks:        { type: Array,  default: () => [] },
     blockTypes:    { type: Object, default: () => ({}) },
     taxonomyTerms: { type: Array,  default: () => [] },
+    graphEnabled:  { type: Boolean, default: false },
 });
 
 const flash = computed(() => usePage().props.flash ?? {});
@@ -786,6 +788,13 @@ function selectedTermIds(vocabularyGroup) {
                         </p>
                     </div>
                 </div>
+
+                <!-- Related Content Widget -->
+                <RelatedContentWidget
+                    v-if="graphEnabled"
+                    :content-id="content.id"
+                    :space-id="content.space_id ?? ''"
+                />
 
                 <!-- Version History (always visible) -->
                 <VersionHistory
