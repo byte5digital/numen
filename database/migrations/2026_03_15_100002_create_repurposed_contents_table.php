@@ -23,8 +23,6 @@ return new class extends Migration
                 $table->text('error_message')->nullable();
                 $table->timestamp('repurposed_at')->nullable();
                 $table->timestamps();
-                $table->index(['source_content_id', 'format_key']);
-                $table->index(['space_id', 'status']);
             });
         }
     }
