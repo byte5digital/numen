@@ -38,6 +38,11 @@ class RoleSeeder extends Seeder
                     'ai.model.haiku',
                     'ai.image.generate',
                     'settings.personas',
+                    'tokens.*',
+                    'roles.manage',
+                    'roles.read',
+                    'users.roles.assign',
+                    'audit.view',
                 ],
                 'ai_limits' => [
                     'daily_generations' => 100,
@@ -77,6 +82,7 @@ class RoleSeeder extends Seeder
                 'permissions' => [
                     'content.read',
                     'media.read',
+                    'roles.read',
                 ],
                 'ai_limits' => [
                     'daily_generations' => 0,

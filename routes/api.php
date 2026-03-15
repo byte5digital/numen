@@ -5,22 +5,16 @@ use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\ContentTaxonomyController;
-use App\Http\Controllers\Api\LocaleController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TaxonomyController;
 use App\Http\Controllers\Api\TaxonomyTermController;
-use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\UserRoleController;
 use App\Http\Controllers\Api\Versioning\AutoSaveController;
 use App\Http\Controllers\Api\Versioning\DiffController;
 use App\Http\Controllers\Api\Versioning\VersionController;
 use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\WebhookDeliveryController;
-use Illuminate\Support\Facades\Route;
-
-/*
-|--------------------------------------------------------------------------
 | Numen Public Content Delivery API
 |--------------------------------------------------------------------------
 |
@@ -29,7 +23,6 @@ use Illuminate\Support\Facades\Route;
 | Management endpoints require Sanctum authentication.
 |
 */
-
 Route::prefix('v1')->group(function () {
 
     // Content delivery (read-only, public)
@@ -41,83 +34,216 @@ Route::prefix('v1')->group(function () {
         // Pages API (read-only, public) — headless delivery
         Route::get('/pages', [PageController::class, 'index']);
         Route::get('/pages/{slug}', [PageController::class, 'show']);
-
-        // Locales (read-only, public)
-        Route::get('/locales', [LocaleController::class, 'index']);
-        Route::get('/locales/{code}', [LocaleController::class, 'show']);
     });
 
     // Component type definitions (public read, authenticated write) — tighter limit
     Route::middleware('throttle:30,1')->group(function () {
-        Route::get('/component-definitions', [ComponentDefinitionController::class, 'index']);
-        Route::get('/component-definitions/{id}', [ComponentDefinitionController::class, 'show']);
+        Route::get('/component-types', [ComponentDefinitionController::class, 'index']);
+        Route::get('/component-types/{type}', [ComponentDefinitionController::class, 'show']);
     });
 
-    // Taxonomy (public read) — master data, infrequent changes
-    Route::middleware('throttle:20,1')->group(function () {
+    // Taxonomy content listing (public read-only)
+    Route::get('/taxonomies/{vocabSlug}/terms/{termSlug}/content', [TaxonomyTermController::class, 'content']);
+    Route::get('/content/{slug}/terms', [ContentTaxonomyController::class, 'terms']);
+
+    // Taxonomy content listing (public read-only)
+    Route::get('/taxonomies/{vocabSlug}/terms/{termSlug}/content', [TaxonomyTermController::class, 'content']);
+    Route::get('/content/{slug}/terms', [ContentTaxonomyController::class, 'terms']);
+
+    // Management API (authenticated)
+    // Format templates — public endpoint
+    Route::get('/format-templates/supported', [FormatTemplateController::class, 'supported']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+
+        // Component type registration (AI agents register new block types here)
+        Route::post('/component-types', [ComponentDefinitionController::class, 'store']);
+        Route::put('/component-types/{type}', [ComponentDefinitionController::class, 'update']);
+
+        // Briefs (tighter rate limit on creation — cost-abuse prevention)
+        Route::post('/briefs', [BriefController::class, 'store'])->middleware('throttle:10,1');
+        Route::get('/briefs', [BriefController::class, 'index']);
+        Route::get('/briefs/{id}', [BriefController::class, 'show']);
+
+        // Pipeline management
+        Route::get('/pipeline-runs/{id}', function (string $id) {
+            $run = \App\Models\PipelineRun::with(['content.currentVersion', 'brief', 'generationLogs'])
+                ->findOrFail($id);
+
+            return response()->json(['data' => $run]);
+        });
+
+        Route::post('/pipeline-runs/{id}/approve', function (string $id) {
+            $run = \App\Models\PipelineRun::findOrFail($id);
+            if ($run->status !== 'paused_for_review') {
+                return response()->json(['error' => 'Run is not awaiting review'], 422);
+            }
+            app(\App\Pipelines\PipelineExecutor::class)->advance($run, [
+                'stage' => $run->current_stage,
+                'success' => true,
+                'summary' => 'Approved by human reviewer',
+            ]);
+
+            return response()->json(['data' => ['status' => 'approved']]);
+        });
+
+        // Audit logs (requires audit.view permission)
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->middleware('permission:audit.view');
+
+        // User roles (requires users.roles.assign or roles.manage)
+        Route::post('/users/{user}/roles', [UserRoleController::class, 'assignRole'])->middleware('permission:users.roles.assign');
+        Route::delete('/users/{user}/roles/{role}', [UserRoleController::class, 'revokeRole'])->middleware('permission:users.roles.assign');
+        Route::get('/users/{user}/roles', [UserRoleController::class, 'userRoles']);
+        Route::get('/roles/{role}/users', [UserRoleController::class, 'roleUsers'])->middleware('permission:roles.manage');
+
+        // Create new content
+        Route::post('/content', [ContentController::class, 'store'])->middleware('permission:content.create');
+
+        // Taxonomies API
         Route::get('/taxonomies', [TaxonomyController::class, 'index']);
-        Route::get('/taxonomies/{id}', [TaxonomyController::class, 'show']);
-        Route::get('/taxonomies/{id}/terms', [TaxonomyTermController::class, 'index']);
-        Route::get('/taxonomy-terms/{id}', [TaxonomyTermController::class, 'show']);
-    });
+        Route::post('/taxonomies', [TaxonomyController::class, 'store'])->middleware('permission:content.create');
+        Route::get('/taxonomies/{vocabSlug}', [TaxonomyController::class, 'show']);
+        Route::put('/taxonomies/{id}', [TaxonomyController::class, 'update'])->middleware('permission:content.update');
+        Route::delete('/taxonomies/{id}', [TaxonomyController::class, 'destroy'])->middleware('permission:content.delete');
 
-    // Authenticated Management Routes
-    Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
-        // Content management (all methods)
-        Route::apiResource('content', ContentController::class);
-        Route::post('/content/{id}/publish', [ContentController::class, 'publish']);
-        Route::post('/content/{id}/unpublish', [ContentController::class, 'unpublish']);
-        Route::post('/content/{id}/translate', [TranslationController::class, 'create']);
+        // Taxonomy Terms API
+        Route::get('/taxonomies/{vocabSlug}/terms', [TaxonomyTermController::class, 'index']);
+        Route::post('/taxonomies/{vocabId}/terms', [TaxonomyTermController::class, 'store'])->middleware('permission:content.create');
+        Route::get('/taxonomies/{vocabSlug}/terms/{termSlug}', [TaxonomyTermController::class, 'show']);
+        Route::put('/taxonomies/terms/{id}', [TaxonomyTermController::class, 'update'])->middleware('permission:content.update');
+        Route::post('/taxonomies/terms/{id}/move', [TaxonomyTermController::class, 'move'])->middleware('permission:content.update');
+        Route::delete('/taxonomies/terms/{id}', [TaxonomyTermController::class, 'destroy'])->middleware('permission:content.delete');
+        Route::post('/taxonomies/terms/reorder', [TaxonomyTermController::class, 'reorder'])->middleware('permission:content.update');
 
-        // Pages management
-        Route::apiResource('pages', PageController::class);
+        // Content Taxonomy Assignment API
+        Route::post('/content/{id}/terms', [ContentTaxonomyController::class, 'assign']);
+        Route::put('/content/{id}/terms', [ContentTaxonomyController::class, 'sync']);
+        Route::delete('/content/{id}/terms/{termId}', [ContentTaxonomyController::class, 'remove']);
+        Route::post('/content/{id}/auto-categorize', [ContentTaxonomyController::class, 'autoCategorize']);
 
-        // Locales management
-        Route::apiResource('locales', LocaleController::class);
-        Route::post('/locales/{code}/set-default', [LocaleController::class, 'setDefault']);
-        Route::post('/locales/{code}/disable', [LocaleController::class, 'disable']);
+        // Roles API (list requires roles.read or roles.manage, create/edit/delete requires roles.manage)
+        Route::get('/roles', [RoleController::class, 'index']);
+        Route::middleware('permission:roles.manage')->group(function () {
+            Route::post('/roles', [RoleController::class, 'store']);
+            Route::put('/roles/{role}', [RoleController::class, 'update']);
+            Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
+        });
 
-        // Translations management
-        Route::apiResource('translations', TranslationController::class, ['only' => ['index', 'show', 'destroy']]);
-        Route::get('/translations/matrix/{contentId}', [TranslationController::class, 'matrix']);
-        Route::post('/translations/{id}/approve', [TranslationController::class, 'approve']);
-        Route::post('/translations/{id}/reject', [TranslationController::class, 'reject']);
-        Route::post('/translations/batch-approve', [TranslationController::class, 'batchApprove']);
+        // Webhooks — management CRUD + delivery log (rate-limited: 60/min overall, 10/min on redeliver)
+        Route::middleware(['throttle:60,1', 'permission:webhooks.manage'])->group(function () {
+            Route::get('/webhooks', [WebhookController::class, 'index']);
+            Route::post('/webhooks', [WebhookController::class, 'store']);
+            Route::get('/webhooks/{id}', [WebhookController::class, 'show']);
+            Route::put('/webhooks/{id}', [WebhookController::class, 'update']);
+            Route::delete('/webhooks/{id}', [WebhookController::class, 'destroy']);
+            Route::post('/webhooks/{id}/rotate-secret', [WebhookController::class, 'rotateSecret']);
+            Route::get('/webhooks/{id}/deliveries', [WebhookDeliveryController::class, 'index']);
+            Route::get('/webhooks/{id}/deliveries/{deliveryId}', [WebhookDeliveryController::class, 'show']);
+            Route::post('/webhooks/{id}/deliveries/{deliveryId}/redeliver', [WebhookDeliveryController::class, 'redeliver'])
+                ->middleware('throttle:10,1');
+        });
 
-        // Taxonomy management
-        Route::apiResource('taxonomies', TaxonomyController::class);
-        Route::apiResource('taxonomy-terms', TaxonomyTermController::class);
-        Route::post('/taxonomies/{id}/reorder', [TaxonomyController::class, 'reorder']);
+        // Audit logs (requires audit.view permission)
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->middleware('permission:audit.view');
 
-        // Briefs management
-        Route::apiResource('briefs', BriefController::class);
-        Route::post('/briefs/{id}/lock', [BriefController::class, 'lock']);
-        Route::post('/briefs/{id}/unlock', [BriefController::class, 'unlock']);
+        // User roles (requires users.roles.assign or roles.manage)
+        Route::post('/users/{user}/roles', [UserRoleController::class, 'assignRole'])->middleware('permission:users.roles.assign');
+        Route::delete('/users/{user}/roles/{role}', [UserRoleController::class, 'revokeRole'])->middleware('permission:users.roles.assign');
+        Route::get('/users/{user}/roles', [UserRoleController::class, 'userRoles']);
+        Route::get('/roles/{role}/users', [UserRoleController::class, 'roleUsers'])->middleware('permission:roles.manage');
 
-        // Roles & Users
-        Route::apiResource('roles', RoleController::class);
-        Route::apiResource('user-roles', UserRoleController::class);
+        // Roles API (list requires roles.read or roles.manage, create/edit/delete requires roles.manage)
+        Route::get('/roles', [RoleController::class, 'index']);
+        Route::middleware('permission:roles.manage')->group(function () {
+            Route::post('/roles', [RoleController::class, 'store']);
+            Route::put('/roles/{role}', [RoleController::class, 'update']);
+            Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
+        });
 
-        // Webhooks
-        Route::apiResource('webhooks', WebhookController::class);
-        Route::get('/webhooks/{id}/deliveries', [WebhookDeliveryController::class, 'index']);
-        Route::get('/webhooks/{id}/deliveries/{deliveryId}', [WebhookDeliveryController::class, 'show']);
-        Route::post('/webhooks/{id}/deliveries/{deliveryId}/retry', [WebhookDeliveryController::class, 'retry']);
+        // Taxonomies API
+        Route::get('/taxonomies', [TaxonomyController::class, 'index']);
+        Route::post('/taxonomies', [TaxonomyController::class, 'store'])->middleware('permission:content.create');
+        Route::get('/taxonomies/{vocabSlug}', [TaxonomyController::class, 'show']);
+        Route::put('/taxonomies/{id}', [TaxonomyController::class, 'update'])->middleware('permission:content.update');
+        Route::delete('/taxonomies/{id}', [TaxonomyController::class, 'destroy'])->middleware('permission:content.delete');
 
-        // Content versioning
-        Route::get('/content/{id}/versions', [VersionController::class, 'index']);
-        Route::get('/content/{id}/versions/{versionId}', [VersionController::class, 'show']);
-        Route::post('/content/{id}/versions/{versionId}/restore', [VersionController::class, 'restore']);
-        Route::get('/content/{id}/diff/{versionId}', [DiffController::class, 'show']);
-        Route::post('/content/{id}/auto-save', [AutoSaveController::class, 'store']);
+        // Taxonomy Terms API
+        Route::get('/taxonomies/{vocabSlug}/terms', [TaxonomyTermController::class, 'index']);
+        Route::post('/taxonomies/{vocabId}/terms', [TaxonomyTermController::class, 'store'])->middleware('permission:content.create');
+        Route::get('/taxonomies/{vocabSlug}/terms/{termSlug}', [TaxonomyTermController::class, 'show']);
+        Route::put('/taxonomies/terms/{id}', [TaxonomyTermController::class, 'update'])->middleware('permission:content.update');
+        Route::post('/taxonomies/terms/{id}/move', [TaxonomyTermController::class, 'move'])->middleware('permission:content.update');
+        Route::delete('/taxonomies/terms/{id}', [TaxonomyTermController::class, 'destroy'])->middleware('permission:content.delete');
+        Route::post('/taxonomies/terms/reorder', [TaxonomyTermController::class, 'reorder'])->middleware('permission:content.update');
 
-        // Audit log
-        Route::get('/audit-logs', [AuditLogController::class, 'index']);
-        Route::get('/audit-logs/{id}', [AuditLogController::class, 'show']);
-        Route::get('/audit-logs/entity/{entityType}/{entityId}', [AuditLogController::class, 'byEntity']);
+        // Content Taxonomy Assignment API
+        Route::post('/content/{id}/terms', [ContentTaxonomyController::class, 'assign']);
+        Route::put('/content/{id}/terms', [ContentTaxonomyController::class, 'sync']);
+        Route::delete('/content/{id}/terms/{termId}', [ContentTaxonomyController::class, 'remove']);
+        Route::post('/content/{id}/auto-categorize', [ContentTaxonomyController::class, 'autoCategorize']);
 
-        // Content relationships
-        Route::post('/content/{id}/taxonomies', [ContentTaxonomyController::class, 'attach']);
-        Route::delete('/content/{id}/taxonomies/{taxonomyId}', [ContentTaxonomyController::class, 'detach']);
+        // Versioning
+        Route::prefix('/content/{content}/versions')->group(function () {
+            Route::get('/', [VersionController::class, 'index']);
+            Route::get('/{version}', [VersionController::class, 'show']);
+            Route::post('/draft', [VersionController::class, 'createDraft']);
+            Route::patch('/{version}', [VersionController::class, 'update']);
+            Route::post('/{version}/publish', [VersionController::class, 'publish']);
+            Route::post('/{version}/schedule', [VersionController::class, 'schedule']);
+            Route::delete('/{version}/schedule', [VersionController::class, 'cancelSchedule']);
+            Route::post('/{version}/label', [VersionController::class, 'label']);
+            Route::post('/{version}/rollback', [VersionController::class, 'rollback']);
+            Route::post('/{version}/branch', [VersionController::class, 'branch']);
+        });
+        // Create new content
+        Route::post('/content', [ContentController::class, 'store'])->middleware('permission:content.create');
+
+        Route::post('/content/{content}/autosave', [AutoSaveController::class, 'save']);
+        Route::get('/content/{content}/autosave', [AutoSaveController::class, 'show']);
+        Route::delete('/content/{content}/autosave', [AutoSaveController::class, 'discard']);
+        Route::get('/content/{content}/diff', [DiffController::class, 'compare']);
+
+        // Personas
+        Route::get('/personas', function () {
+            return response()->json(['data' => \App\Models\Persona::where('is_active', true)->get()]);
+        });
+
+        // Analytics
+        Route::get('/analytics/costs', function () {
+            $logs = \App\Models\AIGenerationLog::selectRaw('
+                DATE(created_at) as date,
+                model,
+                purpose,
+                COUNT(*) as calls,
+                SUM(input_tokens) as total_input_tokens,
+                SUM(output_tokens) as total_output_tokens,
+                SUM(cost_usd) as total_cost
+            ')
+                ->groupBy('date', 'model', 'purpose')
+                ->orderByDesc('date')
+                ->limit(100)
+                ->get();
+
+            return response()->json(['data' => $logs]);
+        });
+        // Content repurposing
+        // Read endpoints — moderate throttle (30/min)
+        Route::middleware('throttle:30,1')->group(function () {
+            Route::get('/content/{content}/repurposed', [RepurposingController::class, 'index']);
+            Route::get('/repurposed/{repurposedContent}', [RepurposingController::class, 'show']);
+            Route::get('/spaces/{space}/repurpose/estimate', [RepurposingController::class, 'estimateCost']);
+        });
+        // Write/AI endpoints — strict throttle (10/min) to guard against cost attacks
+        Route::middleware('throttle:10,1')->group(function () {
+            Route::post('/content/{content}/repurpose', [RepurposingController::class, 'store']);
+            Route::post('/spaces/{space}/repurpose/batch', [RepurposingController::class, 'batch']);
+        });
+
+        // Format templates
+        Route::get('/format-templates', [FormatTemplateController::class, 'index']);
+        Route::post('/format-templates', [FormatTemplateController::class, 'store']);
+        Route::patch('/format-templates/{template}', [FormatTemplateController::class, 'update']);
+        Route::delete('/format-templates/{template}', [FormatTemplateController::class, 'destroy']);
+
     });
 });

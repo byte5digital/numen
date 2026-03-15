@@ -38,14 +38,35 @@ return new class extends Migration
             }
         });
 
-        // SQLite-compatible unique index (no url(500) prefix — SQLite doesn't support it)
-        // For MySQL: the full url column is used; enforce at app layer if key length is an issue
-        \DB::statement('CREATE UNIQUE INDEX IF NOT EXISTS webhooks_space_id_url_unique ON webhooks (space_id, url)');
+        // Add unique index — cross-database compatible
+        // SQLite: CREATE UNIQUE INDEX with IF NOT EXISTS
+        // MySQL: use url(500) prefix to stay within 3072-byte key length limit
+        $driver = \DB::getDriverName();
+        if ($driver === 'sqlite') {
+            \DB::statement('CREATE UNIQUE INDEX IF NOT EXISTS webhooks_space_id_url_unique ON webhooks (space_id, url)');
+        } else {
+            try {
+                \DB::statement('CREATE UNIQUE INDEX webhooks_space_id_url_unique ON webhooks (space_id, url(500))');
+            } catch (\Throwable $e) {
+                if (! str_contains($e->getMessage(), 'Duplicate key name')) {
+                    throw $e;
+                }
+            }
+        }
     }
 
     public function down(): void
     {
-        \DB::statement('DROP INDEX IF EXISTS webhooks_space_id_url_unique');
+        $driver = \DB::getDriverName();
+        if ($driver === 'sqlite') {
+            \DB::statement('DROP INDEX IF EXISTS webhooks_space_id_url_unique');
+        } else {
+            try {
+                \DB::statement('ALTER TABLE webhooks DROP INDEX webhooks_space_id_url_unique');
+            } catch (\Throwable $e) {
+                // Index doesn't exist — safe to ignore
+            }
+        }
 
         Schema::table('webhooks', function (Blueprint $table) {
             if (Schema::hasColumn('webhooks', 'deleted_at')) {

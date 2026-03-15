@@ -1601,302 +1601,195 @@ paths:
 
 
 
-  /locales:
-    get:
-      operationId: listLocales
-      summary: List space locales
-      description: Get all configured locales for a space. **Authentication required.**
-      tags: [Locales]
-      security:
-        - sanctumToken: []
-      parameters:
-        - name: space_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: List of locales
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          format: uuid
-                        space_id:
-                          type: string
-                          format: uuid
-                        locale:
-                          type: string
-                        is_default:
-                          type: boolean
-                        sort_order:
-                          type: integer
-        '401':
-          description: Unauthenticated
-        '403':
-          description: Space access denied
+  /content/{content}/repurpose:
     post:
-      operationId: createLocale
-      summary: Add locale to space
-      description: Create a new locale configuration. **Authentication required.**
-      tags: [Locales]
+      operationId: repurposeSingleContent
+      summary: Trigger content repurposing
+      tags: [Content Repurposing]
       security:
         - sanctumToken: []
+      parameters:
+        - name: content
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              properties:
-                space_id:
-                  type: string
-                  format: uuid
-                locale:
-                  type: string
-                  example: "de"
-                is_default:
-                  type: boolean
-              required: [space_id, locale]
-      responses:
-        '201':
-          description: Locale created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: object
-        '401':
-          description: Unauthenticated
-        '403':
-          description: Space access denied
-        '422':
-          description: Validation error
-
-  /locales/{id}:
-    patch:
-      operationId: updateLocale
-      summary: Update locale configuration
-      description: Modify a space locale. **Authentication required.**
-      tags: [Locales]
-      security:
-        - sanctumToken: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                is_default:
-                  type: boolean
-                sort_order:
-                  type: integer
-      responses:
-        '200':
-          description: Locale updated
-          content:
-            application/json:
-              schema:
-                type: object
-        '401':
-          description: Unauthenticated
-        '403':
-          description: Space access denied
-        '404':
-          description: Locale not found
-    delete:
-      operationId: deleteLocale
-      summary: Remove locale from space
-      description: Delete a locale. **Authentication required.**
-      tags: [Locales]
-      security:
-        - sanctumToken: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '204':
-          description: Locale deleted
-        '401':
-          description: Unauthenticated
-        '403':
-          description: Space access denied
-        '404':
-          description: Locale not found
-
-  /locales/supported:
-    get:
-      operationId: listSupportedLocales
-      summary: Get supported locales
-      description: List valid BCP 47 locale codes.
-      tags: [Locales]
-      responses:
-        '200':
-          description: List of supported locales
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        code:
-                          type: string
-                        name:
-                          type: string
-
-  /content/{id}/translate:
-    post:
-      operationId: translateContent
-      summary: Translate content to target locale
-      description: Trigger AI-powered translation. **Authentication required.**
-      tags: [Translations]
-      security:
-        - sanctumToken: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                target_locale:
-                  type: string
-                  example: "fr"
-                force:
-                  type: boolean
-              required: [target_locale]
       responses:
         '202':
-          description: Translation job queued
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: object
+          description: Repurposing job queued
         '401':
           description: Unauthenticated
-        '403':
-          description: Content access denied
-        '404':
-          description: Content not found
-        '422':
-          description: Validation error
 
-  /content/{id}/translations:
+  /content/{content}/repurposed:
     get:
-      operationId: listContentTranslations
-      summary: List translations for content
-      description: Get all translations for content. **Authentication required.**
-      tags: [Translations]
+      operationId: listRepurposedContent
+      summary: List repurposed variants
+      tags: [Content Repurposing]
       security:
         - sanctumToken: []
       parameters:
-        - name: id
+        - name: content
           in: path
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         '200':
-          description: List of translations
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      type: object
+          description: List of repurposed content
         '401':
           description: Unauthenticated
-        '403':
-          description: Content access denied
-        '404':
-          description: Content not found
 
-  /translations/matrix:
+  /repurposed/{repurposedContent}:
     get:
-      operationId: getTranslationMatrix
-      summary: Translation coverage matrix
-      description: Get per-content, per-locale translation status. **Authentication required.**
-      tags: [Translations]
+      operationId: getRepurposingStatus
+      summary: Poll repurposing status
+      tags: [Content Repurposing]
       security:
         - sanctumToken: []
       parameters:
-        - name: space_id
-          in: query
+        - name: repurposedContent
+          in: path
           required: true
           schema:
             type: string
-            format: uuid
-        - name: status_filter
-          in: query
-          schema:
-            type: string
-            enum: [all, pending, completed, failed]
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 50
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            default: 0
       responses:
         '200':
-          description: Translation matrix
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: object
+          description: Repurposing status
         '401':
           description: Unauthenticated
-        '403':
-          description: Space access denied
+
+  /spaces/{space}/repurpose/estimate:
+    get:
+      operationId: estimateRepurposingCost
+      summary: Estimate repurposing cost
+      tags: [Content Repurposing]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cost estimate
+        '401':
+          description: Unauthenticated
+
+  /spaces/{space}/repurpose/batch:
+    post:
+      operationId: batchRepurposeContent
+      summary: Batch repurpose content
+      tags: [Content Repurposing]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '202':
+          description: Batch jobs queued
+        '401':
+          description: Unauthenticated
+
+  /format-templates:
+    get:
+      operationId: listFormatTemplates
+      summary: List format templates
+      tags: [Format Templates]
+      security:
+        - sanctumToken: []
+      responses:
+        '200':
+          description: List of templates
+        '401':
+          description: Unauthenticated
+
+    post:
+      operationId: createFormatTemplate
+      summary: Create format template
+      tags: [Format Templates]
+      security:
+        - sanctumToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Template created
+        '401':
+          description: Unauthenticated
+
+  /format-templates/{template}:
+    patch:
+      operationId: updateFormatTemplate
+      summary: Update format template
+      tags: [Format Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: template
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Template updated
+        '401':
+          description: Unauthenticated
+
+    delete:
+      operationId: deleteFormatTemplate
+      summary: Delete format template
+      tags: [Format Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: template
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Template deleted
+        '401':
+          description: Unauthenticated
+
+  /format-templates/supported:
+    get:
+      operationId: listSupportedFormats
+      summary: List supported formats
+      tags: [Format Templates]
+      responses:
+        '200':
+          description: List of supported formats
 
 tags:
   - name: Content
@@ -1915,7 +1808,7 @@ tags:
     description: AI generation cost and usage analytics (authenticated)
   - name: Webhooks
     description: Event webhooks with HMAC signing and delivery audit trail (authenticated)
-  - name: Locales
-    description: Locale management — space configuration, BCP 47 codes, fallback chains
-  - name: Translations
-    description: Content translation — AI-powered workflow, matrix view, batch operations
+  - name: Content Repurposing
+    description: AI-powered content repurposing to 8 formats (authenticated)
+  - name: Format Templates
+    description: Custom format templates for content repurposing (authenticated)
