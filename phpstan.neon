@@ -13,8 +13,6 @@ parameters:
     ignoreErrors:
         - '#Access to an undefined property .*(User|Role)::.*pivot#'
         - '#Parameter.*callback of method.*map.*expects callable.*Closure.*given#'
-        - '#Using nullsafe property access.*on left side of.*is unnecessary#'
-        - '#Expression on left side of.*is not nullable#'
     phpVersion: 80200
     parallel:
         maximumNumberOfProcesses: 1
