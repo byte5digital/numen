@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
+use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\Versioning\AutoSaveController;
 use App\Http\Controllers\Api\Versioning\DiffController;
@@ -110,6 +111,16 @@ Route::prefix('v1')->group(function () {
         // Personas
         Route::get('/personas', function () {
             return response()->json(['data' => \App\Models\Persona::where('is_active', true)->get()]);
+        });
+
+        // Media Library
+        Route::prefix('/media')->group(function () {
+            Route::get('/', [MediaController::class, 'index']);
+            Route::post('/', [MediaController::class, 'store']);
+            Route::get('/{asset}', [MediaController::class, 'show']);
+            Route::patch('/{asset}', [MediaController::class, 'update']);
+            Route::delete('/{asset}', [MediaController::class, 'destroy']);
+            Route::patch('/{asset}/move', [MediaController::class, 'move']);
         });
 
         // Analytics
