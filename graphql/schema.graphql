@@ -1,0 +1,474 @@
+"A datetime string with format `Y-m-d H:i:s`, e.g. `2018-05-23 13:43:32`."
+scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+
+"Arbitrary data encoded in JavaScript Object Notation. See https://www.json.org/."
+scalar JSON @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\JSON")
+
+type Query {
+    contentBySlug(slug: String!, locale: String! = "en", spaceSlug: String!): Content
+        @field(resolver: "App\\GraphQL\\Queries\\ContentBySlugQuery")
+        @cache(maxAge: 30)
+
+    contents(
+        spaceSlug: String!
+        locale: String
+        contentType: String
+        status: String
+        first: Int = 20
+        page: Int
+    ): ContentPaginator
+        @field(resolver: "App\\GraphQL\\Queries\\ContentsQuery")
+        @complexity(resolver: "App\\GraphQL\\Complexity\\PaginatedComplexity")
+        @cache(maxAge: 60)
+
+    space(id: ID!): Space @guard @find(model: "App\\Models\\Space")
+    spaces: [Space!]! @guard @all(model: "App\\Models\\Space")
+    content(id: ID!): Content @guard @find(model: "App\\Models\\Content") @cache(maxAge: 30)
+    contentTypes(spaceId: ID!): [ContentType!]!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\ContentTypesQuery")
+        @cache(maxAge: 300)
+    contentVersion(id: ID!): ContentVersion
+        @guard
+        @find(model: "App\\Models\\ContentVersion")
+}
+
+type Space {
+    id: ID!
+    name: String!
+    slug: String!
+    settings: JSON
+    api_config: JSON
+    created_at: DateTime!
+    updated_at: DateTime!
+    contentTypes: [ContentType!]! @hasMany @with(relation: "contentTypes") @cache(maxAge: 300)
+    contents(status: String, locale: String, first: Int = 20, page: Int): ContentPaginator
+        @field(resolver: "App\\GraphQL\\Queries\\SpaceContentsQuery")
+        @complexity(resolver: "App\\GraphQL\\Complexity\\PaginatedComplexity")
+}
+
+type ContentType {
+    id: ID!
+    space_id: ID!
+    name: String!
+    slug: String!
+    schema: JSON!
+    generation_config: JSON
+    seo_config: JSON
+    created_at: DateTime!
+    updated_at: DateTime!
+    space: Space! @belongsTo @with(relation: "space")
+    contents: [Content!]! @hasMany
+}
+
+type Content {
+    id: ID!
+    space_id: ID!
+    content_type_id: ID!
+    slug: String!
+    status: String!
+    locale: String!
+    canonical_id: ID
+    taxonomy: JSON
+    metadata: JSON
+    hero_image_id: ID
+    published_at: DateTime
+    expires_at: DateTime
+    refresh_at: DateTime
+    scheduled_publish_at: DateTime
+    created_at: DateTime!
+    updated_at: DateTime!
+    deleted_at: DateTime
+    space: Space! @belongsTo @with(relation: "space")
+    contentType: ContentType! @belongsTo(relation: "contentType") @with(relation: "contentType")
+    currentVersion: ContentVersion @belongsTo(relation: "currentVersion") @with(relation: "currentVersion")
+    draftVersion: ContentVersion @belongsTo(relation: "draftVersion") @with(relation: "draftVersion")
+    heroImage: MediaAsset @belongsTo(relation: "heroImage") @with(relation: "heroImage")
+    taxonomyTerms: [TaxonomyTerm!]! @hasMany @with(relation: "taxonomyTerms")
+    versions: [ContentVersion!]! @hasMany
+}
+
+type ContentVersion {
+    id: ID!
+    content_id: ID!
+    version_number: Int!
+    label: String
+    status: String!
+    parent_version_id: ID
+    title: String!
+    excerpt: String
+    body: String
+    body_format: String!
+    structured_fields: JSON
+    seo_data: JSON
+    author_type: String!
+    author_id: String!
+    change_reason: String
+    ai_metadata: JSON
+    quality_score: String
+    seo_score: String
+    scheduled_at: DateTime
+    content_hash: String
+    locked_by: String
+    locked_at: DateTime
+    created_at: DateTime!
+    updated_at: DateTime!
+    content: Content! @belongsTo @with(relation: "content")
+    blocks: [ContentBlock!]! @hasMany @with(relation: "blocks")
+}
+
+type ContentPaginator {
+    data: [Content!]!
+    paginatorInfo: PaginatorInfo!
+}
+
+type PaginatorInfo {
+    count: Int!
+    currentPage: Int!
+    firstItem: Int
+    hasMorePages: Boolean!
+    lastItem: Int
+    lastPage: Int!
+    perPage: Int!
+    total: Int!
+}
+
+enum ContentStatus { DRAFT PUBLISHED ARCHIVED SCHEDULED }
+enum BriefStatus { PENDING IN_PROGRESS COMPLETED CANCELLED }
+enum PipelineRunStatus { QUEUED RUNNING PAUSED_FOR_REVIEW COMPLETED FAILED CANCELLED }
+enum MediaSource { UPLOAD AI_GENERATED EXTERNAL IMPORTED }
+
+type PageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
+    endCursor: String
+}
+
+type PipelineRunEdge { node: PipelineRun! cursor: String! }
+type PipelineRunConnection { edges: [PipelineRunEdge!]! pageInfo: PageInfo! totalCount: Int! }
+type ContentBriefEdge { node: ContentBrief! cursor: String! }
+type ContentBriefConnection { edges: [ContentBriefEdge!]! pageInfo: PageInfo! totalCount: Int! }
+type MediaAssetEdge { node: MediaAsset! cursor: String! }
+type MediaAssetConnection { edges: [MediaAssetEdge!]! pageInfo: PageInfo! totalCount: Int! }
+type PageEdge { node: Page! cursor: String! }
+type PageConnection { edges: [PageEdge!]! pageInfo: PageInfo! totalCount: Int! }
+
+"A Persona defines an AI character with a role and capabilities. system_prompt is intentionally excluded."
+type Persona {
+    id: ID!
+    space_id: ID!
+    name: String!
+    role: String!
+    capabilities: JSON
+    is_active: Boolean!
+    created_at: DateTime!
+    updated_at: DateTime!
+    space: Space! @belongsTo @with(relation: "space")
+}
+
+"A ContentPipeline defines an automated workflow for content creation."
+type ContentPipeline {
+    id: ID!
+    space_id: ID!
+    name: String!
+    stages: JSON!
+    is_active: Boolean!
+    created_at: DateTime!
+    updated_at: DateTime!
+    space: Space! @belongsTo @with(relation: "space")
+    runs(first: Int = 20, after: String): PipelineRunConnection!
+        @field(resolver: "App\\GraphQL\\Queries\\PipelineRunsQuery")
+        @complexity(resolver: "App\\GraphQL\\Complexity\\PaginatedComplexity")
+}
+
+"A PipelineRun is a single execution of a ContentPipeline."
+type PipelineRun {
+    id: ID!
+    pipeline_id: ID!
+    content_id: ID
+    status: PipelineRunStatus!
+    current_stage: String
+    stage_results: JSON
+    started_at: DateTime
+    completed_at: DateTime
+    created_at: DateTime!
+    updated_at: DateTime!
+    pipeline: ContentPipeline! @belongsTo(relation: "pipeline") @with(relation: "pipeline")
+    content: Content @belongsTo @with(relation: "content")
+}
+
+"A ContentBrief is a specification for content to be created."
+type ContentBrief {
+    id: ID!
+    space_id: ID!
+    title: String!
+    description: String
+    content_type_slug: String!
+    target_locale: String!
+    target_keywords: JSON
+    priority: String!
+    status: BriefStatus!
+    due_at: DateTime
+    created_at: DateTime!
+    updated_at: DateTime!
+    space: Space! @belongsTo @with(relation: "space")
+}
+
+"A MediaAsset represents an uploaded or AI-generated media file."
+type MediaAsset {
+    id: ID!
+    space_id: ID!
+    filename: String!
+    mime_type: String!
+    size_bytes: Int!
+    source: MediaSource!
+    alt_text: String
+    caption: String
+    tags: JSON
+    width: Int
+    height: Int
+    url: String
+    is_public: Boolean!
+    created_at: DateTime!
+    updated_at: DateTime!
+    space: Space! @belongsTo @with(relation: "space")
+}
+
+"A Vocabulary is a named set of taxonomy terms."
+type Vocabulary {
+    id: ID!
+    space_id: ID!
+    name: String!
+    slug: String!
+    created_at: DateTime!
+    updated_at: DateTime!
+    space: Space! @belongsTo @with(relation: "space")
+    terms: [TaxonomyTerm!]! @hasMany @with(relation: "terms") @cache(maxAge: 300)
+}
+
+"A TaxonomyTerm is a single entry within a Vocabulary."
+type TaxonomyTerm {
+    id: ID!
+    vocabulary_id: ID!
+    parent_id: ID
+    name: String!
+    slug: String!
+    description: String
+    depth: Int!
+    created_at: DateTime!
+    updated_at: DateTime!
+    vocabulary: Vocabulary! @belongsTo @with(relation: "vocabulary")
+    children: [TaxonomyTerm!]! @hasMany
+}
+
+"A Webhook delivers event notifications to an external URL."
+type Webhook {
+    id: ID!
+    space_id: ID!
+    url: String!
+    events: JSON!
+    is_active: Boolean!
+    created_at: DateTime!
+    updated_at: DateTime!
+    space: Space! @belongsTo @with(relation: "space")
+}
+
+"A Page represents a structured content page built from components."
+type Page {
+    id: ID!
+    space_id: ID!
+    slug: String!
+    title: String!
+    status: ContentStatus!
+    template: String
+    created_at: DateTime!
+    updated_at: DateTime!
+    space: Space! @belongsTo @with(relation: "space")
+    components: [PageComponent!]! @hasMany @with(relation: "components")
+}
+
+"A PageComponent is a content block within a Page."
+type PageComponent {
+    id: ID!
+    page_id: ID!
+    type: String!
+    sort_order: Int!
+    data: JSON
+    created_at: DateTime!
+    updated_at: DateTime!
+    page: Page! @belongsTo @with(relation: "page")
+}
+
+"A ContentBlock is a typed block attached to a ContentVersion."
+type ContentBlock {
+    id: ID!
+    version_id: ID!
+    type: String!
+    slot: String
+    sort_order: Int!
+    data: JSON
+    created_at: DateTime!
+    updated_at: DateTime!
+    version: ContentVersion! @belongsTo(relation: "version") @with(relation: "version")
+}
+
+extend type Query {
+    personas(spaceId: ID!): [Persona!]!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\PersonasQuery")
+
+    pipelines(spaceId: ID!): [ContentPipeline!]!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\PipelinesQuery")
+
+    pipelineRun(id: ID!): PipelineRun
+        @guard
+        @find(model: "App\\Models\\PipelineRun")
+
+    mediaAssets(spaceId: ID!, first: Int = 20, after: String): MediaAssetConnection!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\MediaAssetsQuery")
+        @complexity(resolver: "App\\GraphQL\\Complexity\\PaginatedComplexity")
+
+    vocabularies(spaceId: ID!): [Vocabulary!]!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\VocabulariesQuery")
+        @cache(maxAge: 300)
+
+    briefs(spaceId: ID!, status: BriefStatus, first: Int = 20, after: String): ContentBriefConnection!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\BriefsQuery")
+        @complexity(resolver: "App\\GraphQL\\Complexity\\PaginatedComplexity")
+
+    webhooks(spaceId: ID!): [Webhook!]!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\WebhooksQuery")
+
+    pages(spaceId: ID!, first: Int = 20, after: String): PageConnection!
+        @field(resolver: "App\\GraphQL\\Queries\\PagesQuery")
+        @complexity(resolver: "App\\GraphQL\\Complexity\\PaginatedComplexity")
+        @cache(maxAge: 60)
+}
+
+input CreateContentInput {
+    space_id: ID!
+    content_type_id: ID!
+    title: String!
+    slug: String!
+    body: String
+    locale: String = "en"
+    status: String = "draft"
+    taxonomy_term_ids: [ID!]
+    hero_image_id: ID
+}
+
+input UpdateContentInput {
+    title: String
+    slug: String
+    body: String
+    status: String
+    taxonomy_term_ids: [ID!]
+    hero_image_id: ID
+}
+
+input CreateBriefInput {
+    space_id: ID!
+    title: String!
+    description: String
+    content_type_slug: String!
+    target_locale: String = "en"
+    target_keywords: [String!]
+    priority: String = "normal"
+    persona_id: ID
+    pipeline_id: ID
+}
+
+input UpdateBriefInput {
+    title: String
+    description: String
+    priority: String
+    status: String
+}
+
+input UpdateMediaAssetInput {
+    alt_text: String
+    caption: String
+    tags: [String!]
+}
+
+type Mutation {
+    createContent(input: CreateContentInput!): Content
+        @guard
+        @can(ability: "create", model: "App\\Models\\Content")
+        @field(resolver: "App\\GraphQL\\Mutations\\CreateContent")
+
+    updateContent(id: ID!, input: UpdateContentInput!): Content
+        @guard
+        @can(ability: "update", find: "id", model: "App\\Models\\Content")
+        @field(resolver: "App\\GraphQL\\Mutations\\UpdateContent")
+
+    publishContent(id: ID!): Content
+        @guard
+        @can(ability: "publish", find: "id", model: "App\\Models\\Content")
+        @field(resolver: "App\\GraphQL\\Mutations\\PublishContent")
+
+    unpublishContent(id: ID!): Content
+        @guard
+        @can(ability: "unpublish", find: "id", model: "App\\Models\\Content")
+        @field(resolver: "App\\GraphQL\\Mutations\\UnpublishContent")
+
+    deleteContent(id: ID!): Content
+        @guard
+        @can(ability: "delete", find: "id", model: "App\\Models\\Content")
+        @field(resolver: "App\\GraphQL\\Mutations\\DeleteContent")
+
+    createBrief(input: CreateBriefInput!): ContentBrief
+        @guard
+        @can(ability: "create", model: "App\\Models\\ContentBrief")
+        @field(resolver: "App\\GraphQL\\Mutations\\CreateBrief")
+
+    updateBrief(id: ID!, input: UpdateBriefInput!): ContentBrief
+        @guard
+        @can(ability: "update", find: "id", model: "App\\Models\\ContentBrief")
+        @field(resolver: "App\\GraphQL\\Mutations\\UpdateBrief")
+
+    triggerPipeline(pipelineId: ID!, contentId: ID): PipelineRun
+        @guard
+        @can(ability: "trigger", model: "App\\Models\\ContentPipeline")
+        @field(resolver: "App\\GraphQL\\Mutations\\TriggerPipeline")
+
+    approvePipelineRun(id: ID!): PipelineRun
+        @guard
+        @can(ability: "approve", find: "id", model: "App\\Models\\PipelineRun")
+        @field(resolver: "App\\GraphQL\\Mutations\\ApprovePipelineRun")
+
+    rejectPipelineRun(id: ID!, reason: String): PipelineRun
+        @guard
+        @can(ability: "reject", find: "id", model: "App\\Models\\PipelineRun")
+        @field(resolver: "App\\GraphQL\\Mutations\\RejectPipelineRun")
+
+    updateMediaAsset(id: ID!, input: UpdateMediaAssetInput!): MediaAsset
+        @guard
+        @can(ability: "update", find: "id", model: "App\\Models\\MediaAsset")
+        @field(resolver: "App\\GraphQL\\Mutations\\UpdateMediaAsset")
+
+    deleteMediaAsset(id: ID!): MediaAsset
+        @guard
+        @can(ability: "delete", find: "id", model: "App\\Models\\MediaAsset")
+        @field(resolver: "App\\GraphQL\\Mutations\\DeleteMediaAsset")
+}
+
+type Subscription {
+    contentPublished(spaceId: ID!): Content
+        @subscription(class: "App\\GraphQL\\Subscriptions\\ContentPublished")
+
+    contentUpdated(contentId: ID!): Content
+        @subscription(class: "App\\GraphQL\\Subscriptions\\ContentUpdated")
+
+    pipelineRunUpdated(runId: ID!): PipelineRun
+        @subscription(class: "App\\GraphQL\\Subscriptions\\PipelineRunUpdated")
+
+    pipelineRunCompleted(spaceId: ID!): PipelineRun
+        @subscription(class: "App\\GraphQL\\Subscriptions\\PipelineRunCompleted")
+}

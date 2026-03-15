@@ -9,6 +9,35 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.9.0] — 2026-03-15
+
+### Added
+
+**GraphQL API Layer** ([Discussion #13](https://github.com/byte5digital/numen/discussions/13))
+
+Full-featured GraphQL API powered by Lighthouse PHP, covering all Numen resources with real-time subscriptions, persisted queries, and fine-grained complexity controls.
+
+**Features:**
+- **Lighthouse PHP** — production-grade GraphQL server with SDL-first schema definition
+- **20+ GraphQL types** — Content, Space, Brief, PipelineRun, PipelineStage, MediaAsset, MediaFolder, MediaCollection, User, Role, Permission, Tag, Persona, RepurposedContent, FormatTemplate, ContentRevision, Setting, AuditLog, and more
+- **Cursor pagination** — Relay-spec connection types on all list fields (edges/node/pageInfo)
+- **Mutations** — createBrief, createContent, updateContent, publishContent, unpublishContent, deleteContent, triggerPipeline, uploadMedia, deleteMedia, and more
+- **Real-time subscriptions** — contentUpdated, contentPublished, pipelineStageCompleted via WebSocket (Pusher in production, log driver in dev)
+- **Automatic Persisted Queries (APQ)** — SHA256 hash-based query caching to reduce bandwidth
+- **Complexity scoring** — per-field cost weights with configurable max (GRAPHQL_MAX_COMPLEXITY=500)
+- **Depth limiting** — configurable max nesting depth (GRAPHQL_MAX_DEPTH=10)
+- **N+1 prevention** — Dataloader batching via Lighthouse's built-in batch loading
+- **Field-level caching** — @cache directive with automatic invalidation on model events
+- **Auth directives** — @auth, @can, @guest guards on fields and mutations
+- **GraphiQL explorer** — interactive IDE at /graphiql (dev only)
+- **22 tests** — feature and unit test coverage for all major operations
+
+**Endpoint:** 
+**Docs:** 
+
+---
+
+
 
 ## [0.8.0] — 2026-03-15
 
