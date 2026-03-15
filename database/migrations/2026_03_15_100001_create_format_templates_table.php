@@ -11,7 +11,7 @@ return new class extends Migration
         if (! Schema::hasTable('format_templates')) {
             Schema::create('format_templates', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('space_id')->nullable()->constrained()->nullOnDelete(); // null = global default
+            $table->string('space_id', 26)->nullable()->index(); // null = global default
             $table->string('format_key', 50); // twitter_thread, linkedin_post, newsletter_section, etc.
             $table->string('name', 100);
             $table->text('description')->nullable();
