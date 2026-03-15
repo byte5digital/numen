@@ -118,9 +118,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('admin.profile.password.update');
 
     // API Tokens
-    Route::get('/tokens', [TokenAdminController::class, 'index'])->name('admin.tokens.index');
-    Route::post('/tokens', [TokenAdminController::class, 'store'])->name('admin.tokens.store');
-    Route::delete('/tokens/{id}', [TokenAdminController::class, 'destroy'])->name('admin.tokens.destroy');
+    Route::get('/tokens', [TokenAdminController::class, 'index'])->name('admin.tokens.index')->middleware('permission:tokens.list');
+    Route::post('/tokens', [TokenAdminController::class, 'store'])->name('admin.tokens.store')->middleware('permission:tokens.create');
+    Route::delete('/tokens/{id}', [TokenAdminController::class, 'destroy'])->name('admin.tokens.destroy')->middleware('permission:tokens.delete');
 
     // Pages
     Route::get('/pages', [PageAdminController::class, 'index'])->name('admin.pages');

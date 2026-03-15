@@ -15,7 +15,8 @@ return [
 
     'prefix' => env('SCOUT_PREFIX', ''),
 
-    'queue' => env('SCOUT_QUEUE', true),
+    // Disable queuing in testing to prevent queue contamination in tests
+    'queue' => env('SCOUT_QUEUE', env('APP_ENV') === 'testing' ? false : true),
 
     'after_commit' => false,
 
