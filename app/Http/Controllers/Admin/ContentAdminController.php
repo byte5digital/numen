@@ -68,6 +68,7 @@ class ContentAdminController extends Controller
             'content' => [
                 'id' => $content->id,
                 'slug' => $content->slug,
+                'space_id' => $content->space_id,
                 'status' => $content->status,
                 'locale' => $content->locale,
                 'type' => $content->contentType->slug,
@@ -134,6 +135,7 @@ class ContentAdminController extends Controller
 
                 return $groups;
             })($content->taxonomyTerms),
+            'graphEnabled' => (bool) config('numen.graph.enabled', true),
         ]);
     }
 
