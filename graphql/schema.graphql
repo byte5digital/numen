@@ -172,3 +172,334 @@ type PaginatorInfo {
     perPage: Int!
     total: Int!
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Enums
+# ─────────────────────────────────────────────────────────────────────────────
+
+enum ContentStatus {
+    DRAFT
+    PUBLISHED
+    ARCHIVED
+    SCHEDULED
+}
+
+enum BriefStatus {
+    PENDING
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+}
+
+enum PipelineRunStatus {
+    QUEUED
+    RUNNING
+    COMPLETED
+    FAILED
+    CANCELLED
+}
+
+enum MediaSource {
+    UPLOAD
+    AI_GENERATED
+    EXTERNAL
+    IMPORTED
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Cursor Pagination Connections
+# ─────────────────────────────────────────────────────────────────────────────
+
+type PageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
+    endCursor: String
+}
+
+type PipelineRunEdge {
+    node: PipelineRun!
+    cursor: String!
+}
+
+type PipelineRunConnection {
+    edges: [PipelineRunEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type ContentBriefEdge {
+    node: ContentBrief!
+    cursor: String!
+}
+
+type ContentBriefConnection {
+    edges: [ContentBriefEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type MediaAssetEdge {
+    node: MediaAsset!
+    cursor: String!
+}
+
+type MediaAssetConnection {
+    edges: [MediaAssetEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type PageEdge {
+    node: Page!
+    cursor: String!
+}
+
+type PageConnection {
+    edges: [PageEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Extended Types — Numen Models
+# ─────────────────────────────────────────────────────────────────────────────
+
+"A Persona defines an AI character with a role and capabilities. system_prompt is intentionally excluded."
+type Persona {
+    id: ID!
+    space_id: ID!
+    name: String!
+    role: String!
+    capabilities: JSON
+    is_active: Boolean!
+    created_at: DateTime!
+    updated_at: DateTime!
+
+    "Space this persona belongs to."
+    space: Space! @belongsTo
+}
+
+"A ContentPipeline defines an automated workflow for content creation."
+type ContentPipeline {
+    id: ID!
+    space_id: ID!
+    name: String!
+    stages: JSON!
+    is_active: Boolean!
+    created_at: DateTime!
+    updated_at: DateTime!
+
+    "Space this pipeline belongs to."
+    space: Space! @belongsTo
+
+    "Pipeline runs with cursor pagination."
+    runs(first: Int = 20, after: String): PipelineRunConnection!
+        @field(resolver: "App\\GraphQL\\Queries\\PipelineRunsQuery")
+}
+
+"A PipelineRun is a single execution of a ContentPipeline."
+type PipelineRun {
+    id: ID!
+    pipeline_id: ID!
+    content_id: ID
+    status: PipelineRunStatus!
+    current_stage: String
+    stage_results: JSON
+    started_at: DateTime
+    completed_at: DateTime
+    created_at: DateTime!
+    updated_at: DateTime!
+
+    "Pipeline this run belongs to."
+    pipeline: ContentPipeline! @belongsTo(relation: "pipeline")
+
+    "Content entry associated with this run."
+    content: Content @belongsTo
+}
+
+"A ContentBrief is a specification for content to be created."
+type ContentBrief {
+    id: ID!
+    space_id: ID!
+    title: String!
+    description: String
+    content_type_slug: String!
+    target_locale: String!
+    target_keywords: JSON
+    priority: String!
+    status: BriefStatus!
+    due_at: DateTime
+    created_at: DateTime!
+    updated_at: DateTime!
+
+    "Space this brief belongs to."
+    space: Space! @belongsTo
+}
+
+"A MediaAsset represents an uploaded or AI-generated media file."
+type MediaAsset {
+    id: ID!
+    space_id: ID!
+    filename: String!
+    mime_type: String!
+    size_bytes: Int!
+    source: MediaSource!
+    alt_text: String
+    caption: String
+    tags: JSON
+    width: Int
+    height: Int
+    url: String
+    is_public: Boolean!
+    created_at: DateTime!
+    updated_at: DateTime!
+
+    "Space this asset belongs to."
+    space: Space! @belongsTo
+}
+
+"A Vocabulary is a named set of taxonomy terms."
+type Vocabulary {
+    id: ID!
+    space_id: ID!
+    name: String!
+    slug: String!
+    created_at: DateTime!
+    updated_at: DateTime!
+
+    "Space this vocabulary belongs to."
+    space: Space! @belongsTo
+
+    "Terms belonging to this vocabulary."
+    terms: [TaxonomyTerm!]! @hasMany
+}
+
+"A TaxonomyTerm is a single entry within a Vocabulary."
+type TaxonomyTerm {
+    id: ID!
+    vocabulary_id: ID!
+    parent_id: ID
+    name: String!
+    slug: String!
+    description: String
+    depth: Int!
+    created_at: DateTime!
+    updated_at: DateTime!
+
+    "Vocabulary this term belongs to."
+    vocabulary: Vocabulary! @belongsTo
+
+    "Child terms."
+    children: [TaxonomyTerm!]! @hasMany
+}
+
+"A Webhook delivers event notifications to an external URL."
+type Webhook {
+    id: ID!
+    space_id: ID!
+    url: String!
+    events: JSON!
+    is_active: Boolean!
+    created_at: DateTime!
+    updated_at: DateTime!
+
+    "Space this webhook belongs to."
+    space: Space! @belongsTo
+}
+
+"A Page represents a structured content page built from components."
+type Page {
+    id: ID!
+    space_id: ID!
+    slug: String!
+    title: String!
+    status: ContentStatus!
+    template: String
+    created_at: DateTime!
+    updated_at: DateTime!
+
+    "Space this page belongs to."
+    space: Space! @belongsTo
+
+    "Page components ordered by sort_order."
+    components: [PageComponent!]! @hasMany
+}
+
+"A PageComponent is a content block within a Page."
+type PageComponent {
+    id: ID!
+    page_id: ID!
+    type: String!
+    sort_order: Int!
+    data: JSON
+    created_at: DateTime!
+    updated_at: DateTime!
+
+    "Page this component belongs to."
+    page: Page! @belongsTo
+}
+
+"A ContentBlock is a typed block attached to a ContentVersion."
+type ContentBlock {
+    id: ID!
+    version_id: ID!
+    type: String!
+    slot: String
+    sort_order: Int!
+    data: JSON
+    created_at: DateTime!
+    updated_at: DateTime!
+
+    "Content version this block belongs to."
+    version: ContentVersion! @belongsTo(relation: "version")
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Extended Query entries
+# ─────────────────────────────────────────────────────────────────────────────
+
+extend type Query {
+    # ── Authenticated / admin queries (@guard) ────────────────────────────
+
+    "List personas for a space."
+    personas(spaceId: ID!): [Persona!]!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\PersonasQuery")
+
+    "List content pipelines for a space."
+    pipelines(spaceId: ID!): [ContentPipeline!]!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\PipelinesQuery")
+
+    "Get a single pipeline run by ID."
+    pipelineRun(id: ID!): PipelineRun
+        @guard
+        @find(model: "App\\Models\\PipelineRun")
+
+    "List media assets with cursor pagination."
+    mediaAssets(spaceId: ID!, first: Int = 20, after: String): MediaAssetConnection!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\MediaAssetsQuery")
+
+    "List vocabularies for a space."
+    vocabularies(spaceId: ID!): [Vocabulary!]!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\VocabulariesQuery")
+
+    "List content briefs with cursor pagination."
+    briefs(spaceId: ID!, status: BriefStatus, first: Int = 20, after: String): ContentBriefConnection!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\BriefsQuery")
+
+    "List webhooks for a space."
+    webhooks(spaceId: ID!): [Webhook!]!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\WebhooksQuery")
+
+    # ── Public queries (no auth required) ──────────────────────────────────
+
+    "List published pages with cursor pagination (public)."
+    pages(spaceId: ID!, first: Int = 20, after: String): PageConnection!
+        @field(resolver: "App\\GraphQL\\Queries\\PagesQuery")
+}
