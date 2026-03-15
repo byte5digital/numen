@@ -503,3 +503,119 @@ extend type Query {
     pages(spaceId: ID!, first: Int = 20, after: String): PageConnection!
         @field(resolver: "App\\GraphQL\\Queries\\PagesQuery")
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Input Types
+# ─────────────────────────────────────────────────────────────────────────────
+
+input CreateContentInput {
+    space_id: ID!
+    content_type_id: ID!
+    title: String!
+    slug: String!
+    body: String
+    locale: String = "en"
+    status: String = "draft"
+    taxonomy_term_ids: [ID!]
+    hero_image_id: ID
+}
+
+input UpdateContentInput {
+    title: String
+    slug: String
+    body: String
+    status: String
+    taxonomy_term_ids: [ID!]
+    hero_image_id: ID
+}
+
+input CreateBriefInput {
+    space_id: ID!
+    title: String!
+    description: String
+    content_type_slug: String!
+    target_locale: String = "en"
+    target_keywords: [String!]
+    priority: String = "normal"
+    persona_id: ID
+    pipeline_id: ID
+}
+
+input UpdateBriefInput {
+    title: String
+    description: String
+    priority: String
+    status: String
+}
+
+input UpdateMediaAssetInput {
+    alt_text: String
+    caption: String
+    tags: [String!]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Mutations
+# ─────────────────────────────────────────────────────────────────────────────
+
+type Mutation {
+    "Create a new content entry."
+    createContent(input: CreateContentInput!): Content
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\CreateContent")
+
+    "Update an existing content entry."
+    updateContent(id: ID!, input: UpdateContentInput!): Content
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\UpdateContent")
+
+    "Publish a content entry (sets status to published)."
+    publishContent(id: ID!): Content
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\PublishContent")
+
+    "Unpublish a content entry (sets status back to draft)."
+    unpublishContent(id: ID!): Content
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\UnpublishContent")
+
+    "Soft-delete a content entry."
+    deleteContent(id: ID!): Content
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\DeleteContent")
+
+    "Create a new content brief and optionally trigger a pipeline."
+    createBrief(input: CreateBriefInput!): ContentBrief
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\CreateBrief")
+
+    "Update an existing content brief."
+    updateBrief(id: ID!, input: UpdateBriefInput!): ContentBrief
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\UpdateBrief")
+
+    "Trigger a pipeline run, optionally linked to existing content."
+    triggerPipeline(pipelineId: ID!, contentId: ID): PipelineRun
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\TriggerPipeline")
+
+    "Approve a pipeline run that is paused for review (publishes content)."
+    approvePipelineRun(id: ID!): PipelineRun
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\ApprovePipelineRun")
+
+    "Reject a pipeline run that is paused for review."
+    rejectPipelineRun(id: ID!, reason: String): PipelineRun
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\RejectPipelineRun")
+
+    "Update metadata on a media asset (alt text, caption, tags)."
+    updateMediaAsset(id: ID!, input: UpdateMediaAssetInput!): MediaAsset
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\UpdateMediaAsset")
+
+    "Soft-delete a media asset."
+    deleteMediaAsset(id: ID!): MediaAsset
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\DeleteMediaAsset")
+}
