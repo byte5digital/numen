@@ -87,6 +87,7 @@ class RepurposedContent extends Model
         return $this->belongsTo(Persona::class);
     }
 
+    /** @return BelongsTo<RepurposingBatch, $this> */
     public function batch(): BelongsTo
     {
         return $this->belongsTo(RepurposingBatch::class, 'batch_id');
