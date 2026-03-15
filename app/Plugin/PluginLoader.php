@@ -93,8 +93,27 @@ class PluginLoader
      *
      * @return array<PluginManifest>
      */
+    /**
+     * Make discover() accessible for explicit CLI re-discovery.
+     */
+    public function discoverManifests(): array
+    {
+        return $this->discover();
+    }
+
     private function discover(): array
     {
+        // Early exit: skip expensive discovery when nothing is configured
+        // and the test environment has no plugin paths set.
+        $pluginPaths = config('plugins.plugin_paths', []);
+        $hasLocalPaths = is_array($pluginPaths) && ! empty($pluginPaths);
+        $installedJson = base_path('vendor/composer/installed.json');
+        $hasComposerFile = file_exists($installedJson);
+
+        if (! $hasLocalPaths && ! $hasComposerFile) {
+            return [];
+        }
+
         return array_merge(
             $this->discoverFromComposer(),
             $this->discoverFromPluginPaths(),
