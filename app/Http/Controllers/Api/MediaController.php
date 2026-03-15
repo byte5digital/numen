@@ -185,6 +185,20 @@ class MediaController extends Controller
      * @param  string[]  $mimes
      * @return string[]
      */
+    /**
+     * Get content items that use a specific media asset.
+     *
+     * TODO(chunk-6): implement real usage tracking via media_asset_usages pivot table.
+     */
+    public function usage(MediaAsset $asset): JsonResponse
+    {
+        // Stub — real implementation comes in Chunk 6 (usage tracking system)
+        return response()->json([
+            'data' => [],
+            'meta' => ['total' => 0],
+        ]);
+    }
+
     private function mimeTypesToExtensions(array $mimes): array
     {
         $map = [

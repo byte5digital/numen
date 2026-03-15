@@ -122,6 +122,7 @@ Route::prefix('v1')->group(function () {
             Route::patch('/{asset}', [MediaController::class, 'update']);
             Route::delete('/{asset}', [MediaController::class, 'destroy']);
             Route::patch('/{asset}/move', [MediaController::class, 'move']);
+            Route::get('/{asset}/usage', [MediaController::class, 'usage']);
         });
 
         // Media Folders
