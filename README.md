@@ -33,6 +33,35 @@ Each stage is a queued job. The pipeline is event-driven. Stages are defined in 
 
 ---
 
+---
+
+## Features
+
+### Content Generation Pipeline
+Submit a brief → AI agents generate, illustrate, optimize, and quality-gate content → auto-publish or human review.
+
+### AI Content Repurposing Engine
+**New in v0.8.0.** One-click content repurposing to 8 formats:
+- **Twitter thread**, LinkedIn post, Newsletter section, Instagram caption
+- **Podcast script outline**, Product page copy, FAQ section, YouTube description
+- Tone-aware & brand-consistent via Persona/LLM system
+- Batch repurposing (50 items) + cost estimation
+- Staleness detection (auto-repurpose when source updates)
+- Custom format templates per space
+
+### Multi-Provider AI
+Swap between Anthropic, OpenAI, Azure OpenAI, Together AI — no code changes. Fallback chain auto-retries on rate limits.
+
+### Multi-Provider Image Generation
+OpenAI, Together AI, fal.ai, Replicate — choose the best model for your brand. Images auto-download and link to content.
+
+### RBAC with AI Governance
+Role-based access control (Admin, Editor, Author, Viewer) with space-scoped permissions, AI budget limits, and immutable audit logs.
+
+### CLI for Automation
+8 commands for content, briefs, and pipeline management — perfect for CI/CD hooks and server-side workflows.
+
+
 ## Architecture
 
 ```

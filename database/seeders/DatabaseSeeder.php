@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             ContentBlockSeeder::class,
             BlogPostSeeder::class,
             TaxonomySeeder::class,
+            DefaultFormatTemplatesSeeder::class,
         ]);
     }
 }

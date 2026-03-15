@@ -1600,6 +1600,197 @@ paths:
           description: Rate limit exceeded
 
 
+
+  /content/{content}/repurpose:
+    post:
+      operationId: repurposeSingleContent
+      summary: Trigger content repurposing
+      tags: [Content Repurposing]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: content
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '202':
+          description: Repurposing job queued
+        '401':
+          description: Unauthenticated
+
+  /content/{content}/repurposed:
+    get:
+      operationId: listRepurposedContent
+      summary: List repurposed variants
+      tags: [Content Repurposing]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: content
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of repurposed content
+        '401':
+          description: Unauthenticated
+
+  /repurposed/{repurposedContent}:
+    get:
+      operationId: getRepurposingStatus
+      summary: Poll repurposing status
+      tags: [Content Repurposing]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: repurposedContent
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Repurposing status
+        '401':
+          description: Unauthenticated
+
+  /spaces/{space}/repurpose/estimate:
+    get:
+      operationId: estimateRepurposingCost
+      summary: Estimate repurposing cost
+      tags: [Content Repurposing]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cost estimate
+        '401':
+          description: Unauthenticated
+
+  /spaces/{space}/repurpose/batch:
+    post:
+      operationId: batchRepurposeContent
+      summary: Batch repurpose content
+      tags: [Content Repurposing]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '202':
+          description: Batch jobs queued
+        '401':
+          description: Unauthenticated
+
+  /format-templates:
+    get:
+      operationId: listFormatTemplates
+      summary: List format templates
+      tags: [Format Templates]
+      security:
+        - sanctumToken: []
+      responses:
+        '200':
+          description: List of templates
+        '401':
+          description: Unauthenticated
+
+    post:
+      operationId: createFormatTemplate
+      summary: Create format template
+      tags: [Format Templates]
+      security:
+        - sanctumToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Template created
+        '401':
+          description: Unauthenticated
+
+  /format-templates/{template}:
+    patch:
+      operationId: updateFormatTemplate
+      summary: Update format template
+      tags: [Format Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: template
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Template updated
+        '401':
+          description: Unauthenticated
+
+    delete:
+      operationId: deleteFormatTemplate
+      summary: Delete format template
+      tags: [Format Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: template
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Template deleted
+        '401':
+          description: Unauthenticated
+
+  /format-templates/supported:
+    get:
+      operationId: listSupportedFormats
+      summary: List supported formats
+      tags: [Format Templates]
+      responses:
+        '200':
+          description: List of supported formats
+
 tags:
   - name: Content
     description: Public content delivery endpoints (60 req/min)
@@ -1617,3 +1808,7 @@ tags:
     description: AI generation cost and usage analytics (authenticated)
   - name: Webhooks
     description: Event webhooks with HMAC signing and delivery audit trail (authenticated)
+  - name: Content Repurposing
+    description: AI-powered content repurposing to 8 formats (authenticated)
+  - name: Format Templates
+    description: Custom format templates for content repurposing (authenticated)

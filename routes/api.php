@@ -15,10 +15,6 @@ use App\Http\Controllers\Api\Versioning\DiffController;
 use App\Http\Controllers\Api\Versioning\VersionController;
 use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\WebhookDeliveryController;
-use Illuminate\Support\Facades\Route;
-
-/*
-|--------------------------------------------------------------------------
 | Numen Public Content Delivery API
 |--------------------------------------------------------------------------
 |
@@ -52,6 +48,9 @@ Route::prefix('v1')->group(function () {
     Route::get('/content/{slug}/terms', [ContentTaxonomyController::class, 'terms']);
 
     // Management API (authenticated)
+    // Format templates — public endpoint
+    Route::get('/format-templates/supported', [FormatTemplateController::class, 'supported']);
+
     Route::middleware('auth:sanctum')->group(function () {
 
         // Component type registration (AI agents register new block types here)
@@ -182,5 +181,24 @@ Route::prefix('v1')->group(function () {
 
             return response()->json(['data' => $logs]);
         });
+        // Content repurposing
+        // Read endpoints — moderate throttle (30/min)
+        Route::middleware('throttle:30,1')->group(function () {
+            Route::get('/content/{content}/repurposed', [RepurposingController::class, 'index']);
+            Route::get('/repurposed/{repurposedContent}', [RepurposingController::class, 'show']);
+            Route::get('/spaces/{space}/repurpose/estimate', [RepurposingController::class, 'estimateCost']);
+        });
+        // Write/AI endpoints — strict throttle (10/min) to guard against cost attacks
+        Route::middleware('throttle:10,1')->group(function () {
+            Route::post('/content/{content}/repurpose', [RepurposingController::class, 'store']);
+            Route::post('/spaces/{space}/repurpose/batch', [RepurposingController::class, 'batch']);
+        });
+
+        // Format templates
+        Route::get('/format-templates', [FormatTemplateController::class, 'index']);
+        Route::post('/format-templates', [FormatTemplateController::class, 'store']);
+        Route::patch('/format-templates/{template}', [FormatTemplateController::class, 'update']);
+        Route::delete('/format-templates/{template}', [FormatTemplateController::class, 'destroy']);
+
     });
 });
