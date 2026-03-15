@@ -63,6 +63,7 @@ jobs:
           echo "CACHE_DRIVER=array" >> .env
           echo "SESSION_DRIVER=array" >> .env
           echo "QUEUE_CONNECTION=sync" >> .env
+          echo "SCOUT_DRIVER=null" >> .env
 
       - name: Create SQLite database
         run: touch database/database.sqlite

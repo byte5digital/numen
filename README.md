@@ -160,6 +160,167 @@ Watch the queue worker terminal — you'll see each stage fire in sequence. Cont
 
 ---
 
+## CLI Reference
+
+Numen ships a full artisan-based CLI for server-side automation, scripted workflows, and CI/CD integration.
+
+> **Security note:** The CLI runs with full application privileges. Restrict server access accordingly — CLI is not intended for untrusted users.
+
+### Installation
+
+The CLI is available automatically via artisan once the app is installed:
+
+```bash
+php artisan list numen
+```
+
+### Commands
+
+#### `numen:status` — System Health Check
+
+```bash
+# Quick health overview
+php artisan numen:status
+
+# With AI provider model details
+php artisan numen:status --details
+```
+
+Shows: database connectivity, content stats, cache, queue driver, and AI provider configuration.
+
+---
+
+#### `numen:content:list` — List Content
+
+```bash
+# List all content (latest 20)
+php artisan numen:content:list
+
+# Filter by type and status
+php artisan numen:content:list --type=blog_post --status=published --limit=50
+```
+
+---
+
+#### `numen:content:import` — Bulk Import from JSON
+
+```bash
+# Import from file
+php artisan numen:content:import --file=storage/exports/content.json
+
+# Preview without writing (dry run)
+php artisan numen:content:import --file=storage/exports/content.json --dry-run
+
+# Import into specific space
+php artisan numen:content:import --file=content.json --space-id=<uuid>
+```
+
+**Import file format (JSON array):**
+
+```json
+[
+  {
+    "slug": "my-first-article",
+    "title": "My First Article",
+    "content_type": "blog_post",
+    "status": "draft",
+    "locale": "en",
+    "excerpt": "A short summary of the article.",
+    "body": "Full article body in HTML or Markdown.",
+    "seo_data": {
+      "meta_title": "My First Article | Numen",
+      "meta_description": "A short summary."
+    }
+  }
+]
+```
+
+Valid `status` values: `draft`, `published`, `archived` (invalid values default to `draft`).
+
+---
+
+#### `numen:content:export` — Export to JSON or Markdown
+
+```bash
+# Export all content to storage/exports/ (default)
+php artisan numen:content:export
+
+# Export as Markdown to a specific file
+php artisan numen:content:export --format=markdown --output=/tmp/export.md
+
+# Filter by type and status
+php artisan numen:content:export --type=blog_post --status=published
+
+# Export a single item by ID
+php artisan numen:content:export --id=<uuid>
+```
+
+When `--output` is omitted, exports default to `storage/exports/<timestamp>.json`.
+
+---
+
+#### `numen:brief:create` — Create a Content Brief
+
+```bash
+# Create a brief and trigger the pipeline
+php artisan numen:brief:create --title="10 Tips for Laravel Performance"
+
+# Full options
+php artisan numen:brief:create \
+  --title="SEO Guide 2026" \
+  --type=guide \
+  --persona=seo-expert \
+  --priority=high \
+  --keywords=laravel --keywords=performance \
+  --description="Comprehensive SEO guide for developers"
+
+# Create without running the pipeline
+php artisan numen:brief:create --title="Draft Idea" --no-run
+```
+
+Valid `--priority` values: `low`, `normal`, `high`, `urgent` (invalid values default to `normal`).
+
+---
+
+#### `numen:brief:list` — List Briefs
+
+```bash
+# List latest 20 briefs
+php artisan numen:brief:list
+
+# Filter by status and space
+php artisan numen:brief:list --status=pending --limit=50
+```
+
+---
+
+#### `numen:pipeline:run` — Trigger Pipeline Run
+
+```bash
+# Run the active pipeline for a brief
+php artisan numen:pipeline:run --brief-id=<uuid>
+
+# Run a specific pipeline
+php artisan numen:pipeline:run --brief-id=<uuid> --pipeline-id=<uuid>
+```
+
+---
+
+#### `numen:pipeline:status` — Check Pipeline Status
+
+```bash
+# Show recent pipeline runs
+php artisan numen:pipeline:status
+
+# Show only running pipelines
+php artisan numen:pipeline:status --running
+
+# Show more history
+php artisan numen:pipeline:status --limit=50
+```
+
+---
+
 ## API Reference
 
 ### Authentication
@@ -244,6 +405,251 @@ curl http://localhost:8000/api/v1/component-types
 # Get specific type schema
 curl http://localhost:8000/api/v1/component-types/hero_banner
 ```
+
+
+### Webhooks
+
+Webhooks enable real-time event delivery to external systems. Subscribe to events like content publication, pipeline completion, or media uploads, and receive signed HTTP POST requests when they occur.
+
+#### Overview
+
+A webhook is a URL endpoint + event filter you configure in Numen. When a subscribed event fires, Numen serializes it into a JSON payload, signs it with HMAC-SHA256, and delivers it asynchronously to your endpoint with automatic retries.
+
+**Key features:**
+- **Event subscriptions** — Choose which events trigger deliveries (e.g., `content.published`, `pipeline.completed`, or `*` for all)
+- **HMAC-SHA256 signing** — Every delivery includes an `X-Numen-Signature` header. Verify it consumer-side to ensure authenticity.
+- **Secure secrets** — Webhook secrets are encrypted at rest; never logged or exposed in API responses.
+- **Audit trail** — Every delivery (attempt, success, failure) is recorded and queryable.
+- **Automatic retries** — Failed deliveries retry with exponential backoff (3 attempts, 60+ seconds apart).
+- **Rate limiting** — 60 webhook creations/minute per space; 10 manual redelivery attempts/minute per webhook.
+- **SSRF protection** — URLs are validated to prevent Server-Side Request Forgery (private IP ranges blocked).
+
+#### Event Catalog
+
+Subscribe to one or more events. Wildcards supported: `content.*`, `pipeline.*`, `media.*`, `user.*`, or `*` (all events).
+
+| Event | Payload Contains | Fired When |
+|---|---|---|
+| `content.published` | content_id, space_id, title, content_type, published_at, version | Content item published (either directly or after pipeline approval) |
+| `content.updated` | content_id, space_id, title, content_type, version | Content metadata updated (title, type, tags, etc.) |
+| `content.deleted` | content_id, space_id | Content permanently deleted |
+| `pipeline.started` | pipeline_id, space_id, run_id | New pipeline run initiated |
+| `pipeline.completed` | pipeline_id, space_id, run_id, ai_score, completed_at | Pipeline run finished successfully |
+| `pipeline.failed` | pipeline_id, space_id, run_id, stage, completed_at | Pipeline run failed at a stage |
+| `media.uploaded` | asset_id, space_id, filename, mime_type, url | Media asset uploaded |
+| `media.processed` | asset_id, space_id, filename, mime_type, url | Media processed (image generated, etc.) |
+| `media.deleted` | asset_id, space_id, filename | Media asset deleted |
+| `user.created` | user_id, space_id | User added to space |
+| `user.updated` | user_id, space_id | User permissions changed |
+| `user.deleted` | user_id, space_id | User removed from space |
+
+#### Webhook Payload Format
+
+Every webhook POST includes:
+
+```json
+{
+  "id": "evt_abc123def456",
+  "event": "content.published",
+  "timestamp": "2026-03-15T11:30:45.000Z",
+  "data": {
+    "content_id": "ctn_xyz789",
+    "space_id": "spc_001",
+    "title": "My First Article",
+    "content_type": "blog_post",
+    "published_at": "2026-03-15T11:30:00.000Z",
+    "version": 2
+  }
+}
+```
+
+**Headers included in every delivery:**
+- `Content-Type: application/json`
+- `X-Numen-Event: content.published` (event type)
+- `X-Numen-Delivery: <deliveryId>` (delivery record ID for audit trail)
+- `X-Numen-Signature: sha256=<hmac>` (HMAC-SHA256 signature)
+- Any custom headers you configure on the webhook
+
+#### HMAC Signature Verification
+
+Verify every incoming webhook by recomputing the HMAC and comparing it to the header.
+
+**PHP Example:**
+
+```php
+<?php
+// Get the signature from headers
+$signature = $_SERVER['HTTP_X_NUMEN_SIGNATURE'] ?? '';
+// Get the raw request body (BEFORE json_decode!)
+$body = file_get_contents('php://input');
+// Get your webhook secret (stored securely)
+$secret = env('NUMEN_WEBHOOK_SECRET');
+
+// Compute expected signature
+[$algo, $hash] = explode('=', $signature);
+$computed = hash_hmac($algo, $body, $secret);
+
+// Constant-time comparison to prevent timing attacks
+if (!hash_equals($hash, $computed)) {
+    http_response_code(401);
+    die('Unauthorized: Invalid signature');
+}
+
+// Safe to process
+$payload = json_decode($body, true);
+echo "✓ Event received: {$payload['event']}\n";
+```
+
+**JavaScript (Node.js) Example:**
+
+```javascript
+import crypto from 'crypto';
+import express from 'express';
+
+const app = express();
+const secret = process.env.NUMEN_WEBHOOK_SECRET;
+
+app.post('/webhook', express.json({ verify: (req, res, buf) => {
+  const signature = req.get('x-numen-signature');
+  const [algo, hash] = signature.split('=');
+  const computed = crypto
+    .createHmac(algo, secret)
+    .update(buf)
+    .digest('hex');
+
+  if (!crypto.timingSafeEqual(hash, computed)) {
+    throw new Error('Unauthorized: Invalid signature');
+  }
+}}), (req, res) => {
+  console.log(`✓ Event received: ${req.body.event}`);
+  res.json({ success: true });
+});
+
+app.listen(3000);
+```
+
+#### Quick Setup Example
+
+Create a webhook via API:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/webhooks \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "space_id": "spc_001",
+    "url": "https://my-app.example.com/webhooks/numen",
+    "events": ["content.published", "pipeline.completed"],
+    "is_active": true,
+    "headers": {
+      "X-Custom-Header": "my-value"
+    }
+  }'
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "id": "wbk_abc123",
+    "space_id": "spc_001",
+    "url": "https://my-app.example.com/webhooks/numen",
+    "events": ["content.published", "pipeline.completed"],
+    "is_active": true,
+    "secret": "wbk_secret_long_random_string_here",
+    "created_at": "2026-03-15T11:00:00.000Z"
+  }
+}
+```
+
+**Store the secret securely** — you'll need it to verify incoming signatures. Never share or log it.
+
+Listen at `https://my-app.example.com/webhooks/numen`:
+
+```javascript
+// Assume you already verified the signature (see above)
+const payload = req.body;
+
+switch (payload.event) {
+  case 'content.published':
+    console.log(`Article published: ${payload.data.title}`);
+    // Sync to search index, email subscribers, etc.
+    break;
+
+  case 'pipeline.completed':
+    console.log(`Pipeline ${payload.data.run_id} finished with score ${payload.data.ai_score}`);
+    // Update dashboard, notify stakeholders, etc.
+    break;
+}
+
+res.status(200).json({ received: true });
+```
+
+#### Rate Limits
+
+| Action | Limit |
+|---|---|
+| Create/update webhook | 60/min per space |
+| Redeliver webhook | 10/min per webhook |
+| HTTP delivery timeout | 10 seconds per attempt |
+
+Webhooks use standard HTTP 429 (Too Many Requests) when rate limits are exceeded. Check the `Retry-After` header for backoff.
+
+#### Audit & Troubleshooting
+
+List deliveries for a webhook:
+
+```bash
+curl http://localhost:8000/api/v1/webhooks/wbk_abc123/deliveries \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+Response includes status, HTTP response code, and response body (first 4KB):
+
+```json
+{
+  "data": [
+    {
+      "id": "dly_123",
+      "webhook_id": "wbk_abc123",
+      "event_id": "evt_abc123",
+      "event_type": "content.published",
+      "status": "delivered",
+      "http_status": 200,
+      "attempt_number": 1,
+      "scheduled_at": "2026-03-15T11:05:00.000Z",
+      "delivered_at": "2026-03-15T11:05:01.000Z"
+    },
+    {
+      "id": "dly_456",
+      "webhook_id": "wbk_abc123",
+      "event_id": "evt_def456",
+      "event_type": "pipeline.completed",
+      "status": "abandoned",
+      "http_status": null,
+      "attempt_number": 3,
+      "scheduled_at": "2026-03-15T11:06:00.000Z",
+      "response_body": "Connection timeout"
+    }
+  ]
+}
+```
+
+**Status values:**
+- `pending` — Scheduled, waiting to be delivered
+- `delivered` — Successfully delivered (HTTP 2xx)
+- `abandoned` — Failed after 3 retry attempts; needs manual redeliver or debugging
+
+Manually retry a failed delivery:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/webhooks/wbk_abc123/deliveries/dly_456/redeliver \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+---
+
 
 ---
 

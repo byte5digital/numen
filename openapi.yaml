@@ -414,39 +414,35 @@ components:
           format: float
           example: 0.87
 
-    Role:
+    Webhook:
       type: object
       properties:
         id:
           type: string
-          example: "018e1234-5678-7abc-def0-aaaaaaaaaaaa"
+          format: ulid
         space_id:
           type: string
-          nullable: true
-          example: null
-        name:
+          format: uuid
+        url:
           type: string
-          example: "Content Editor"
-        slug:
-          type: string
-          example: "content-editor"
-        description:
-          type: string
-          example: "Can create and publish content"
-        permissions:
+          format: uri
+        events:
           type: array
           items:
             type: string
-          example: ["content.create", "content.publish", "pipeline.run"]
-        ai_limits:
+          example: [content.published, pipeline.completed]
+        is_active:
+          type: boolean
+        secret:
+          type: string
+          description: Only returned on creation/rotation. Store securely.
+        headers:
           type: object
           nullable: true
-          example:
-            daily_generations: 100
-            allowed_models: ["claude-sonnet-4-6", "claude-haiku-4-5-20251001"]
-        is_system:
+        batch_mode:
           type: boolean
-          example: false
+        batch_timeout:
+          type: integer
         created_at:
           type: string
           format: date-time
@@ -454,72 +450,44 @@ components:
           type: string
           format: date-time
 
-    UserRole:
-      type: object
-      properties:
-        user_id:
-          type: string
-          example: "018e1234-5678-7abc-def0-aaaaaaaaaaaa"
-        role_id:
-          type: string
-          example: "018e1234-5678-7abc-def0-bbbbbbbbbbbb"
-        space_id:
-          type: string
-          nullable: true
-          example: null
-        created_at:
-          type: string
-          format: date-time
-
-    AuditLog:
+    WebhookDelivery:
       type: object
       properties:
         id:
           type: string
-          example: "018e1234-5678-7abc-def0-cccccccccccc"
-        user_id:
+          format: ulid
+        webhook_id:
+          type: string
+          format: ulid
+        event_id:
+          type: string
+        event_type:
+          type: string
+          example: content.published
+        payload_hash:
+          type: string
+        status:
+          type: string
+          enum: [pending, delivered, abandoned]
+        http_status:
+          type: integer
+          nullable: true
+        response_body:
           type: string
           nullable: true
-          example: "018e1234-5678-7abc-def0-aaaaaaaaaaaa"
-        space_id:
+          description: First 4KB of HTTP response
+        attempt_number:
+          type: integer
+        scheduled_at:
           type: string
-          nullable: true
-          example: "018e1234-5678-7abc-def0-bbbbbbbbbbbb"
-        action:
+          format: date-time
+        delivered_at:
           type: string
-          example: "content.publish"
-        resource_type:
-          type: string
+          format: date-time
           nullable: true
-          example: "App\\Models\\Content"
-        resource_id:
-          type: string
-          nullable: true
-          example: "018e1234-5678-7abc-def0-dddddddddddd"
-        metadata:
-          type: object
-          nullable: true
-          example:
-            version: 3
-            previous_status: "draft"
-        ip_address:
-          type: string
-          nullable: true
-          example: "192.168.1.100"
-        user_agent:
-          type: string
-          nullable: true
-          example: "Mozilla/5.0..."
         created_at:
           type: string
           format: date-time
-
-    Permission:
-      type: object
-      additionalProperties:
-        type: object
-        additionalProperties:
-          type: string
 
 paths:
   # ─── Content Delivery (Public, 60 req/min) ────────────────────────────────
@@ -1295,22 +1263,25 @@ paths:
         '401':
           description: Unauthenticated
 
+  # ─── Webhooks (Auth) ──────────────────────────────────────────────────────
 
-  # ─── Roles (Auth, RBAC) ───────────────────────────────────────────────────
-
-  /roles:
+  /webhooks:
     get:
-      operationId: listRoles
-      summary: List roles in current space
-      description: |
-        Returns all roles in the current space, including system roles.
-        **Authentication required.**
-      tags: [RBAC - Roles]
+      operationId: listWebhooks
+      summary: List webhooks for a space
+      description: Returns all webhooks for a space. **Authentication required.**
+      tags: [Webhooks]
       security:
         - sanctumToken: []
+      parameters:
+        - name: space_id
+          in: query
+          required: true
+          schema:
+            type: string
       responses:
         '200':
-          description: List of roles
+          description: List of webhooks
           content:
             application/json:
               schema:
@@ -1319,14 +1290,17 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Role'
+                      $ref: '#/components/schemas/Webhook'
         '401':
           description: Unauthenticated
+        '403':
+          description: Space access denied
 
     post:
-      operationId: createRole
-      summary: Create a custom role
-      tags: [RBAC - Roles]
+      operationId: createWebhook
+      summary: Create a webhook
+      description: Register a webhook with event subscriptions. **Authentication required. Space-scoped.**
+      tags: [Webhooks]
       security:
         - sanctumToken: []
       requestBody:
@@ -1335,68 +1309,96 @@ paths:
           application/json:
             schema:
               type: object
+              required: [space_id, url, events]
               properties:
-                name:
+                space_id:
                   type: string
-                  example: "Content Reviewer"
-                slug:
+                url:
                   type: string
-                  example: "content-reviewer"
-                permissions:
+                  format: uri
+                  maxLength: 2048
+                events:
                   type: array
                   items:
                     type: string
-                  example: ["content.read", "pipeline.approve"]
-              required: [name, slug, permissions]
+                  minItems: 1
+                  example: [content.published, pipeline.completed]
+                is_active:
+                  type: boolean
+                  default: true
+                headers:
+                  type: object
+                  nullable: true
+                batch_mode:
+                  type: boolean
+                  default: false
+                batch_timeout:
+                  type: integer
+                  minimum: 100
+                  maximum: 300000
       responses:
         '201':
-          description: Role created
+          description: Webhook created successfully
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/Role'
+                    $ref: '#/components/schemas/Webhook'
+        '400':
+          description: Invalid URL or validation error
+        '401':
+          description: Unauthenticated
         '403':
-          description: Insufficient permissions
+          description: Space access denied
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
 
-  /users/{userId}/roles:
+  /webhooks/{id}:
     get:
-      operationId: getUserRoles
-      summary: List roles assigned to a user
-      tags: [RBAC - User Roles]
+      operationId: showWebhook
+      summary: Get webhook details
+      description: Retrieve configuration for a single webhook. **Authentication required.**
+      tags: [Webhooks]
       security:
         - sanctumToken: []
       parameters:
-        - name: userId
+        - name: id
           in: path
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: List of user roles
+          description: Webhook details
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/UserRole'
+                    $ref: '#/components/schemas/Webhook'
         '401':
           description: Unauthenticated
+        '403':
+          description: Space access denied
+        '404':
+          description: Webhook not found
 
-    post:
-      operationId: assignUserRole
-      summary: Assign a role to a user
-      tags: [RBAC - User Roles]
+    put:
+      operationId: updateWebhook
+      summary: Update webhook configuration
+      description: Modify webhook settings. **Authentication required.**
+      tags: [Webhooks]
       security:
         - sanctumToken: []
       parameters:
-        - name: userId
+        - name: id
           in: path
           required: true
           schema:
@@ -1408,53 +1410,112 @@ paths:
             schema:
               type: object
               properties:
-                role_id:
+                url:
                   type: string
-                  example: "018e1234-5678-7abc-def0-bbbbbbbbbbbb"
-              required: [role_id]
+                  format: uri
+                events:
+                  type: array
+                  items:
+                    type: string
+                is_active:
+                  type: boolean
+                headers:
+                  type: object
+                  nullable: true
+                batch_mode:
+                  type: boolean
+                batch_timeout:
+                  type: integer
       responses:
-        '201':
-          description: Role assigned
+        '200':
+          description: Webhook updated
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/UserRole'
+                    $ref: '#/components/schemas/Webhook'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Space access denied
+        '404':
+          description: Webhook not found
+        '422':
+          description: Validation error
 
-  /audit-logs:
-    get:
-      operationId: listAuditLogs
-      summary: Query audit logs
-      description: Retrieve audit logs with optional filtering.
-      tags: [RBAC - Audit Logs]
+    delete:
+      operationId: deleteWebhook
+      summary: Delete a webhook
+      description: Soft-delete a webhook. **Authentication required.**
+      tags: [Webhooks]
       security:
         - sanctumToken: []
       parameters:
-        - name: user_id
-          in: query
+        - name: id
+          in: path
+          required: true
           schema:
             type: string
-          description: Filter by user ID
-        - name: action
-          in: query
+      responses:
+        '204':
+          description: Webhook deleted
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Space access denied
+        '404':
+          description: Webhook not found
+
+  /webhooks/{id}/rotate-secret:
+    post:
+      operationId: rotateWebhookSecret
+      summary: Rotate webhook secret
+      description: Generate a new secret for the webhook. **Authentication required.**
+      tags: [Webhooks]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
           schema:
             type: string
-          description: Filter by action
-        - name: per_page
-          in: query
-          schema:
-            type: integer
-            default: 50
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
       responses:
         '200':
-          description: Paginated audit logs
+          description: Secret rotated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Webhook'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Space access denied
+        '404':
+          description: Webhook not found
+
+  /webhooks/{id}/deliveries:
+    get:
+      operationId: listWebhookDeliveries
+      summary: List webhook deliveries
+      description: Returns all delivery attempts for a webhook. **Authentication required.**
+      tags: [Webhooks]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of deliveries
           content:
             application/json:
               schema:
@@ -1463,32 +1524,81 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AuditLog'
+                      $ref: '#/components/schemas/WebhookDelivery'
         '401':
           description: Unauthenticated
         '403':
-          description: Insufficient permissions
+          description: Space access denied
+        '404':
+          description: Webhook not found
 
-  /permissions:
+  /webhooks/{id}/deliveries/{deliveryId}:
     get:
-      operationId: listPermissions
-      summary: List all available permissions
-      description: Returns the canonical permission taxonomy grouped by domain.
-      tags: [RBAC - Permissions]
+      operationId: showWebhookDelivery
+      summary: Get delivery details
+      description: Inspect a single delivery record. **Authentication required.**
+      tags: [Webhooks]
       security:
         - sanctumToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: deliveryId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         '200':
-          description: Permission taxonomy
+          description: Delivery details
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/Permission'
+                    $ref: '#/components/schemas/WebhookDelivery'
         '401':
           description: Unauthenticated
+        '403':
+          description: Space access denied
+        '404':
+          description: Delivery not found
+
+  /webhooks/{id}/deliveries/{deliveryId}/redeliver:
+    post:
+      operationId: redeliverWebhookDelivery
+      summary: Manually retry a webhook delivery
+      description: Trigger a retry of a failed delivery. **Authentication required. Rate limited: 10/min.**
+      tags: [Webhooks]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: deliveryId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Redelivery queued
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Space access denied
+        '404':
+          description: Delivery not found
+        '429':
+          description: Rate limit exceeded
+
 
 tags:
   - name: Content
@@ -1505,11 +1615,5 @@ tags:
     description: Audience personas for AI content generation (authenticated)
   - name: Analytics
     description: AI generation cost and usage analytics (authenticated)
-  - name: RBAC - Roles
-    description: Role management and role-based authorization (authenticated)
-  - name: RBAC - User Roles
-    description: User role assignment and role revocation (authenticated)
-  - name: RBAC - Audit Logs
-    description: Immutable audit logs of all sensitive actions (authenticated)
-  - name: RBAC - Permissions
-    description: Permission taxonomy and available permissions (authenticated)
+  - name: Webhooks
+    description: Event webhooks with HMAC signing and delivery audit trail (authenticated)
