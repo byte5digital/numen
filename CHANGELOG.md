@@ -10,6 +10,40 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ---
 
 
+## [0.9.0] — 2026-03-15
+
+### Added
+
+**AI-Powered Content Knowledge Graph** ([Discussion #14](https://github.com/byte5digital/numen/discussions/14))
+
+Automatically maps relationships between content items into an interactive knowledge graph, enabling related content discovery, topic clustering, content gap analysis, and D3.js visualization.
+
+**Features:**
+- **Entity extraction:** AI extracts named entities (persons, organizations, locations, concepts) from content body using Claude
+- **5 edge types:** Semantic similarity (vector embeddings), co-tag (shared taxonomy), co-author (same author), sequential (series order), co-entity (shared named entities)
+- **Topic clustering:** DBSCAN/k-means clustering groups semantically related content into named topic clusters
+- **Content gap analysis:** Identifies under-covered topic clusters relative to audience demand signals, with suggested topics
+- **D3.js visualization:** Force-directed interactive graph in Numen Studio at `/studio/graph/{spaceId}` — nodes colour-coded by cluster, edge thickness indicates weight
+- **Related content widget:** `GET /api/v1/graph/related/{contentId}` powers headless frontend sidebars and bottom-of-page recommendations
+- **Shortest path:** Finds the connection path between any two content nodes for content journey debugging
+- **REST API:** 7 endpoints covering related content, clusters, cluster contents, content gaps, shortest path, node metadata, and manual reindex
+
+**Endpoints:**
+- `GET /api/v1/graph/related/{contentId}` — Related content with edge type filtering
+- `GET /api/v1/graph/clusters` — Topic cluster summaries for a space
+- `GET /api/v1/graph/clusters/{clusterId}` — Contents of a specific cluster
+- `GET /api/v1/graph/gaps` — Content gap analysis with gap scores
+- `GET /api/v1/graph/path/{fromId}/{toId}` — Shortest path between two nodes
+- `GET /api/v1/graph/node/{contentId}` — Graph node metadata
+- `POST /api/v1/graph/reindex/{contentId}` — Trigger re-indexing (admin)
+
+**New environment variables:**
+- `GRAPH_ENABLED=true`
+- `GRAPH_SIMILARITY_THRESHOLD=0.75`
+- `GRAPH_MAX_EDGES_PER_TYPE=20`
+
+---
+
 ## [0.8.0] — 2026-03-15
 
 ### Added

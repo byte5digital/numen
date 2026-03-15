@@ -49,6 +49,17 @@ Submit a brief → AI agents generate, illustrate, optimize, and quality-gate co
 - Staleness detection (auto-repurpose when source updates)
 - Custom format templates per space
 
+### AI-Powered Content Knowledge Graph
+**New in v0.9.0.** Automatically maps relationships between content items into an interactive knowledge graph:
+- **5 edge types:** Semantic similarity, shared tags, co-author, series order, shared named entities
+- **Topic clustering:** Groups content into named topic clusters using AI embeddings
+- **Content gap analysis:** Surfaces under-covered topics with opportunity scores and suggested titles
+- **D3.js visualization:** Force-directed interactive graph in Numen Studio — nodes by cluster, edges by weight
+- **Related content widget:**  for headless frontend sidebars
+- **7 REST endpoints:** Related, clusters, cluster contents, gaps, path, node metadata, reindex
+
+
+
 ### Multi-Provider AI
 Swap between Anthropic, OpenAI, Azure OpenAI, Together AI — no code changes. Fallback chain auto-retries on rate limits.
 
