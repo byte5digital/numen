@@ -10,6 +10,35 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ---
 
 
+## [0.9.0] — 2026-03-15
+
+### Added
+
+**Plugin & Extension System** ([Discussion #12](https://github.com/byte5digital/numen/discussions/12))
+
+A first-class plugin architecture that lets third-party developers extend every layer of Numen — from AI pipelines to admin UI.
+
+**Features:**
+- **Plugin lifecycle:** Discover → Install → Activate → Deactivate → Uninstall with full DB persistence and domain events
+- **Hook registry:** Register pipeline stages, LLM providers, image providers, Vue components, and content-event listeners
+- **Manifest-based:** Plugins declare capabilities in `numen-plugin.json` with semantic versioning and API-version pinning
+- **Admin API:** Full REST API for managing plugins and per-space settings
+- **Admin UI:** Vue component with real-time status, settings editor, and lifecycle controls
+- **Artisan commands:** `plugin:discover`, `plugin:install`, `plugin:activate`, `plugin:deactivate`, `plugin:uninstall`, `plugin:list`, `make:plugin`
+- **Plugin scaffold generator:** `php artisan make:plugin` bootstraps a fully-wired plugin skeleton
+- **Secret settings masking:** Secrets stored in `plugin_settings` are never exposed via the API
+- **Per-space settings:** Plugin configuration can be scoped per workspace
+
+**Endpoints:**
+- `GET /api/v1/admin/plugins` — List all plugins
+- `GET /api/v1/admin/plugins/{name}` — Plugin details + settings
+- `POST /api/v1/admin/plugins/{name}/install` — Install a plugin
+- `POST /api/v1/admin/plugins/{name}/activate` — Activate a plugin
+- `POST /api/v1/admin/plugins/{name}/deactivate` — Deactivate a plugin
+- `POST /api/v1/admin/plugins/{name}/uninstall` — Uninstall a plugin
+- `PATCH /api/v1/admin/plugins/{name}/settings` — Update plugin settings
+
+---
 ## [0.8.0] — 2026-03-15
 
 ### Added
