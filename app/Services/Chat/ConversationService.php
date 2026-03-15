@@ -37,6 +37,7 @@ class ConversationService
         private readonly LLMManager $llmManager,
         private readonly CostTracker $costTracker,
         private readonly ConversationContextManager $contextManager,
+        private readonly SystemPromptBuilder $systemPromptBuilder,
     ) {}
 
     /**
@@ -68,8 +69,8 @@ class ConversationService
             'content' => $message,
         ]);
 
-        // 4. Build system prompt
-        $systemPrompt = $this->buildSystemPrompt($user, $space);
+        // 4. Build system prompt using SystemPromptBuilder
+        $systemPrompt = $this->systemPromptBuilder->build($space, $user);
 
         // 5. Call LLM
         try {
@@ -126,82 +127,6 @@ class ConversationService
 
         // 13. Yield done chunk
         yield ['type' => 'done', 'cost_usd' => $response->costUsd];
-    }
-
-    /**
-     * Build the CMS assistant system prompt with available actions based on user permissions.
-     */
-    private function buildSystemPrompt(User $user, Space $space): string
-    {
-        $actions = $this->buildAvailableActions($user, $space);
-        $actionsJson = json_encode($actions, JSON_PRETTY_PRINT);
-        $spaceName = $space->name;
-        $userName = $user->name;
-
-        return <<<PROMPT
-            You are a CMS assistant for the "{$spaceName}" space, helping {$userName} manage their content.
-
-            You have access to the following actions based on the user's permissions:
-            {$actionsJson}
-
-            RESPONSE FORMAT (always respond with valid JSON):
-            {
-              "message": "Human-readable response to the user",
-              "intent": {
-                "action": "one of the available actions or null",
-                "entity": "content|pipeline|null",
-                "params": {},
-                "confidence": 0.0,
-                "requires_confirmation": false
-              }
-            }
-
-            RULES:
-            1. Always respond with valid JSON matching the format above.
-            2. If no action is needed, set "action" to "query.generic" and "requires_confirmation" to false.
-            3. For destructive actions (delete, publish), set "requires_confirmation" to true unless the user explicitly confirmed.
-            4. Keep "message" conversational and helpful.
-            5. Set "confidence" between 0.0 and 1.0 based on how certain you are about the intent.
-            6. Never perform actions the user doesn't have permission for.
-            7. If asked to do something not in the available actions, explain politely that you don't have permission.
-            PROMPT;
-    }
-
-    /**
-     * Build list of available actions based on user permissions.
-     *
-     * @return array<string, string>
-     */
-    private function buildAvailableActions(User $user, Space $space): array
-    {
-        $actions = ['query.generic' => 'Answer general questions about content in the space'];
-
-        if ($user->isAdmin() || $user->hasPermission('content.view', $space->id)) {
-            $actions['content.query'] = 'Query and list content items with filters';
-        }
-
-        if ($user->isAdmin() || $user->hasPermission('content.create', $space->id)) {
-            $actions['content.create'] = 'Create new content or a content brief';
-        }
-
-        if ($user->isAdmin() || $user->hasPermission('content.update', $space->id)) {
-            $actions['content.update'] = 'Update existing content fields';
-        }
-
-        if ($user->isAdmin() || $user->hasPermission('content.delete', $space->id)) {
-            $actions['content.delete'] = 'Delete content (requires confirmation)';
-        }
-
-        if ($user->isAdmin() || $user->hasPermission('content.publish', $space->id)) {
-            $actions['content.publish'] = 'Publish content (requires confirmation)';
-            $actions['content.unpublish'] = 'Unpublish / archive content (requires confirmation)';
-        }
-
-        if ($user->isAdmin() || $user->hasPermission('pipeline.trigger', $space->id)) {
-            $actions['pipeline.trigger'] = 'Trigger a content pipeline run';
-        }
-
-        return $actions;
     }
 
     /**

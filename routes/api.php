@@ -332,4 +332,5 @@ Route::prefix('v1/chat')->middleware(['auth:sanctum', 'throttle:20,1'])->group(f
     Route::post('/conversations/{id}/messages', [ChatController::class, 'sendMessage']);
     Route::post('/conversations/{id}/confirm', [ChatController::class, 'confirmAction']);
     Route::delete('/conversations/{id}/confirm', [ChatController::class, 'cancelAction']);
+    Route::get('/suggestions', [ChatController::class, 'suggestions']);
 });

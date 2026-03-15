@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SendChatMessageRequest;
 use App\Models\ChatConversation;
+use App\Models\Space;
 use App\Services\Chat\ConversationService;
+use App\Services\Chat\SuggestionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -14,6 +16,7 @@ class ChatController extends Controller
 {
     public function __construct(
         private readonly ConversationService $conversationService,
+        private readonly SuggestionService $suggestionService,
     ) {}
 
     /**
@@ -172,5 +175,21 @@ class ChatController extends Controller
                 'cancelled' => true,
             ],
         ]);
+    }
+
+    /**
+     * Get context-aware suggestion chips for the current route and space.
+     */
+    public function suggestions(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'route' => ['nullable', 'string', 'max:255'],
+            'space_id' => ['required', 'string', 'exists:spaces,id'],
+        ]);
+
+        $space = Space::findOrFail($data['space_id']);
+        $suggestions = $this->suggestionService->getSuggestions($data['route'] ?? '', $space);
+
+        return response()->json(['data' => $suggestions]);
     }
 }

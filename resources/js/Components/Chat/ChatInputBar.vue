@@ -1,17 +1,26 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
+import { usePage } from '@inertiajs/vue3'
+import SuggestionChips from '@/Components/Chat/SuggestionChips.vue'
 
 const props = defineProps<{
     disabled?: boolean
     sessionCost?: number
+    spaceId?: string
 }>()
 
 const emit = defineEmits<{
     send: [message: string]
 }>()
 
+const page = usePage()
 const text = ref('')
 const textareaRef = ref<HTMLTextAreaElement>()
+
+const currentPage = ref<string>(
+    (page.props?.ziggy as { location?: string } | undefined)?.location ??
+    (typeof window !== 'undefined' ? window.location.pathname : ''),
+)
 
 function autoResize() {
     nextTick(() => {
@@ -46,6 +55,11 @@ function send() {
     })
 }
 
+function onChipSelect(chip: string) {
+    text.value = chip
+    nextTick(() => send())
+}
+
 const formatCost = (cost: number) => `$${cost.toFixed(4)}`
 </script>
 
@@ -55,6 +69,14 @@ const formatCost = (cost: number) => `$${cost.toFixed(4)}`
         <div v-if="sessionCost !== undefined && sessionCost > 0" class="mb-2 text-right">
             <span class="text-xs text-gray-600">Session cost: {{ formatCost(sessionCost) }}</span>
         </div>
+
+        <!-- Suggestion chips -->
+        <SuggestionChips
+            :current-page="currentPage"
+            :space-id="spaceId"
+            class="mb-2"
+            @select="onChipSelect"
+        />
 
         <div class="flex items-end gap-2">
             <textarea
