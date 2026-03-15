@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -27,35 +28,20 @@ use Illuminate\Support\Facades\Storage;
  */
 class MediaAsset extends Model
 {
-    use HasUlids;
+    use HasUlids, HasFactory;
 
     protected $fillable = [
         'space_id', 'filename', 'disk', 'path', 'mime_type',
         'size_bytes', 'source', 'ai_metadata', 'variants',
+        'alt_text', 'caption', 'tags', 'file_size', 'width',
+        'height', 'duration', 'metadata', 'is_public', 'folder_id',
     ];
 
     protected $casts = [
         'ai_metadata' => 'array',
         'variants' => 'array',
+        'tags' => 'array',
+        'metadata' => 'array',
+        'is_public' => 'boolean',
     ];
-
-    public function space(): BelongsTo
-    {
-        return $this->belongsTo(Space::class);
-    }
-
-    public function contents(): BelongsToMany
-    {
-        return $this->belongsToMany(Content::class, 'content_media')
-            ->withPivot('role', 'sort_order');
-    }
-
-    /**
-     * Disk-aware public URL for this asset.
-     * Works for both the local 'public' disk and S3-compatible disks (Laravel Cloud).
-     */
-    public function getUrlAttribute(): string
-    {
-        return Storage::disk($this->disk)->url($this->path);
-    }
 }
