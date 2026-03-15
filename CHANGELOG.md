@@ -14,29 +14,38 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-**Plugin & Extension System** ([Discussion #12](https://github.com/byte5digital/numen/discussions/12))
+**Conversational CMS** ([Discussion #11](https://github.com/byte5digital/numen/discussions/11))
 
-A first-class plugin architecture that lets third-party developers extend every layer of Numen — from AI pipelines to admin UI.
+Talk to your CMS — create content, run pipelines, query data, all via natural language.
 
-**Features:**
-- **Plugin lifecycle:** Discover → Install → Activate → Deactivate → Uninstall with full DB persistence and domain events
-- **Hook registry:** Register pipeline stages, LLM providers, image providers, Vue components, and content-event listeners
-- **Manifest-based:** Plugins declare capabilities in `numen-plugin.json` with semantic versioning and API-version pinning
-- **Admin API:** Full REST API for managing plugins and per-space settings
-- **Admin UI:** Vue component with real-time status, settings editor, and lifecycle controls
-- **Artisan commands:** `plugin:discover`, `plugin:install`, `plugin:activate`, `plugin:deactivate`, `plugin:uninstall`, `plugin:list`, `make:plugin`
-- **Plugin scaffold generator:** `php artisan make:plugin` bootstraps a fully-wired plugin skeleton
-- **Secret settings masking:** Secrets stored in `plugin_settings` are never exposed via the API
-- **Per-space settings:** Plugin configuration can be scoped per workspace
+**Key Capabilities:**
+- **Natural language admin** — Manage content and trigger pipelines using plain English. No need to navigate menus or know the API.
+- **Intent routing** — AI extracts structured CMS intents (action, entity, params, confidence) from free-form messages and maps them to real service calls.
+- **SSE streaming** — Responses stream in real time via Server-Sent Events. Chunk types: `text`, `intent`, `action`, `confirm`, `error`, `done`.
+- **Confirmation flow** — Destructive actions (`content.delete`, `content.update`, etc.) pause for explicit user confirmation before executing.
+- **Context management** — Conversation history is summarized automatically when it grows long, keeping LLM context lean without losing continuity.
+- **Rate limiting** — Per-user message rate limit (20/min) and per-user daily AI cost budget (configurable via `CHAT_MAX_DAILY_COST`). Standard `X-RateLimit-*` headers on all responses.
+- **Suggestion chips** — Context-aware quick-action chips based on the current UI route and space.
 
-**Endpoints:**
-- `GET /api/v1/admin/plugins` — List all plugins
-- `GET /api/v1/admin/plugins/{name}` — Plugin details + settings
-- `POST /api/v1/admin/plugins/{name}/install` — Install a plugin
-- `POST /api/v1/admin/plugins/{name}/activate` — Activate a plugin
-- `POST /api/v1/admin/plugins/{name}/deactivate` — Deactivate a plugin
-- `POST /api/v1/admin/plugins/{name}/uninstall` — Uninstall a plugin
-- `PATCH /api/v1/admin/plugins/{name}/settings` — Update plugin settings
+**New Environment Variables:**
+- `CHAT_ENABLED` — Enable/disable the chat API (default: `true`)
+- `CHAT_DEFAULT_MODEL` — LLM model alias for chat (default: `haiku`)
+- `CHAT_MAX_DAILY_COST` — Per-user daily AI spend cap in USD (default: `1.00`)
+- `CHAT_MAX_MESSAGES_PER_MINUTE` — Rate limit per user (default: `20`)
+- `CHAT_CONTEXT_WINDOW_SIZE` — Messages to keep in context before summarizing (default: `15`)
+- `CHAT_CONFIRMATION_REQUIRED_ACTIONS` — Comma-separated list of actions requiring confirmation
+
+**API Endpoints (8 total):**
+- `GET /v1/chat/conversations` — List conversations
+- `POST /v1/chat/conversations` — Create conversation
+- `DELETE /v1/chat/conversations/{id}` — Delete conversation
+- `GET /v1/chat/conversations/{id}/messages` — Message history
+- `POST /v1/chat/conversations/{id}/messages` — Send message (SSE stream)
+- `POST /v1/chat/conversations/{id}/confirm` — Execute pending action
+- `DELETE /v1/chat/conversations/{id}/confirm` — Cancel pending action
+- `GET /v1/chat/suggestions` — Context-aware suggestion chips
+
+**Documentation:** See `docs/chat-api.md` for full endpoint reference, SSE format, and intent action catalogue.
 
 ---
 ## [0.8.0] — 2026-03-15

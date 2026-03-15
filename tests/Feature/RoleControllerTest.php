@@ -27,14 +27,14 @@ class RoleControllerTest extends TestCase
             ->assertJsonCount(3, 'data');
     }
 
-    public function test_index_requires_roles_manage_permission(): void
+    public function test_index_requires_roles_read_or_manage_permission(): void
     {
         $user = $this->userWithRole(['content.read']);
 
         $response = $this->actingAs($user)->getJson('/api/v1/roles');
 
         $response->assertForbidden()
-            ->assertJsonFragment(['error' => 'Forbidden', 'required' => 'roles.manage']);
+            ->assertJsonFragment(['error' => 'Forbidden', 'required' => 'roles.read']);
     }
 
     public function test_index_rejects_unauthenticated(): void

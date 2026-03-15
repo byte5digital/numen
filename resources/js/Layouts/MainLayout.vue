@@ -1,5 +1,6 @@
 <script setup>
-import { Link, usePage, router } from '@inertiajs/vue3';
+import { Link, usePage, router } from '@inertiajs/vue3'
+import ChatSidebar from '../Components/Chat/ChatSidebar.vue';
 import { ref, computed } from 'vue';
 
 const page = usePage();
@@ -18,7 +19,9 @@ const navigation = [
     { name: 'Personas', href: '/admin/personas', icon: '🤖' },
     { name: 'Pages', href: '/admin/pages', icon: '🗂️' },
     { name: 'Taxonomy', href: '/admin/taxonomy', icon: '🏷️' },
+    { name: 'Media', href: '/admin/media', icon: '🖼️' },
     { name: 'Analytics', href: '/admin/analytics', icon: '📈' },
+    { name: 'Knowledge Graph', href: '/admin/graph', icon: '🕸️' },
     { name: 'Queue', href: '/admin/queue', icon: '⚙️' },
     { name: 'Users', href: '/admin/users', icon: '👥' },
     { name: 'API Tokens', href: '/admin/tokens', icon: '🔑' },
@@ -95,4 +98,7 @@ const navigation = [
             </main>
         </div>
     </div>
+
+    <!-- AI Chat Sidebar -->
+    <ChatSidebar />
 </template>

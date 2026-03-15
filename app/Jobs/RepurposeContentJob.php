@@ -20,15 +20,15 @@ class RepurposeContentJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public string $queue = 'ai-pipeline';
-
     public int $tries = 2;
 
     public int $timeout = 120;
 
     public function __construct(
         public readonly RepurposedContent $repurposedContent,
-    ) {}
+    ) {
+        $this->onQueue('ai-pipeline');
+    }
 
     public function handle(
         FormatAdapterService $formatAdapter,

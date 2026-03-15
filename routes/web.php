@@ -4,10 +4,10 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BriefAdminController;
 use App\Http\Controllers\Admin\ContentAdminController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\GraphController;
 use App\Http\Controllers\Admin\PageAdminController;
 use App\Http\Controllers\Admin\PersonaAdminController;
 use App\Http\Controllers\Admin\PipelineAdminController;
-use App\Http\Controllers\Admin\PluginWebController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\QueueMonitorController;
 use App\Http\Controllers\Admin\SettingsAdminController;
@@ -18,6 +18,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Public\BlogController;
 use App\Http\Controllers\Public\HomeController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,6 +60,8 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
+
+Route::get('/chat', fn () => Inertia::render('Chat/Index'))->name('chat.index')->middleware('auth');
 
 /*
 |--------------------------------------------------------------------------
@@ -146,7 +149,6 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/taxonomy/terms/{termId}/move', [TaxonomyAdminController::class, 'moveTerm'])->name('admin.taxonomy.terms.move');
     Route::post('/taxonomy/terms/reorder', [TaxonomyAdminController::class, 'reorderTerms'])->name('admin.taxonomy.terms.reorder');
 
-    // Plugin management UI
-    Route::get('/plugins', [PluginWebController::class, 'index'])->name('admin.plugins.index');
-    Route::get('/plugins/{name}', [PluginWebController::class, 'show'])->name('admin.plugins.show');
+    // Knowledge Graph
+    Route::get('/graph', [GraphController::class, 'index'])->name('graph.index');
 });

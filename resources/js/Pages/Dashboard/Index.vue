@@ -1,4 +1,5 @@
 <script setup>
+import ContentGapsWidget from '../../Components/Graph/ContentGapsWidget.vue';
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -8,6 +9,7 @@ const props = defineProps({
     costToday:     { type: Number,  default: 0 },
     providers:     { type: Array,   default: () => [] },
     fallbackChain: { type: Array,   default: () => [] },
+    defaultSpaceId: { type: String, default: '' },
 });
 
 const statCards = computed(() => [
@@ -147,6 +149,11 @@ const statCards = computed(() => [
                 </div>
                 <p v-else class="text-gray-600 text-sm">No pipeline runs yet.</p>
             </div>
+        </div>
+
+        <!-- Content Gap Analysis -->
+        <div v-if="defaultSpaceId" class="mt-6">
+            <ContentGapsWidget :space-id="defaultSpaceId" />
         </div>
     </div>
 </template>
