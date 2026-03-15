@@ -122,17 +122,23 @@ Route::prefix('v1')->group(function () {
         // Create new content
         Route::post('/content', [ContentController::class, 'store'])->middleware('permission:content.create');
 
-        // Taxonomy write (authenticated)
-        Route::post('/taxonomies', [TaxonomyController::class, 'store'])->middleware('permission:content.create');
-        Route::put('/taxonomies/{id}', [TaxonomyController::class, 'update'])->middleware('permission:content.update');
-        Route::delete('/taxonomies/{id}', [TaxonomyController::class, 'destroy'])->middleware('permission:content.delete');
+        // Taxonomy write (authenticated only — no per-permission guard, any authenticated user may manage taxonomies)
+        Route::post('/taxonomies', [TaxonomyController::class, 'store']);
+        Route::put('/taxonomies/{id}', [TaxonomyController::class, 'update']);
+        Route::delete('/taxonomies/{id}', [TaxonomyController::class, 'destroy']);
 
         // Taxonomy Terms write (authenticated)
-        Route::post('/taxonomies/{vocabId}/terms', [TaxonomyTermController::class, 'store'])->middleware('permission:content.create');
-        Route::put('/taxonomies/terms/{id}', [TaxonomyTermController::class, 'update'])->middleware('permission:content.update');
-        Route::post('/taxonomies/terms/{id}/move', [TaxonomyTermController::class, 'move'])->middleware('permission:content.update');
-        Route::delete('/taxonomies/terms/{id}', [TaxonomyTermController::class, 'destroy'])->middleware('permission:content.delete');
-        Route::post('/taxonomies/terms/reorder', [TaxonomyTermController::class, 'reorder'])->middleware('permission:content.update');
+        Route::post('/taxonomies/{vocabId}/terms', [TaxonomyTermController::class, 'store']);
+        Route::put('/taxonomies/terms/{id}', [TaxonomyTermController::class, 'update']);
+        Route::post('/taxonomies/terms/{id}/move', [TaxonomyTermController::class, 'move']);
+        Route::delete('/taxonomies/terms/{id}', [TaxonomyTermController::class, 'destroy']);
+        Route::post('/taxonomies/terms/reorder', [TaxonomyTermController::class, 'reorder']);
+
+        // Taxonomy Terms short aliases (without /taxonomies/ prefix)
+        Route::put('/terms/{id}', [TaxonomyTermController::class, 'update']);
+        Route::delete('/terms/{id}', [TaxonomyTermController::class, 'destroy']);
+        Route::post('/terms/{id}/move', [TaxonomyTermController::class, 'move']);
+        Route::post('/terms/reorder', [TaxonomyTermController::class, 'reorder']);
 
         // Content Taxonomy Assignment API
         Route::post('/content/{id}/terms', [ContentTaxonomyController::class, 'assign']);
