@@ -19,6 +19,7 @@ const navigation = [
     { name: 'Pages', href: '/admin/pages', icon: '🗂️' },
     { name: 'Taxonomy', href: '/admin/taxonomy', icon: '🏷️' },
     { name: 'Analytics', href: '/admin/analytics', icon: '📈' },
+    { name: 'Knowledge Graph', href: '/admin/graph', icon: '🕸️' },
     { name: 'Queue', href: '/admin/queue', icon: '⚙️' },
     { name: 'Users', href: '/admin/users', icon: '👥' },
     { name: 'API Tokens', href: '/admin/tokens', icon: '🔑' },
