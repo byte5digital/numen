@@ -16,3 +16,8 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::command('numen:publish-scheduled')
     ->everyMinute()
     ->withoutOverlapping();
+
+// Prune old chat conversations daily at 3am
+Schedule::command('chat:prune --days=90')
+    ->dailyAt('03:00')
+    ->withoutOverlapping();

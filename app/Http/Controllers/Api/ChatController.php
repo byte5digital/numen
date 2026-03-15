@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SendChatMessageRequest;
 use App\Models\ChatConversation;
 use App\Models\Space;
+use App\Services\Chat\ChatRateLimiter;
 use App\Services\Chat\ConversationService;
 use App\Services\Chat\SuggestionService;
 use Illuminate\Http\JsonResponse;
@@ -17,6 +18,7 @@ class ChatController extends Controller
     public function __construct(
         private readonly ConversationService $conversationService,
         private readonly SuggestionService $suggestionService,
+        private readonly ChatRateLimiter $rateLimiter,
     ) {}
 
     /**
@@ -93,10 +95,24 @@ class ChatController extends Controller
     /**
      * Send a message and stream the assistant's response via SSE.
      */
-    public function sendMessage(SendChatMessageRequest $request, string $id): StreamedResponse
+    public function sendMessage(SendChatMessageRequest $request, string $id): StreamedResponse|JsonResponse
     {
         /** @var \App\Models\User $user */
         $user = $request->user();
+
+        // Rate limit check
+        if (! $this->rateLimiter->check($user)) {
+            $quota = $this->rateLimiter->getRemainingQuota($user);
+
+            return response()->json([
+                'error' => 'Rate limit exceeded.',
+                'quota' => $quota,
+            ], 429)->withHeaders([
+                'X-RateLimit-Remaining' => (string) $quota['messages_remaining'],
+                'X-RateLimit-Reset' => (string) strtotime($quota['resets_at']),
+                'Retry-After' => '60',
+            ]);
+        }
 
         $conversation = ChatConversation::where('id', $id)
             ->where('user_id', $user->id)
@@ -104,6 +120,8 @@ class ChatController extends Controller
 
         $space = $conversation->space;
         $message = $request->validated('message');
+
+        $quota = $this->rateLimiter->getRemainingQuota($user);
 
         $generator = $this->conversationService->handle(
             user: $user,
@@ -125,6 +143,8 @@ class ChatController extends Controller
             'Content-Type' => 'text/event-stream',
             'Cache-Control' => 'no-cache',
             'X-Accel-Buffering' => 'no',
+            'X-RateLimit-Remaining' => (string) $quota['messages_remaining'],
+            'X-RateLimit-Reset' => (string) strtotime($quota['resets_at']),
         ]);
     }
 
