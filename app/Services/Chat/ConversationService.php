@@ -36,6 +36,7 @@ class ConversationService
     public function __construct(
         private readonly LLMManager $llmManager,
         private readonly CostTracker $costTracker,
+        private readonly ConversationContextManager $contextManager,
     ) {}
 
     /**
@@ -49,24 +50,14 @@ class ConversationService
         string $conversationId,
         string $message,
     ): Generator {
-        // 1. Load conversation + last 15 messages for context
+        // 1. Load conversation
         $conversation = ChatConversation::where('id', $conversationId)
             ->where('space_id', $space->id)
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        $history = $conversation->messages()
-            ->orderByDesc('created_at')
-            ->limit(15)
-            ->get()
-            ->reverse()
-            ->values();
-
-        // 2. Build messages array for LLM (conversation history)
-        $llmMessages = $history->map(fn (ChatMessage $msg) => [
-            'role' => $msg->role,
-            'content' => $msg->content,
-        ])->values()->all();
+        // 2. Build full context via context manager (summary + window)
+        $llmMessages = $this->contextManager->getFullContext($conversation);
 
         // Append the new user message
         $llmMessages[] = ['role' => 'user', 'content' => $message];
@@ -114,7 +105,8 @@ class ConversationService
         }
 
         // 9. Save assistant message to DB
-        $conversation->messages()->create([
+        /** @var ChatMessage $assistantMessage */
+        $assistantMessage = $conversation->messages()->create([
             'role' => 'assistant',
             'content' => $humanMessage,
             'intent' => $intent,
@@ -129,7 +121,10 @@ class ConversationService
         // 11. Track cost
         $this->costTracker->recordUsage($response->costUsd, $space->id);
 
-        // 12. Yield done chunk
+        // 12. Trigger summarization if conversation is long enough
+        $this->contextManager->summarizeOlder($conversation);
+
+        // 13. Yield done chunk
         yield ['type' => 'done', 'cost_usd' => $response->costUsd];
     }
 
