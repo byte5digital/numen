@@ -57,7 +57,7 @@ async function save() {
     saveError.value = null;
     saveSuccess.value = false;
     try {
-        const res = await axios.patch("/v1/media/" + props.asset.id, {
+        const res = await axios.patch("/api/v1/media/" + props.asset.id, {
             alt_text: form.value.alt_text || null,
             caption: form.value.caption || null,
             tags: form.value.tags,
@@ -76,7 +76,7 @@ async function save() {
 async function deleteAsset() {
     deleting.value = true;
     try {
-        await axios.delete("/v1/media/" + props.asset.id);
+        await axios.delete("/api/v1/media/" + props.asset.id);
         emit("deleted");
         emit("close");
     } catch (e) {
