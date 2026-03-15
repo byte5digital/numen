@@ -19,7 +19,7 @@ class MediaTaggingService
      */
     public function isEnabled(): bool
     {
-        return (bool) config('media.ai_tagging', env('MEDIA_AI_TAGGING', false));
+        return (bool) config('media.ai_tagging', false);
     }
 
     /**

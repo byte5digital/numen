@@ -53,6 +53,7 @@ class MediaEditController extends Controller
                 'params.height' => ['required', 'integer', 'min:1'],
                 'params.maintain_aspect' => ['sometimes', 'boolean'],
             ]),
+            default => throw new \InvalidArgumentException("Invalid operation: {$operation}"),
         };
 
         $saveAsVariant = $validated['save_as_variant'] ?? true;
@@ -67,6 +68,7 @@ class MediaEditController extends Controller
             ),
             'rotate' => $this->transformService->rotate($asset, (int) $params['degrees']),
             'resize' => $this->handleResize($asset, $params, $saveAsVariant),
+            default => throw new \InvalidArgumentException("Invalid operation: {$operation}"),
         };
 
         GenerateVariantsJob::dispatch($updatedAsset);
@@ -83,8 +85,12 @@ class MediaEditController extends Controller
     {
         $this->authz->authorize($request->user(), 'media.read', $asset->space_id);
 
-        $variants = $asset->variants ?? [];
-        $metaVariants = $asset->metadata['variants'] ?? [];
+        /** @var array<string, mixed> $variants */
+        $variants = (array) ($asset->variants ?? []);
+        /** @var array<string, mixed> $metadata */
+        $metadata = (array) ($asset->metadata ?? []);
+        /** @var array<string, mixed> $metaVariants */
+        $metaVariants = (array) ($metadata['variants'] ?? []);
 
         $result = [];
 

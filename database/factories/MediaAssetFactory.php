@@ -14,9 +14,9 @@ class MediaAssetFactory extends Factory
     {
         return [
             'space_id' => Space::factory(),
-            'filename' => $this->faker->word() . '.jpg',
+            'filename' => $this->faker->word().'.jpg',
             'disk' => 'public',
-            'path' => 'media/' . $this->faker->word() . '.jpg',
+            'path' => 'media/'.$this->faker->word().'.jpg',
             'mime_type' => 'image/jpeg',
             'size_bytes' => $this->faker->numberBetween(1000, 5000000),
             'source' => 'upload',

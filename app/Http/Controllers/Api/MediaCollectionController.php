@@ -81,7 +81,7 @@ class MediaCollectionController extends Controller
     public function show(Request $request, int $collection): JsonResponse
     {
         $col = DB::table('media_collections')->where('id', $collection)->first();
-        abort_unless($col, 404);
+        abort_unless($col !== null, 404);
 
         $this->authz->authorize($request->user(), 'media.read', $col->space_id);
 
@@ -105,7 +105,7 @@ class MediaCollectionController extends Controller
     public function update(Request $request, int $collection): JsonResponse
     {
         $col = DB::table('media_collections')->where('id', $collection)->first();
-        abort_unless($col, 404);
+        abort_unless($col !== null, 404);
 
         $this->authz->authorize($request->user(), 'media.update', $col->space_id);
 
@@ -139,7 +139,7 @@ class MediaCollectionController extends Controller
     public function destroy(Request $request, int $collection): JsonResponse
     {
         $col = DB::table('media_collections')->where('id', $collection)->first();
-        abort_unless($col, 404);
+        abort_unless($col !== null, 404);
 
         $this->authz->authorize($request->user(), 'media.delete', $col->space_id);
 
@@ -155,7 +155,7 @@ class MediaCollectionController extends Controller
     public function addItem(Request $request, int $collection): JsonResponse
     {
         $col = DB::table('media_collections')->where('id', $collection)->first();
-        abort_unless($col, 404);
+        abort_unless($col !== null, 404);
 
         $this->authz->authorize($request->user(), 'media.update', $col->space_id);
 
@@ -186,7 +186,7 @@ class MediaCollectionController extends Controller
     public function removeItem(Request $request, int $collection, string $asset): JsonResponse
     {
         $col = DB::table('media_collections')->where('id', $collection)->first();
-        abort_unless($col, 404);
+        abort_unless($col !== null, 404);
 
         $this->authz->authorize($request->user(), 'media.update', $col->space_id);
 

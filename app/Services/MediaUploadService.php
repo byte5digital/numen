@@ -120,8 +120,8 @@ class MediaUploadService
      */
     public function getUrl(MediaAsset $asset, array $transforms = []): string
     {
-        $cdnEnabled = (bool) config('media.cdn_enabled', env('CDN_ENABLED', false));
-        $cdnBase = config('media.cdn_url', env('CDN_URL', ''));
+        $cdnEnabled = (bool) config('media.cdn_enabled', false);
+        $cdnBase = config('media.cdn_url', '');
 
         if ($cdnEnabled && $cdnBase) {
             $url = rtrim($cdnBase, '/').'/'.$asset->path;
@@ -200,7 +200,7 @@ class MediaUploadService
         }
 
         $size = @getimagesize($file->getRealPath());
-        if ($size === false || $size === null) {
+        if (! is_array($size) || count($size) < 2) {
             return [null, null];
         }
 

@@ -8,6 +8,21 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property string $space_id
+ * @property int|null $parent_id
+ * @property string $name
+ * @property string $slug
+ * @property string|null $description
+ * @property int $sort_order
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ * @property-read Space $space
+ * @property-read MediaFolder|null $parent
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, MediaFolder> $children
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, MediaAsset> $assets
+ */
 class MediaFolder extends Model
 {
     use HasFactory;
@@ -24,6 +39,7 @@ class MediaFolder extends Model
     protected $casts = [
         'sort_order' => 'integer',
         'parent_id' => 'integer',
+        'space_id' => 'string',
     ];
 
     // -------------------------------------------------------------------------
@@ -59,7 +75,7 @@ class MediaFolder extends Model
         return $query->whereNull('parent_id');
     }
 
-    public function scopeForSpace(Builder $query, int $spaceId): Builder
+    public function scopeForSpace(Builder $query, int|string $spaceId): Builder
     {
         return $query->where('space_id', $spaceId);
     }

@@ -5,9 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @property string $id
@@ -20,6 +17,10 @@ use Illuminate\Support\Facades\Storage;
  * @property string $source
  * @property array|null $ai_metadata
  * @property array|null $variants
+ * @property string|null $alt_text
+ * @property string|null $caption
+ * @property array|null $tags
+ * @property string|null $url
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  * @property-read Space $space
@@ -28,7 +29,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class MediaAsset extends Model
 {
-    use HasUlids, HasFactory;
+    use HasFactory, HasUlids;
 
     protected $fillable = [
         'space_id', 'filename', 'disk', 'path', 'mime_type',

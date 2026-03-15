@@ -30,14 +30,16 @@ class MediaFolderController extends Controller
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get()
-            ->map(fn (MediaFolder $f) => [
-                'id' => $f->id,
-                'parent_id' => $f->parent_id,
-                'name' => $f->name,
-                'slug' => $f->slug,
-                'sort_order' => $f->sort_order,
-                'asset_count' => $f->assets_count,
-            ]);
+            ->map(function (MediaFolder $f): array {
+                return [
+                    'id' => $f->id,
+                    'parent_id' => $f->parent_id,
+                    'name' => $f->name,
+                    'slug' => $f->slug,
+                    'sort_order' => $f->sort_order,
+                    'asset_count' => $f->assets_count,
+                ];
+            });
 
         return response()->json(['data' => $folders]);
     }

@@ -22,13 +22,13 @@ class PublicMediaController extends Controller
     public function index(Request $request): JsonResponse
     {
         $request->validate([
-            'space_id'  => ['required', 'ulid', 'exists:spaces,id'],
-            'type'      => ['nullable', 'string'],
-            'tags'      => ['nullable', 'array'],
-            'tags.*'    => ['string'],
+            'space_id' => ['required', 'ulid', 'exists:spaces,id'],
+            'type' => ['nullable', 'string'],
+            'tags' => ['nullable', 'array'],
+            'tags.*' => ['string'],
             'folder_id' => ['nullable', 'integer'],
-            'search'    => ['nullable', 'string', 'max:255'],
-            'per_page'  => ['nullable', 'integer', 'min:1', 'max:100'],
+            'search' => ['nullable', 'string', 'max:255'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
         $query = MediaAsset::where('space_id', $request->input('space_id'))
@@ -63,7 +63,7 @@ class PublicMediaController extends Controller
         }
 
         $perPage = (int) $request->input('per_page', 30);
-        $assets  = $query->latest()->paginate($perPage);
+        $assets = $query->latest()->paginate($perPage);
 
         $items = collect($assets->items())->map(function (MediaAsset $a) {
             return $this->formatAsset($a);
@@ -73,9 +73,9 @@ class PublicMediaController extends Controller
             'data' => $items,
             'meta' => [
                 'current_page' => $assets->currentPage(),
-                'last_page'    => $assets->lastPage(),
-                'per_page'     => $assets->perPage(),
-                'total'        => $assets->total(),
+                'last_page' => $assets->lastPage(),
+                'per_page' => $assets->perPage(),
+                'total' => $assets->total(),
             ],
         ]);
     }
@@ -98,7 +98,7 @@ class PublicMediaController extends Controller
     public function collection(int $collection): JsonResponse
     {
         $col = DB::table('media_collections')->where('id', $collection)->first();
-        abort_unless($col, 404);
+        abort_unless($col !== null, 404);
 
         $items = MediaAsset::join('media_collection_items', 'media_assets.id', '=', 'media_collection_items.media_asset_id')
             ->where('media_collection_items.collection_id', $collection)
@@ -109,8 +109,8 @@ class PublicMediaController extends Controller
             ->map(fn (MediaAsset $a) => $this->formatAsset($a));
 
         return response()->json([
-            'data'       => $col,
-            'items'      => $items,
+            'data' => $col,
+            'items' => $items,
             'item_count' => $items->count(),
         ]);
     }
@@ -121,19 +121,19 @@ class PublicMediaController extends Controller
     private function formatAsset(MediaAsset $asset): array
     {
         $base = [
-            'id'          => $asset->id,
-            'filename'    => $asset->filename,
-            'mime_type'   => $asset->mime_type,
-            'size_bytes'  => $asset->size_bytes,
-            'width'       => $asset->width ?? null,
-            'height'      => $asset->height ?? null,
-            'duration'    => $asset->duration ?? null,
-            'alt_text'    => $asset->alt_text ?? null,
-            'caption'     => $asset->caption ?? null,
-            'tags'        => $asset->tags ?? [],
-            'url'         => $this->uploadService->getUrl($asset),
-            'created_at'  => $asset->created_at,
-            'updated_at'  => $asset->updated_at,
+            'id' => $asset->id,
+            'filename' => $asset->filename,
+            'mime_type' => $asset->mime_type,
+            'size_bytes' => $asset->size_bytes,
+            'width' => $asset->width ?? null,
+            'height' => $asset->height ?? null,
+            'duration' => $asset->duration ?? null,
+            'alt_text' => $asset->alt_text ?? null,
+            'caption' => $asset->caption ?? null,
+            'tags' => $asset->tags ?? [],
+            'url' => $this->uploadService->getUrl($asset),
+            'created_at' => $asset->created_at,
+            'updated_at' => $asset->updated_at,
         ];
 
         // Include variant URLs if present
@@ -143,8 +143,8 @@ class PublicMediaController extends Controller
                 $variantAsset->path = $variant['path'] ?? $asset->path;
 
                 return [$key => [
-                    'url'    => $this->uploadService->getUrl($variantAsset),
-                    'width'  => $variant['width'] ?? null,
+                    'url' => $this->uploadService->getUrl($variantAsset),
+                    'width' => $variant['width'] ?? null,
                     'height' => $variant['height'] ?? null,
                     'format' => $variant['format'] ?? null,
                 ]];
