@@ -17,6 +17,51 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.7.0] — 2026-03-15
+
+### Added
+
+**Numen CLI** ([Discussion #16](https://github.com/byte5digital/numen/discussions/16))
+
+A full artisan-based CLI for managing content, briefs, pipelines, and system health — designed for server-side automation, CI/CD hooks, and scripted workflows.
+
+**8 CLI commands:**
+
+| Command | Signature |
+|---|---|
+| Content list | `numen:content:list [--type=] [--status=] [--limit=20]` |
+| Content import | `numen:content:import --file=<path> [--space-id=] [--dry-run]` |
+| Content export | `numen:content:export [--format=json\|markdown] [--output=] [--type=] [--status=] [--id=]` |
+| Brief create | `numen:brief:create --title= [--type=] [--persona=] [--priority=] [--keywords=*] [--no-run]` |
+| Brief list | `numen:brief:list [--status=] [--space-id=] [--limit=20]` |
+| Pipeline run | `numen:pipeline:run --brief-id= [--pipeline-id=]` |
+| Pipeline status | `numen:pipeline:status [--limit=10] [--running] [--pipeline-id=]` |
+| System status | `numen:status [--details]` |
+
+**Import/Export:**
+- JSON bulk import with `--dry-run` preview mode; skips duplicates by slug
+- JSON and Markdown export with content type and status filters
+- Export defaults to `storage/exports/<timestamp>.json` when no `--output` given
+
+**System Health Check (`numen:status`):**
+- Database connectivity and driver info
+- Content stats (spaces, content items, briefs, pipeline runs)
+- Cache read/write verification
+- Queue driver detection (warns on sync/null in production)
+- AI provider configuration (Anthropic, OpenAI, Azure; with `--details` for model info)
+- Image generation provider status
+
+### Security
+
+- **File path validation:** `realpath()` used on all file inputs; path traversal sequences (`../`) are rejected outright
+- **Import path sandboxing:** warns (but does not block) when `--file` is outside `storage_path()` — CLI is a trusted, privileged interface
+- **Export default sandboxing:** `--output` defaults to `storage/exports/`; warns when writing outside `base_path()`
+- **Input enum whitelisting:**
+  - `ContentImportCommand`: `status` field validated against `[draft, published, archived]`, defaults to `draft`
+  - `BriefCreateCommand`: `--priority` validated against `[low, normal, high, urgent]`, defaults to `normal`
+
+---
+
 ## [0.2.1] — 2026-03-07
 
 ### Fixed
