@@ -44,11 +44,11 @@ class RepurposingTest extends TestCase
     {
         RepurposedContent::factory()
             ->for($this->content, 'sourceContent')
-            ->create(['format_key' => 'twitter_thread', 'status' => 'completed']);
+            ->create(['space_id' => $this->space->id, 'format_key' => 'twitter_thread', 'status' => 'completed']);
 
         RepurposedContent::factory()
             ->for($this->content, 'sourceContent')
-            ->create(['format_key' => 'linkedin_post', 'status' => 'pending']);
+            ->create(['space_id' => $this->space->id, 'format_key' => 'linkedin_post', 'status' => 'pending']);
 
         $response = $this->actingAs($this->user)
             ->getJson("/api/content/{$this->content->id}/repurposed");
@@ -156,7 +156,7 @@ class RepurposingTest extends TestCase
     {
         $repurposed = RepurposedContent::factory()
             ->for($this->content, 'sourceContent')
-            ->create(['status' => 'processing', 'format_key' => 'twitter_thread']);
+            ->create(['space_id' => $this->space->id, 'status' => 'processing', 'format_key' => 'twitter_thread']);
 
         $response = $this->actingAs($this->user)
             ->getJson("/api/repurposed/{$repurposed->id}");
@@ -217,9 +217,9 @@ class RepurposingTest extends TestCase
     {
         $repurposed = RepurposedContent::factory()
             ->for($this->content, 'sourceContent')
-            ->create(['status' => 'completed']);
+            ->create(['space_id' => \$this->space->id, 'status' => 'completed']);
 
-        $this->assertEquals($this->content->id, $repurposed->content_id);
+        $this->assertEquals($this->content->id, $repurposed->source_content_id);
         $this->assertNotNull($repurposed->id);
     }
 
@@ -247,7 +247,7 @@ class RepurposingTest extends TestCase
     {
         $repurposed = RepurposedContent::factory()
             ->for($this->content, 'sourceContent')
-            ->create(['status' => 'pending']);
+            ->create(['space_id' => \$this->space->id, 'status' => 'pending']);
 
         $this->assertEquals('pending', $repurposed->status);
 

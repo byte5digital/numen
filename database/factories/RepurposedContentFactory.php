@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Content;
+use App\Models\Space;
 use App\Models\RepurposedContent;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -13,6 +14,7 @@ class RepurposedContentFactory extends Factory
     public function definition(): array
     {
         return [
+            'space_id' => Space::factory(),
             'source_content_id' => Content::factory(),
             'format_key' => $this->faker->word(),
             'status' => 'pending',
