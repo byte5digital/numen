@@ -9,65 +9,41 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [0.9.0] — 2026-03-15
-
-### Added
-
-**GraphQL API Layer** ([Discussion #13](https://github.com/byte5digital/numen/discussions/13))
-
-Full-featured GraphQL API powered by Lighthouse PHP, covering all Numen resources with real-time subscriptions, persisted queries, and fine-grained complexity controls.
-
-**Features:**
-- **Lighthouse PHP** — production-grade GraphQL server with SDL-first schema definition
-- **20+ GraphQL types** — Content, Space, Brief, PipelineRun, PipelineStage, MediaAsset, MediaFolder, MediaCollection, User, Role, Permission, Tag, Persona, RepurposedContent, FormatTemplate, ContentRevision, Setting, AuditLog, and more
-- **Cursor pagination** — Relay-spec connection types on all list fields (edges/node/pageInfo)
-- **Mutations** — createBrief, createContent, updateContent, publishContent, unpublishContent, deleteContent, triggerPipeline, uploadMedia, deleteMedia, and more
-- **Real-time subscriptions** — contentUpdated, contentPublished, pipelineStageCompleted via WebSocket (Pusher in production, log driver in dev)
-- **Automatic Persisted Queries (APQ)** — SHA256 hash-based query caching to reduce bandwidth
-- **Complexity scoring** — per-field cost weights with configurable max (GRAPHQL_MAX_COMPLEXITY=500)
-- **Depth limiting** — configurable max nesting depth (GRAPHQL_MAX_DEPTH=10)
-- **N+1 prevention** — Dataloader batching via Lighthouse's built-in batch loading
-- **Field-level caching** — @cache directive with automatic invalidation on model events
-- **Auth directives** — @auth, @can, @guest guards on fields and mutations
-- **GraphiQL explorer** — interactive IDE at /graphiql (dev only)
-- **22 tests** — feature and unit test coverage for all major operations
-
-**Endpoint:** 
-**Docs:** 
-
----
-
-
 
 ## [0.9.0] — 2026-03-15
 
 ### Added
 
-**Plugin & Extension System** ([Discussion #12](https://github.com/byte5digital/numen/discussions/12))
+**AI-Powered Content Knowledge Graph** ([Discussion #14](https://github.com/byte5digital/numen/discussions/14))
 
-A first-class plugin architecture that lets third-party developers extend every layer of Numen — from AI pipelines to admin UI.
+Automatically maps relationships between content items into an interactive knowledge graph, enabling related content discovery, topic clustering, content gap analysis, and D3.js visualization.
 
 **Features:**
-- **Plugin lifecycle:** Discover → Install → Activate → Deactivate → Uninstall with full DB persistence and domain events
-- **Hook registry:** Register pipeline stages, LLM providers, image providers, Vue components, and content-event listeners
-- **Manifest-based:** Plugins declare capabilities in `numen-plugin.json` with semantic versioning and API-version pinning
-- **Admin API:** Full REST API for managing plugins and per-space settings
-- **Admin UI:** Vue component with real-time status, settings editor, and lifecycle controls
-- **Artisan commands:** `plugin:discover`, `plugin:install`, `plugin:activate`, `plugin:deactivate`, `plugin:uninstall`, `plugin:list`, `make:plugin`
-- **Plugin scaffold generator:** `php artisan make:plugin` bootstraps a fully-wired plugin skeleton
-- **Secret settings masking:** Secrets stored in `plugin_settings` are never exposed via the API
-- **Per-space settings:** Plugin configuration can be scoped per workspace
+- **Entity extraction:** AI extracts named entities (persons, organizations, locations, concepts) from content body using Claude
+- **5 edge types:** Semantic similarity (vector embeddings), co-tag (shared taxonomy), co-author (same author), sequential (series order), co-entity (shared named entities)
+- **Topic clustering:** DBSCAN/k-means clustering groups semantically related content into named topic clusters
+- **Content gap analysis:** Identifies under-covered topic clusters relative to audience demand signals, with suggested topics
+- **D3.js visualization:** Force-directed interactive graph in Numen Studio at `/studio/graph/{spaceId}` — nodes colour-coded by cluster, edge thickness indicates weight
+- **Related content widget:** `GET /api/v1/graph/related/{contentId}` powers headless frontend sidebars and bottom-of-page recommendations
+- **Shortest path:** Finds the connection path between any two content nodes for content journey debugging
+- **REST API:** 7 endpoints covering related content, clusters, cluster contents, content gaps, shortest path, node metadata, and manual reindex
 
 **Endpoints:**
-- `GET /api/v1/admin/plugins` — List all plugins
-- `GET /api/v1/admin/plugins/{name}` — Plugin details + settings
-- `POST /api/v1/admin/plugins/{name}/install` — Install a plugin
-- `POST /api/v1/admin/plugins/{name}/activate` — Activate a plugin
-- `POST /api/v1/admin/plugins/{name}/deactivate` — Deactivate a plugin
-- `POST /api/v1/admin/plugins/{name}/uninstall` — Uninstall a plugin
-- `PATCH /api/v1/admin/plugins/{name}/settings` — Update plugin settings
+- `GET /api/v1/graph/related/{contentId}` — Related content with edge type filtering
+- `GET /api/v1/graph/clusters` — Topic cluster summaries for a space
+- `GET /api/v1/graph/clusters/{clusterId}` — Contents of a specific cluster
+- `GET /api/v1/graph/gaps` — Content gap analysis with gap scores
+- `GET /api/v1/graph/path/{fromId}/{toId}` — Shortest path between two nodes
+- `GET /api/v1/graph/node/{contentId}` — Graph node metadata
+- `POST /api/v1/graph/reindex/{contentId}` — Trigger re-indexing (admin)
+
+**New environment variables:**
+- `GRAPH_ENABLED=true`
+- `GRAPH_SIMILARITY_THRESHOLD=0.75`
+- `GRAPH_MAX_EDGES_PER_TYPE=20`
 
 ---
+
 ## [0.8.0] — 2026-03-15
 
 ### Added
@@ -100,11 +76,11 @@ One-click content repurposing to 8 formats with AI-powered tone preservation and
 ---
 ## [Unreleased]
 
-## [0.9.0] — 2026-03-15
+## [0.8.0] — 2026-03-15
 
 ### Added
 
-**Media Library & Digital Asset Management** ([PR #27](https://github.com/byte5digital/numen/pull/27), [Discussion #4](https://github.com/byte5digital/numen/discussions/4))
+**Media Library & Digital Asset Management** ([Discussion #4](https://github.com/byte5digital/numen/discussions/4))
 
 A complete digital asset management (DAM) system for organizing, tagging, editing, and serving media assets. Built for multi-format content delivery and CDN integration.
 
@@ -147,16 +123,6 @@ A complete digital asset management (DAM) system for organizing, tagging, editin
 - `GET /v1/public/media/{asset}` — Fetch public asset
 - `GET /v1/public/media/collections/{collection}` — Fetch collection
 
-**Database Tables:**
-- `media_assets` — core asset metadata (filename, MIME type, dimensions, size, duration, tags)
-- `media_folders` — hierarchical asset organization (adjacency-list model)
-- `media_collections` — user-created smart collections
-- `media_collection_items` — collection membership
-- `media_variants` — auto-generated thumbnail and preview sizes
-- `media_asset_usage` — tracks which content references each asset (prevents accidental deletion)
-
-**Breaking Changes:** None — fully backward compatible.
-
 ---
 
 ### Planned
@@ -164,6 +130,56 @@ A complete digital asset management (DAM) system for organizing, tagging, editin
 - `AgentContract` interface extracted from `Agent` abstract class
 
 ---
+
+## [0.9.0] — 2026-03-15
+
+### Added
+
+**Multi-Language & i18n Support** ([Discussion #7](https://github.com/byte5digital/numen/discussions/7))
+
+Full content localization with AI-powered translation, space-level locale management, and intelligent fallback chains.
+
+**Locale Management:**
+- Space-level locale configuration: add/remove/reorder locales, set default locale
+- Intelligent 5-step fallback chain (exact match → language prefix → fallback config → space default → `"en"`)
+- Prevents invalid locale codes with `Locale` validation class (BCP 47 compliant)
+
+**AI-Powered Translation:**
+- Tone-aware translation using existing Persona system — respects content creator's voice
+- Async job queue (`TranslateContentJob` on `ai-pipeline` queue) for background processing
+- Translation status tracking: pending → completed/failed with error logging
+- Job retry support with configurable backoff
+
+**Translation Workflow:**
+- Translation matrix view showing per-content, per-locale coverage and status
+- Side-by-side translation editor for reviewing AI-generated translations
+- Manual translation support via API
+- Batch translation operations with progress reporting
+
+**REST API Endpoints:**
+- **Locale Management:** `GET/POST/PATCH/DELETE /api/v1/locales` (space-scoped)
+- **Translation Workflow:** `POST /api/v1/content/{content}/translate`, `GET /api/v1/content/{content}/translations`
+- **Translation Matrix:** `GET /api/v1/translations/matrix` with pagination and status filters
+- **Supported Locales:** `GET /api/v1/locales/supported` for available BCP 47 codes
+
+**Locale Awareness:**
+- Middleware: `SetLocaleFromRequest` respects `Accept-Language` header, `?locale=` query param, and `X-Locale` header
+- API responses include current locale context; content delivery selects best-match locale automatically
+- Graceful fallback for missing translations (no errors, uses fallback chain)
+
+**CLI:**
+- `php artisan numen:setup-i18n {space_id}` — automated migration of existing spaces to i18n (adds default locale + tracks baseline)
+
+**Database Tables:**
+- `space_locales` — locale configurations per space (locale code, is_default, sort order)
+- `translation_jobs` — async translation job tracking (content_id, from_locale, to_locale, status, result)
+
+**Zero Breaking Changes:**
+- Feature is fully additive — existing single-language spaces work unchanged
+- No migrations required for spaces that don't use i18n
+- Backward compatible with all existing API routes
+
+
 
 ## [0.7.0] — 2026-03-15
 
@@ -364,10 +380,7 @@ Initial public release. This is the "here's what we have" release — solid arch
 
 ---
 
-[Unreleased]: https://github.com/byte5digital/numen/compare/v0.9.0...HEAD
-[0.9.0]: https://github.com/byte5digital/numen/compare/v0.8.0...v0.9.0
-[0.8.0]: https://github.com/byte5digital/numen/compare/v0.7.0...v0.8.0
-[0.7.0]: https://github.com/byte5digital/numen/compare/v0.2.1...v0.7.0
+[Unreleased]: https://github.com/byte5digital/numen/compare/v0.2.1...HEAD
 [0.2.1]: https://github.com/byte5digital/numen/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/byte5digital/numen/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/byte5digital/numen/compare/v0.1.0...v0.1.1

@@ -302,3 +302,16 @@ Route::prefix('v1/public')->middleware('throttle:120,1')->group(function () {
     Route::get('/media/collections/{collection}', [PublicMediaController::class, 'collection']);
     Route::get('/media/{asset}', [PublicMediaController::class, 'show']);
 });
+
+// Knowledge Graph API
+use App\Http\Controllers\Api\GraphController;
+
+Route::prefix('v1/graph')->middleware('auth:sanctum')->group(function () {
+    Route::get('/related/{contentId}', [GraphController::class, 'related']);
+    Route::get('/clusters', [GraphController::class, 'clusters']);
+    Route::get('/clusters/{clusterId}', [GraphController::class, 'clusterContents']);
+    Route::get('/gaps', [GraphController::class, 'gaps']);
+    Route::get('/path/{fromId}/{toId}', [GraphController::class, 'path']);
+    Route::get('/node/{contentId}', [GraphController::class, 'node']);
+    Route::post('/reindex/{contentId}', [GraphController::class, 'reindex']);
+});
