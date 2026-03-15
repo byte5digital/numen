@@ -145,7 +145,7 @@ return [
          * Allows using a specific cache store, uses the app's default if set to null.
          * Not relevant when using opcache mode.
          */
-        'store' => env('LIGHTHOUSE_QUERY_CACHE_STORE', null),
+        'store' => env('LIGHTHOUSE_QUERY_CACHE_STORE', env('APP_ENV') === 'production' ? 'redis' : 'file'),
 
         /*
          * Duration in seconds the query should remain cached, null means forever.
@@ -213,7 +213,7 @@ return [
         'interfaces' => 'App\\GraphQL\\Interfaces',
         'unions' => 'App\\GraphQL\\Unions',
         'scalars' => 'App\\GraphQL\\Scalars',
-        'directives' => 'App\\GraphQL\\Directives',
+        'directives' => ['App\\GraphQL\\Directives', 'App\\GraphQL\\Middleware'],
         'validators' => 'App\\GraphQL\\Validators',
     ],
 
@@ -327,6 +327,8 @@ return [
         Nuwave\Lighthouse\Schema\Directives\SpreadDirective::class,
         Nuwave\Lighthouse\Schema\Directives\RenameArgsDirective::class,
         Nuwave\Lighthouse\Schema\Directives\DropArgsDirective::class,
+        // Tracks query cost, execution time, and user for analytics
+        App\GraphQL\Middleware\CostTrackingMiddleware::class,
     ],
 
     /*
@@ -350,9 +352,19 @@ return [
     | [Apollo implementation](https://www.apollographql.com/docs/apollo-server/performance/apq).
     | You may set this flag to either process or deny these queries.
     |
+    | APQ allows clients to send a query hash instead of the full query string
+    | on subsequent requests, saving bandwidth. The first request registers the
+    | query; thereafter only the hash is needed.
+    |
+    | Cache store selection:
+    |   - local/dev: 'file' (default) — persisted to filesystem
+    |   - production: 'redis' — shared across all servers
+    |
+    | Configure via LIGHTHOUSE_QUERY_CACHE_STORE env variable.
+    |
     */
 
-    'persisted_queries' => true,
+    'persisted_queries' => env('LIGHTHOUSE_PERSISTED_QUERIES', true),
 
     /*
     |--------------------------------------------------------------------------

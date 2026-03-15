@@ -7,6 +7,7 @@ scalar JSON @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\JSON")
 type Query {
     contentBySlug(slug: String!, locale: String! = "en", spaceSlug: String!): Content
         @field(resolver: "App\\GraphQL\\Queries\\ContentBySlugQuery")
+        @cache(maxAge: 30)
 
     contents(
         spaceSlug: String!
@@ -18,13 +19,15 @@ type Query {
     ): ContentPaginator
         @field(resolver: "App\\GraphQL\\Queries\\ContentsQuery")
         @complexity(resolver: "App\\GraphQL\\Complexity\\PaginatedComplexity")
+        @cache(maxAge: 60)
 
     space(id: ID!): Space @guard @find(model: "App\\Models\\Space")
     spaces: [Space!]! @guard @all(model: "App\\Models\\Space")
-    content(id: ID!): Content @guard @find(model: "App\\Models\\Content")
+    content(id: ID!): Content @guard @find(model: "App\\Models\\Content") @cache(maxAge: 30)
     contentTypes(spaceId: ID!): [ContentType!]!
         @guard
         @field(resolver: "App\\GraphQL\\Queries\\ContentTypesQuery")
+        @cache(maxAge: 300)
     contentVersion(id: ID!): ContentVersion
         @guard
         @find(model: "App\\Models\\ContentVersion")
@@ -38,7 +41,7 @@ type Space {
     api_config: JSON
     created_at: DateTime!
     updated_at: DateTime!
-    contentTypes: [ContentType!]! @hasMany @with(relation: "contentTypes")
+    contentTypes: [ContentType!]! @hasMany @with(relation: "contentTypes") @cache(maxAge: 300)
     contents(status: String, locale: String, first: Int = 20, page: Int): ContentPaginator
         @field(resolver: "App\\GraphQL\\Queries\\SpaceContentsQuery")
         @complexity(resolver: "App\\GraphQL\\Complexity\\PaginatedComplexity")
@@ -241,7 +244,7 @@ type Vocabulary {
     created_at: DateTime!
     updated_at: DateTime!
     space: Space! @belongsTo @with(relation: "space")
-    terms: [TaxonomyTerm!]! @hasMany @with(relation: "terms")
+    terms: [TaxonomyTerm!]! @hasMany @with(relation: "terms") @cache(maxAge: 300)
 }
 
 "A TaxonomyTerm is a single entry within a Vocabulary."
@@ -331,6 +334,7 @@ extend type Query {
     vocabularies(spaceId: ID!): [Vocabulary!]!
         @guard
         @field(resolver: "App\\GraphQL\\Queries\\VocabulariesQuery")
+        @cache(maxAge: 300)
 
     briefs(spaceId: ID!, status: BriefStatus, first: Int = 20, after: String): ContentBriefConnection!
         @guard
@@ -344,6 +348,7 @@ extend type Query {
     pages(spaceId: ID!, first: Int = 20, after: String): PageConnection!
         @field(resolver: "App\\GraphQL\\Queries\\PagesQuery")
         @complexity(resolver: "App\\GraphQL\\Complexity\\PaginatedComplexity")
+        @cache(maxAge: 60)
 }
 
 input CreateContentInput {
