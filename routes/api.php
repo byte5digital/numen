@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\WebhookController;
+use App\Http\Controllers\Api\WebhookDeliveryController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -78,7 +79,9 @@ Route::prefix('v1')->group(function () {
         Route::put('/webhooks/{id}', [WebhookController::class, 'update']);
         Route::delete('/webhooks/{id}', [WebhookController::class, 'destroy']);
         Route::post('/webhooks/{id}/rotate-secret', [WebhookController::class, 'rotateSecret']);
-        Route::get('/webhooks/{id}/deliveries', [WebhookController::class, 'deliveries']);
+        Route::get('/webhooks/{id}/deliveries', [WebhookDeliveryController::class, 'index']);
+        Route::get('/webhooks/{id}/deliveries/{deliveryId}', [WebhookDeliveryController::class, 'show']);
+        Route::post('/webhooks/{id}/deliveries/{deliveryId}/redeliver', [WebhookDeliveryController::class, 'redeliver']);
 
         // Personas
         Route::get('/personas', function () {

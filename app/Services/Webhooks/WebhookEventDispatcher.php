@@ -43,6 +43,7 @@ class WebhookEventDispatcher
                 'event_id' => $payload['id'],
                 'event_type' => $eventType,
                 'payload_hash' => $payloadHash,
+                'payload' => $payload,
                 'attempt_number' => 1,
                 'status' => WebhookDelivery::STATUS_PENDING,
                 'scheduled_at' => now(),

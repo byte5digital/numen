@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $event_id
  * @property string $event_type
  * @property string|null $payload_hash
+ * @property array|null $payload
  * @property int $attempt_number
  * @property string $status
  * @property int|null $http_status
@@ -26,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class WebhookDelivery extends Model
 {
+    use HasFactory;
     use HasUlids;
 
     // Delivery status constants
@@ -45,6 +48,7 @@ class WebhookDelivery extends Model
         'event_id',
         'event_type',
         'payload_hash',
+        'payload',
         'attempt_number',
         'status',
         'http_status',
@@ -56,6 +60,7 @@ class WebhookDelivery extends Model
     ];
 
     protected $casts = [
+        'payload' => 'array',
         'attempt_number' => 'integer',
         'http_status' => 'integer',
         'scheduled_at' => 'datetime',

@@ -33,7 +33,8 @@ class DeliverWebhook implements ShouldQueue
         $webhook = $this->delivery->webhook;
 
         $body = json_encode($this->payload, JSON_UNESCAPED_UNICODE);
-        $signature = 'sha256='.hash_hmac('sha256', $body, $webhook->secret);
+        $hmac = hash_hmac('sha256', $body, $webhook->secret);
+        $signature = 'sha256='.$hmac;
 
         $headers = array_merge(
             $webhook->headers ?? [],
@@ -41,7 +42,7 @@ class DeliverWebhook implements ShouldQueue
                 'Content-Type' => 'application/json',
                 'X-Numen-Event' => $this->delivery->event_type,
                 'X-Numen-Delivery' => $this->delivery->id,
-                'X-Numen-Signature-256' => $signature,
+                'X-Numen-Signature' => $signature,
             ],
         );
 
