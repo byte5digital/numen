@@ -25,6 +25,7 @@ const navigation = [
     { name: 'Queue', href: '/admin/queue', icon: '⚙️' },
     { name: 'Users', href: '/admin/users', icon: '👥' },
     { name: 'API Tokens', href: '/admin/tokens', icon: '🔑' },
+    { name: 'Webhooks', href: '/admin/webhooks', icon: '🔗' },
     { name: 'Settings', href: '/admin/settings', icon: '⚙️' },
     { name: 'Plugins', href: '/admin/plugins', icon: '🧩' },
 ];
