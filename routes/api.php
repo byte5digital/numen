@@ -4,6 +4,11 @@ use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
+use App\Http\Controllers\Api\MediaController;
+use App\Http\Controllers\Api\MediaFolderController;
+use App\Http\Controllers\Api\MediaCollectionController;
+use App\Http\Controllers\Api\MediaEditController;
+use App\Http\Controllers\Api\PublicMediaController;
 use App\Http\Controllers\Api\ContentTaxonomyController;
 use App\Http\Controllers\Api\FormatTemplateController;
 use App\Http\Controllers\Api\PageController;
@@ -245,6 +250,42 @@ Route::prefix('v1')->group(function () {
             Route::get('/content-gaps', [SearchAdminController::class, 'contentGaps']);
         });
 
+
+        // Media Library — CRUD for assets, folders, collections, editing
+        Route::prefix('/media')->group(function () {
+            // Asset listing, upload, fetch, update, delete
+            Route::get('/', [MediaController::class, 'index']);
+            Route::post('/', [MediaController::class, 'store']);
+            Route::get('/{asset}', [MediaController::class, 'show']);
+            Route::patch('/{asset}', [MediaController::class, 'update']);
+            Route::delete('/{asset}', [MediaController::class, 'destroy']);
+            Route::patch('/{asset}/move', [MediaController::class, 'move']);
+
+            // Image editing (crop, rotate, resize)
+            Route::post('/{asset}/edit', [MediaEditController::class, 'edit']);
+
+            // Folders — create, list, update hierarchy
+            Route::get('/folders', [MediaFolderController::class, 'index']);
+            Route::post('/folders', [MediaFolderController::class, 'store']);
+            Route::get('/folders/{folder}', [MediaFolderController::class, 'show']);
+            Route::patch('/folders/{folder}', [MediaFolderController::class, 'update']);
+            Route::delete('/folders/{folder}', [MediaFolderController::class, 'destroy']);
+
+            // Collections — curated asset groupings
+            Route::get('/collections', [MediaCollectionController::class, 'index']);
+            Route::post('/collections', [MediaCollectionController::class, 'store']);
+            Route::get('/collections/{collection}', [MediaCollectionController::class, 'show']);
+            Route::patch('/collections/{collection}', [MediaCollectionController::class, 'update']);
+            Route::delete('/collections/{collection}', [MediaCollectionController::class, 'destroy']);
+            Route::post('/collections/{collection}/items', [MediaCollectionController::class, 'addItems']);
+            Route::delete('/collections/{collection}/items/{itemId}', [MediaCollectionController::class, 'removeItem']);
+        });
+
+        // Public Media CDN API (no auth required)
+        Route::prefix('/media/public')->group(function () {
+            Route::get('/{publicUrl}', [PublicMediaController::class, 'serve']);
+            Route::head('/{publicUrl}', [PublicMediaController::class, 'head']);
+        });
         // Analytics
         Route::get('/analytics/costs', function () {
             $logs = \App\Models\AIGenerationLog::selectRaw('
