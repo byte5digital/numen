@@ -77,7 +77,7 @@ class RepurposingTest extends TestCase
         $response->assertCreated();
 
         $repurposed = RepurposedContent::where([
-            'content_id' => $this->content->id,
+            'source_content_id' => $this->content->id,
             'format_key' => 'twitter_thread',
         ])->first();
 
