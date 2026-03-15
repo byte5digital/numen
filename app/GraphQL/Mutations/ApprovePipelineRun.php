@@ -2,6 +2,8 @@
 
 namespace App\GraphQL\Mutations;
 
+use App\GraphQL\Events\ContentPublishedEvent;
+use App\GraphQL\Events\PipelineRunUpdatedEvent;
 use App\Models\PipelineRun;
 use App\Services\AuthorizationService;
 use Illuminate\Support\Facades\Auth;
@@ -30,12 +32,18 @@ class ApprovePipelineRun
         $content = $run->content;
         if ($content) {
             $content->publish();
+            ContentPublishedEvent::dispatch($content->fresh(['currentVersion', 'contentType', 'space']));
         }
 
         $run->markCompleted();
 
         $this->authz->log($user, 'pipeline.approve', $run);
 
-        return $run->fresh(['pipeline', 'content']);
+        $fresh = $run->fresh(['pipeline', 'content']);
+
+        // Fire subscription broadcast for pipeline run update
+        PipelineRunUpdatedEvent::dispatch($fresh);
+
+        return $fresh;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\GraphQL\Mutations;
 
+use App\GraphQL\Events\ContentPublishedEvent;
 use App\Models\Content;
 use App\Services\AuthorizationService;
 use Illuminate\Support\Facades\Auth;
@@ -24,6 +25,11 @@ class PublishContent
 
         $this->authz->log($user, 'content.publish', $content);
 
-        return $content->fresh(['currentVersion', 'contentType', 'space']);
+        $fresh = $content->fresh(['currentVersion', 'contentType', 'space']);
+
+        // Fire subscription broadcast
+        ContentPublishedEvent::dispatch($fresh);
+
+        return $fresh;
     }
 }
