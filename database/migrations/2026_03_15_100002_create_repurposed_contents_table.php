@@ -8,7 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('repurposed_contents', function (Blueprint $table) {
+        if (! Schema::hasTable('repurposed_contents')) {
+            Schema::create('repurposed_contents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('space_id')->constrained()->cascadeOnDelete();
             $table->foreignId('source_content_id')->constrained('contents')->cascadeOnDelete();
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->index(['source_content_id', 'format_key']);
             $table->index(['space_id', 'status']);
         });
+        }
     }
 
     public function down(): void

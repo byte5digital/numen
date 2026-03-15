@@ -8,7 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('space_locales', function (Blueprint $table) {
+        if (! Schema::hasTable('space_locales')) {
+            Schema::create('space_locales', function (Blueprint $table) {
             $table->id();
             $table->foreignId('space_id')->constrained()->cascadeOnDelete();
             $table->string('locale', 10); // e.g. en, fr, de, zh-TW
@@ -20,6 +21,7 @@ return new class extends Migration
             $table->timestamps();
             $table->unique(['space_id', 'locale']);
         });
+        }
     }
 
     public function down(): void

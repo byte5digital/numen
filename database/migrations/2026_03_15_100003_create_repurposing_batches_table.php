@@ -8,7 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('repurposing_batches', function (Blueprint $table) {
+        if (! Schema::hasTable('repurposing_batches')) {
+            Schema::create('repurposing_batches', function (Blueprint $table) {
             $table->id();
             $table->foreignId('space_id')->constrained()->cascadeOnDelete();
             $table->string('format_key', 50);
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->timestamps();
             $table->index(['space_id', 'status']);
         });
+        }
     }
 
     public function down(): void

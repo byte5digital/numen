@@ -8,7 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('format_templates', function (Blueprint $table) {
+        if (! Schema::hasTable('format_templates')) {
+            Schema::create('format_templates', function (Blueprint $table) {
             $table->id();
             $table->foreignId('space_id')->nullable()->constrained()->nullOnDelete(); // null = global default
             $table->string('format_key', 50); // twitter_thread, linkedin_post, newsletter_section, etc.
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->timestamps();
             $table->index('format_key');
         });
+        }
 
         // SQLite-compatible unique index (avoids MySQL-specific column prefix syntax)
         \DB::statement('CREATE UNIQUE INDEX IF NOT EXISTS format_templates_space_id_format_key_unique ON format_templates (space_id, format_key)');
