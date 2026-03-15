@@ -358,3 +358,27 @@ Route::prefix('v1/chat')->middleware(['auth:sanctum', 'throttle:20,1'])->group(f
     Route::delete('/conversations/{id}/confirm', [ChatController::class, 'cancelAction']);
     Route::get('/suggestions', [ChatController::class, 'suggestions']);
 });
+
+// --- #36 Pipeline Templates API ---
+use App\Http\Controllers\Api\Templates\PipelineTemplateController;
+use App\Http\Controllers\Api\Templates\PipelineTemplateInstallController;
+use App\Http\Controllers\Api\Templates\PipelineTemplateRatingController;
+use App\Http\Controllers\Api\Templates\PipelineTemplateVersionController;
+
+Route::prefix('v1/spaces/{space}/pipeline-templates')->middleware('auth:sanctum')->group(function () {
+    Route::get('/', [PipelineTemplateController::class, 'index'])->name('api.pipeline-templates.index');
+    Route::post('/', [PipelineTemplateController::class, 'store'])->name('api.pipeline-templates.store');
+    Route::get('/{template}', [PipelineTemplateController::class, 'show'])->name('api.pipeline-templates.show');
+    Route::patch('/{template}', [PipelineTemplateController::class, 'update'])->name('api.pipeline-templates.update');
+    Route::delete('/{template}', [PipelineTemplateController::class, 'destroy'])->name('api.pipeline-templates.destroy');
+    Route::post('/{template}/publish', [PipelineTemplateController::class, 'publish'])->name('api.pipeline-templates.publish');
+    Route::post('/{template}/unpublish', [PipelineTemplateController::class, 'unpublish'])->name('api.pipeline-templates.unpublish');
+    Route::get('/{template}/versions', [PipelineTemplateVersionController::class, 'index'])->name('api.pipeline-templates.versions.index');
+    Route::post('/{template}/versions', [PipelineTemplateVersionController::class, 'store'])->name('api.pipeline-templates.versions.store');
+    Route::get('/{template}/versions/{version}', [PipelineTemplateVersionController::class, 'show'])->name('api.pipeline-templates.versions.show');
+    Route::post('/installs/{version}', [PipelineTemplateInstallController::class, 'store'])->name('api.pipeline-templates.installs.store');
+    Route::patch('/installs/{install}', [PipelineTemplateInstallController::class, 'update'])->name('api.pipeline-templates.installs.update');
+    Route::delete('/installs/{install}', [PipelineTemplateInstallController::class, 'destroy'])->name('api.pipeline-templates.installs.destroy');
+    Route::get('/{template}/ratings', [PipelineTemplateRatingController::class, 'index'])->name('api.pipeline-templates.ratings.index');
+    Route::post('/{template}/ratings', [PipelineTemplateRatingController::class, 'store'])->name('api.pipeline-templates.ratings.store');
+});
