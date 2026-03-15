@@ -346,13 +346,14 @@ Route::prefix('v1/chat')->middleware(['auth:sanctum', 'throttle:20,1'])->group(f
     Route::get('/suggestions', [ChatController::class, 'suggestions']);
 });
 
-// Knowledge Graph API
-Route::prefix('v1/graph')->middleware('auth:sanctum')->group(function () {
-    Route::get('/related/{contentId}', [GraphController::class, 'related']);
-    Route::get('/clusters', [GraphController::class, 'clusters']);
-    Route::get('/clusters/{clusterId}', [GraphController::class, 'clusterContents']);
-    Route::get('/gaps', [GraphController::class, 'gaps']);
-    Route::get('/path/{fromId}/{toId}', [GraphController::class, 'path']);
-    Route::get('/node/{contentId}', [GraphController::class, 'node']);
-    Route::post('/reindex/{contentId}', [GraphController::class, 'reindex']);
+// Chat / Conversational CMS API
+Route::prefix('v1/chat')->middleware(['auth:sanctum', 'throttle:20,1'])->group(function () {
+    Route::get('/conversations', [ChatController::class, 'conversations']);
+    Route::post('/conversations', [ChatController::class, 'createConversation']);
+    Route::delete('/conversations/{id}', [ChatController::class, 'deleteConversation']);
+    Route::get('/conversations/{id}/messages', [ChatController::class, 'messages']);
+    Route::post('/conversations/{id}/messages', [ChatController::class, 'sendMessage']);
+    Route::post('/conversations/{id}/confirm', [ChatController::class, 'confirmAction']);
+    Route::delete('/conversations/{id}/confirm', [ChatController::class, 'cancelAction']);
+    Route::get('/suggestions', [ChatController::class, 'suggestions']);
 });

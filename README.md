@@ -96,6 +96,9 @@ Role-based access control (Admin, Editor, Author, Viewer) with space-scoped perm
 ### Plugin & Extension System
 First-class plugin architecture. Extend pipelines, register custom LLM providers, add admin UI, and react to content events — all from a self-contained plugin package.
 
+### Plugin & Extension System
+First-class plugin architecture. Extend pipelines, register custom LLM providers, add admin UI, and react to content events — all from a self-contained plugin package.
+
 ## Architecture
 
 ```
