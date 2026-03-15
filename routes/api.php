@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\Versioning\DiffController;
 use App\Http\Controllers\Api\Versioning\VersionController;
 use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\WebhookDeliveryController;
+use App\Http\Controllers\Api\LocaleController;
+use App\Http\Controllers\Api\TranslationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -144,4 +146,14 @@ Route::prefix('v1/locales')->group(function () {
         Route::delete('/{locale}', [LocaleController::class, 'destroy']);
         Route::post('/{locale}/set-default', [LocaleController::class, 'setDefault']);
     });
+});
+
+// Translation workflow
+Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
+    Route::get('/translations/matrix', [TranslationController::class, 'matrix']);
+    Route::get('/content/{content}/translations', [TranslationController::class, 'status']);
+    Route::post('/content/{content}/translate', [TranslationController::class, 'translate']);
+    Route::get('/content/{content}/translate/estimate', [TranslationController::class, 'estimateCost']);
+    Route::delete('/translations/{job}', [TranslationController::class, 'cancel']);
+    Route::post('/translations/{job}/retry', [TranslationController::class, 'retry']);
 });
