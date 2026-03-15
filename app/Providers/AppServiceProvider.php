@@ -8,7 +8,9 @@ use App\Events\Content\ContentUnpublished;
 use App\Listeners\IndexContentForSearch;
 use App\Listeners\RemoveFromSearchIndex;
 use App\Models\Content;
+use App\Models\ContentPipeline;
 use App\Models\Setting;
+use App\Policies\ContentPipelinePolicy;
 use App\Policies\ContentPolicy;
 use App\Services\AI\CostTracker;
 use App\Services\AI\ImageManager;
@@ -107,7 +109,17 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Register content access policies
+        // Global admin bypass — admins can do anything
+        Gate::before(function ($user, string $ability): ?bool {
+            if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
+                return true;
+            }
+
+            return null;
+        });
+
         Gate::policy(Content::class, ContentPolicy::class);
+        Gate::policy(ContentPipeline::class, ContentPipelinePolicy::class);
 
         // Load DB settings into config (overrides .env defaults)
         Setting::loadIntoConfig();
