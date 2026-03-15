@@ -1600,6 +1600,304 @@ paths:
           description: Rate limit exceeded
 
 
+
+  /locales:
+    get:
+      operationId: listLocales
+      summary: List space locales
+      description: Get all configured locales for a space. **Authentication required.**
+      tags: [Locales]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of locales
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        space_id:
+                          type: string
+                          format: uuid
+                        locale:
+                          type: string
+                        is_default:
+                          type: boolean
+                        sort_order:
+                          type: integer
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Space access denied
+    post:
+      operationId: createLocale
+      summary: Add locale to space
+      description: Create a new locale configuration. **Authentication required.**
+      tags: [Locales]
+      security:
+        - sanctumToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                space_id:
+                  type: string
+                  format: uuid
+                locale:
+                  type: string
+                  example: "de"
+                is_default:
+                  type: boolean
+              required: [space_id, locale]
+      responses:
+        '201':
+          description: Locale created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Space access denied
+        '422':
+          description: Validation error
+
+  /locales/{id}:
+    patch:
+      operationId: updateLocale
+      summary: Update locale configuration
+      description: Modify a space locale. **Authentication required.**
+      tags: [Locales]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                is_default:
+                  type: boolean
+                sort_order:
+                  type: integer
+      responses:
+        '200':
+          description: Locale updated
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Space access denied
+        '404':
+          description: Locale not found
+    delete:
+      operationId: deleteLocale
+      summary: Remove locale from space
+      description: Delete a locale. **Authentication required.**
+      tags: [Locales]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Locale deleted
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Space access denied
+        '404':
+          description: Locale not found
+
+  /locales/supported:
+    get:
+      operationId: listSupportedLocales
+      summary: Get supported locales
+      description: List valid BCP 47 locale codes.
+      tags: [Locales]
+      responses:
+        '200':
+          description: List of supported locales
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        name:
+                          type: string
+
+  /content/{id}/translate:
+    post:
+      operationId: translateContent
+      summary: Translate content to target locale
+      description: Trigger AI-powered translation. **Authentication required.**
+      tags: [Translations]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_locale:
+                  type: string
+                  example: "fr"
+                force:
+                  type: boolean
+              required: [target_locale]
+      responses:
+        '202':
+          description: Translation job queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Content access denied
+        '404':
+          description: Content not found
+        '422':
+          description: Validation error
+
+  /content/{id}/translations:
+    get:
+      operationId: listContentTranslations
+      summary: List translations for content
+      description: Get all translations for content. **Authentication required.**
+      tags: [Translations]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of translations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Content access denied
+        '404':
+          description: Content not found
+
+  /translations/matrix:
+    get:
+      operationId: getTranslationMatrix
+      summary: Translation coverage matrix
+      description: Get per-content, per-locale translation status. **Authentication required.**
+      tags: [Translations]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status_filter
+          in: query
+          schema:
+            type: string
+            enum: [all, pending, completed, failed]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Translation matrix
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Space access denied
+
 tags:
   - name: Content
     description: Public content delivery endpoints (60 req/min)
@@ -1617,3 +1915,7 @@ tags:
     description: AI generation cost and usage analytics (authenticated)
   - name: Webhooks
     description: Event webhooks with HMAC signing and delivery audit trail (authenticated)
+  - name: Locales
+    description: Locale management — space configuration, BCP 47 codes, fallback chains
+  - name: Translations
+    description: Content translation — AI-powered workflow, matrix view, batch operations
