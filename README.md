@@ -79,6 +79,9 @@ OpenAI, Together AI, fal.ai, Replicate — choose the best model for your brand.
 ### RBAC with AI Governance
 Role-based access control (Admin, Editor, Author, Viewer) with space-scoped permissions, AI budget limits, and immutable audit logs.
 
+### Webhooks Admin UI
+Manage webhook endpoints and event subscriptions directly from the admin panel (Settings → Webhooks). Create, edit, delete endpoints; select event subscriptions; view delivery logs; rotate signing secrets; and manually redeliver webhooks (rate-limited to 10/minute per user).
+
 ### CLI for Automation
 8 commands for content, briefs, and pipeline management — perfect for CI/CD hooks and server-side workflows.
 
@@ -92,6 +95,9 @@ Role-based access control (Admin, Editor, Author, Viewer) with space-scoped perm
 - **GraphiQL explorer** at `/graphiql` for interactive development
 - See [docs/graphql-api.md](docs/graphql-api.md) for the full guide
 
+
+### Plugin & Extension System
+First-class plugin architecture. Extend pipelines, register custom LLM providers, add admin UI, and react to content events — all from a self-contained plugin package.
 
 ### Plugin & Extension System
 First-class plugin architecture. Extend pipelines, register custom LLM providers, add admin UI, and react to content events — all from a self-contained plugin package.
