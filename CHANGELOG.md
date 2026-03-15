@@ -76,6 +76,10 @@ One-click content repurposing to 8 formats with AI-powered tone preservation and
 ---
 ## [Unreleased]
 
+### Added
+
+- Webhooks admin UI — manage webhook endpoints, event subscriptions, delivery logs, and secret rotation directly from the admin panel (Settings → Webhooks)
+
 ## [0.8.0] — 2026-03-15
 
 ### Added
