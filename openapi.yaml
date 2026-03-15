@@ -489,6 +489,100 @@ components:
           type: string
           format: date-time
 
+    MediaAsset:
+      type: object
+      properties:
+        id:
+          type: string
+          example: asset-uuid-123
+        filename:
+          type: string
+          example: hero-image.jpg
+        mime_type:
+          type: string
+          example: image/jpeg
+        size_bytes:
+          type: integer
+          example: 524288
+        width:
+          type: integer
+          example: 1920
+        height:
+          type: integer
+          example: 1080
+        title:
+          type: string
+        description:
+          type: string
+        alt_text:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        url:
+          type: string
+          format: uri
+        folder_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - filename
+        - mime_type
+        - size_bytes
+        - url
+
+    MediaFolder:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        parent_id:
+          type: string
+          nullable: true
+        asset_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    MediaCollection:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [manual, smart]
+        rules:
+          type: object
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaAsset'
+        item_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
 paths:
   # ─── Content Delivery (Public, 60 req/min) ────────────────────────────────
 
@@ -1600,6 +1694,231 @@ paths:
           description: Rate limit exceeded
 
 
+
+  /media:
+    get:
+      tags: [Media Library]
+      summary: List media assets
+      operationId: listMedia
+      security: [{sanctumToken: []}]
+      responses:
+        "200":
+          description: Paginated assets
+    post:
+      tags: [Media Library]
+      summary: Upload media asset
+      operationId: uploadMedia
+      security: [{sanctumToken: []}]
+      responses:
+        "201":
+          description: Asset uploaded
+
+  /media/{asset}:
+    get:
+      tags: [Media Library]
+      summary: Get asset
+      operationId: getMedia
+      security: [{sanctumToken: []}]
+      responses:
+        "200":
+          description: Asset
+    patch:
+      tags: [Media Library]
+      summary: Update asset
+      operationId: updateMedia
+      security: [{sanctumToken: []}]
+      responses:
+        "200":
+          description: Updated
+    delete:
+      tags: [Media Library]
+      summary: Delete asset
+      operationId: deleteMedia
+      security: [{sanctumToken: []}]
+      responses:
+        "204":
+          description: Deleted
+
+  /media/{asset}/move:
+    patch:
+      tags: [Media Library]
+      summary: Move asset to folder
+      operationId: moveMedia
+      security: [{sanctumToken: []}]
+      responses:
+        "200":
+          description: Moved
+
+  /media/{asset}/usage:
+    get:
+      tags: [Media Library]
+      summary: Get asset usage
+      operationId: getMediaUsage
+      security: [{sanctumToken: []}]
+      responses:
+        "200":
+          description: Usage info
+
+  /media/{asset}/edit:
+    post:
+      tags: [Media Library]
+      summary: Edit image (crop/rotate/resize)
+      operationId: editMedia
+      security: [{sanctumToken: []}]
+      responses:
+        "201":
+          description: Variant created
+
+  /media/{asset}/variants:
+    get:
+      tags: [Media Library]
+      summary: Get image variants
+      operationId: getMediaVariants
+      security: [{sanctumToken: []}]
+      responses:
+        "200":
+          description: Variants list
+
+  /media/folders:
+    get:
+      tags: [Media Library]
+      summary: List media folders
+      operationId: listMediaFolders
+      security: [{sanctumToken: []}]
+      responses:
+        "200":
+          description: List of folders
+    post:
+      tags: [Media Library]
+      summary: Create media folder
+      operationId: createMediaFolder
+      security: [{sanctumToken: []}]
+      responses:
+        "201":
+          description: Folder created
+
+  /media/folders/{folder}:
+    patch:
+      tags: [Media Library]
+      summary: Update media folder
+      operationId: updateMediaFolder
+      security: [{sanctumToken: []}]
+      responses:
+        "200":
+          description: Folder updated
+    delete:
+      tags: [Media Library]
+      summary: Delete media folder
+      operationId: deleteMediaFolder
+      security: [{sanctumToken: []}]
+      responses:
+        "204":
+          description: Folder deleted
+
+  /media/folders/{folder}/move:
+    patch:
+      tags: [Media Library]
+      summary: Move folder to parent
+      operationId: moveMediaFolder
+      security: [{sanctumToken: []}]
+      responses:
+        "200":
+          description: Folder moved
+
+  /media/collections:
+    get:
+      tags: [Media Library]
+      summary: List media collections
+      operationId: listMediaCollections
+      security: [{sanctumToken: []}]
+      responses:
+        "200":
+          description: List of collections
+    post:
+      tags: [Media Library]
+      summary: Create media collection
+      operationId: createMediaCollection
+      security: [{sanctumToken: []}]
+      responses:
+        "201":
+          description: Collection created
+
+  /media/collections/{collection}:
+    get:
+      tags: [Media Library]
+      summary: Get media collection
+      operationId: getMediaCollection
+      security: [{sanctumToken: []}]
+      responses:
+        "200":
+          description: Collection details
+    patch:
+      tags: [Media Library]
+      summary: Update media collection
+      operationId: updateMediaCollection
+      security: [{sanctumToken: []}]
+      responses:
+        "200":
+          description: Collection updated
+    delete:
+      tags: [Media Library]
+      summary: Delete media collection
+      operationId: deleteMediaCollection
+      security: [{sanctumToken: []}]
+      responses:
+        "204":
+          description: Collection deleted
+
+  /media/collections/{collection}/items:
+    post:
+      tags: [Media Library]
+      summary: Add item to collection
+      operationId: addMediaCollectionItem
+      security: [{sanctumToken: []}]
+      responses:
+        "201":
+          description: Item added
+
+  /media/collections/{collection}/items/{asset}:
+    delete:
+      tags: [Media Library]
+      summary: Remove item from collection
+      operationId: removeMediaCollectionItem
+      security: [{sanctumToken: []}]
+      responses:
+        "204":
+          description: Item removed
+
+  /public/media:
+    get:
+      tags: [Public Media API]
+      summary: List public media assets
+      description: Public API for headless (no auth, 120 req/min throttle)
+      operationId: listPublicMedia
+      responses:
+        "200":
+          description: Public assets
+        "429":
+          description: Rate limit exceeded
+
+  /public/media/{asset}:
+    get:
+      tags: [Public Media API]
+      summary: Get public asset
+      operationId: getPublicMedia
+      responses:
+        "200":
+          description: Public asset
+
+  /public/media/collections/{collection}:
+    get:
+      tags: [Public Media API]
+      summary: Get public media collection
+      operationId: getPublicMediaCollection
+      responses:
+        "200":
+          description: Public collection
+
 tags:
   - name: Content
     description: Public content delivery endpoints (60 req/min)
@@ -1615,5 +1934,9 @@ tags:
     description: Audience personas for AI content generation (authenticated)
   - name: Analytics
     description: AI generation cost and usage analytics (authenticated)
+  - name: Media Library
+    description: Media asset management (authenticated, 20 req/min upload)
+  - name: Public Media API
+    description: Public headless media delivery (no auth, 120 req/min throttle)
   - name: Webhooks
     description: Event webhooks with HMAC signing and delivery audit trail (authenticated)

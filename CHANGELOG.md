@@ -11,6 +11,55 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-03-15
+
+### Added
+
+**Media Library & Digital Asset Management** ([Discussion #4](https://github.com/byte5digital/numen/discussions/4))
+
+A complete digital asset management (DAM) system for organizing, tagging, editing, and serving media assets. Built for multi-format content delivery and CDN integration.
+
+**Features:**
+
+- **Folders & Collections** — Organize assets hierarchically using adjacency-list folders. Create smart collections with powerful filtering and bulk operations.
+- **Drag-and-drop Upload** — Metadata extraction (MIME type, dimensions, file size, duration) on ingest. Progress tracking and batch upload support.
+- **AI Auto-tagging (opt-in)** — Enable `MEDIA_AI_TAGGING` environment variable to automatically tag images using Claude vision. Powered by Anthropic API; all costs logged to `AIGenerationLog`.
+- **Image Editing** — Crop, rotate, and resize images via `MediaEditController`. Changes create new variants; originals are preserved.
+- **Automatic Variant Generation** — On upload, generate `thumb` (150×150), `medium` (600×600), and `large` (1600×1600) variants. WebP format with configurable quality. Stored locally or on S3 (via `FILESYSTEM_DISK`).
+- **Usage Tracking** — Query which content items reference a specific asset. Prevents accidental deletion of in-use media.
+- **Public Headless API** — `/v1/public/media` endpoints (no auth required) with throttle protection (120 req/min). Perfect for headless frontends and CDN edge caching.
+- **Full REST API** — Complete CRUD operations on assets, folders, and collections. Bearer token auth via Sanctum.
+- **MediaPicker Vue Component** — Integrates with content editor for seamless asset selection during content creation.
+
+**Environment Variables (new):**
+
+- `MEDIA_AI_TAGGING` — Enable automatic AI-based image tagging (default: `false`)
+- `CDN_ENABLED` — Enable public CDN delivery endpoints (default: `true`)
+
+**API Endpoints:**
+
+*Authenticated (requires Bearer token):*
+- `GET /v1/media` — List all assets
+- `POST /v1/media` — Upload asset (20 req/min throttle)
+- `GET /v1/media/{asset}` — Fetch asset details
+- `PATCH /v1/media/{asset}` — Update asset metadata
+- `DELETE /v1/media/{asset}` — Delete asset
+- `PATCH /v1/media/{asset}/move` — Move to folder
+- `GET /v1/media/{asset}/usage` — Show usage in content
+- `POST /v1/media/{asset}/edit` — Edit (crop/rotate/resize)
+- `GET /v1/media/{asset}/variants` — List generated variants
+- `GET|POST /v1/media/folders` — CRUD folders
+- `PATCH /v1/media/folders/{folder}/move` — Move folder
+- `GET|POST|PATCH|DELETE /v1/media/collections` — CRUD collections
+- `POST|DELETE /v1/media/collections/{collection}/items` — Manage collection items
+
+*Public (no auth):*
+- `GET /v1/public/media` — List public assets (120 req/min throttle)
+- `GET /v1/public/media/{asset}` — Fetch public asset
+- `GET /v1/public/media/collections/{collection}` — Fetch collection
+
+---
+
 ### Planned
 - Remove legacy `numen.anthropic` config block (duplicates `numen.providers.anthropic`)
 - `AgentContract` interface extracted from `Agent` abstract class
