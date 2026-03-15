@@ -42,11 +42,11 @@ One-click content repurposing to 8 formats with AI-powered tone preservation and
 ---
 ## [Unreleased]
 
-## [0.8.0] — 2026-03-15
+## [0.9.0] — 2026-03-15
 
 ### Added
 
-**Media Library & Digital Asset Management** ([Discussion #4](https://github.com/byte5digital/numen/discussions/4))
+**Media Library & Digital Asset Management** ([PR #27](https://github.com/byte5digital/numen/pull/27), [Discussion #4](https://github.com/byte5digital/numen/discussions/4))
 
 A complete digital asset management (DAM) system for organizing, tagging, editing, and serving media assets. Built for multi-format content delivery and CDN integration.
 
@@ -89,6 +89,16 @@ A complete digital asset management (DAM) system for organizing, tagging, editin
 - `GET /v1/public/media/{asset}` — Fetch public asset
 - `GET /v1/public/media/collections/{collection}` — Fetch collection
 
+**Database Tables:**
+- `media_assets` — core asset metadata (filename, MIME type, dimensions, size, duration, tags)
+- `media_folders` — hierarchical asset organization (adjacency-list model)
+- `media_collections` — user-created smart collections
+- `media_collection_items` — collection membership
+- `media_variants` — auto-generated thumbnail and preview sizes
+- `media_asset_usage` — tracks which content references each asset (prevents accidental deletion)
+
+**Breaking Changes:** None — fully backward compatible.
+
 ---
 
 ### Planned
@@ -96,56 +106,6 @@ A complete digital asset management (DAM) system for organizing, tagging, editin
 - `AgentContract` interface extracted from `Agent` abstract class
 
 ---
-
-## [0.9.0] — 2026-03-15
-
-### Added
-
-**Multi-Language & i18n Support** ([Discussion #7](https://github.com/byte5digital/numen/discussions/7))
-
-Full content localization with AI-powered translation, space-level locale management, and intelligent fallback chains.
-
-**Locale Management:**
-- Space-level locale configuration: add/remove/reorder locales, set default locale
-- Intelligent 5-step fallback chain (exact match → language prefix → fallback config → space default → `"en"`)
-- Prevents invalid locale codes with `Locale` validation class (BCP 47 compliant)
-
-**AI-Powered Translation:**
-- Tone-aware translation using existing Persona system — respects content creator's voice
-- Async job queue (`TranslateContentJob` on `ai-pipeline` queue) for background processing
-- Translation status tracking: pending → completed/failed with error logging
-- Job retry support with configurable backoff
-
-**Translation Workflow:**
-- Translation matrix view showing per-content, per-locale coverage and status
-- Side-by-side translation editor for reviewing AI-generated translations
-- Manual translation support via API
-- Batch translation operations with progress reporting
-
-**REST API Endpoints:**
-- **Locale Management:** `GET/POST/PATCH/DELETE /api/v1/locales` (space-scoped)
-- **Translation Workflow:** `POST /api/v1/content/{content}/translate`, `GET /api/v1/content/{content}/translations`
-- **Translation Matrix:** `GET /api/v1/translations/matrix` with pagination and status filters
-- **Supported Locales:** `GET /api/v1/locales/supported` for available BCP 47 codes
-
-**Locale Awareness:**
-- Middleware: `SetLocaleFromRequest` respects `Accept-Language` header, `?locale=` query param, and `X-Locale` header
-- API responses include current locale context; content delivery selects best-match locale automatically
-- Graceful fallback for missing translations (no errors, uses fallback chain)
-
-**CLI:**
-- `php artisan numen:setup-i18n {space_id}` — automated migration of existing spaces to i18n (adds default locale + tracks baseline)
-
-**Database Tables:**
-- `space_locales` — locale configurations per space (locale code, is_default, sort order)
-- `translation_jobs` — async translation job tracking (content_id, from_locale, to_locale, status, result)
-
-**Zero Breaking Changes:**
-- Feature is fully additive — existing single-language spaces work unchanged
-- No migrations required for spaces that don't use i18n
-- Backward compatible with all existing API routes
-
-
 
 ## [0.7.0] — 2026-03-15
 
@@ -346,7 +306,10 @@ Initial public release. This is the "here's what we have" release — solid arch
 
 ---
 
-[Unreleased]: https://github.com/byte5digital/numen/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/byte5digital/numen/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/byte5digital/numen/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/byte5digital/numen/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/byte5digital/numen/compare/v0.2.1...v0.7.0
 [0.2.1]: https://github.com/byte5digital/numen/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/byte5digital/numen/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/byte5digital/numen/compare/v0.1.0...v0.1.1
