@@ -25,5 +25,9 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="CACHE_STORE" value="array"/>
         <env name="SCOUT_DRIVER" value="null"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="RATE_LIMITER" value="array"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="BROADCAST_DRIVER" value="log"/>
     </php>
 </phpunit>
