@@ -11,6 +11,7 @@ use App\Listeners\RemoveFromSearchIndex;
 use App\Listeners\UpdateKnowledgeGraphListener;
 use App\Models\Content;
 use App\Models\Setting;
+use App\Pipelines\Stages\CompetitorAnalysisStage;
 use App\Plugin\HookRegistry;
 use App\Plugin\PluginLoader;
 use App\Policies\ContentPolicy;
@@ -146,6 +147,11 @@ class AppServiceProvider extends ServiceProvider
             $llmManager->registerProvider($name, $provider);
         }
 
+        // Register built-in competitor analysis pipeline stage
+        $hookRegistry->registerPipelineStageClass(
+            CompetitorAnalysisStage::type(),
+            CompetitorAnalysisStage::class,
+        );
         // Register search event listeners
         Event::listen(ContentPublished::class, IndexContentForSearch::class);
         Event::listen(ContentUnpublished::class, RemoveFromSearchIndex::class);
