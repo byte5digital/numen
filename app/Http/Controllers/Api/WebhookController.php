@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Webhook;
-use App\Models\WebhookDelivery;
+use App\Rules\ExternalUrl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -13,16 +13,22 @@ use Illuminate\Validation\Rule;
 class WebhookController extends Controller
 {
     /**
+     * Reserved header names that must not be overridden by custom headers.
+     */
+    private const RESERVED_HEADERS = ['x-numen-signature', 'content-type', 'user-agent'];
+
+    /**
      * List all webhooks for a space.
      *
-     * GET /api/v1/webhooks
+     * GET /api/v1/webhooks?space_id=<required>
      */
     public function index(Request $request): JsonResponse
     {
-        $spaceId = $request->query('space_id');
+        $validated = $request->validate([
+            'space_id' => ['required', 'string', 'exists:spaces,id'],
+        ]);
 
-        $webhooks = Webhook::query()
-            ->when($spaceId, fn ($q) => $q->where('space_id', $spaceId))
+        $webhooks = Webhook::where('space_id', $validated['space_id'])
             ->latest()
             ->get()
             ->map(fn (Webhook $w) => $this->format($w));
@@ -39,15 +45,20 @@ class WebhookController extends Controller
     {
         $validated = $request->validate([
             'space_id' => ['required', 'string', 'exists:spaces,id'],
-            'url' => ['required', 'url', 'max:2048'],
+            'url' => ['required', 'url', 'max:2048', new ExternalUrl],
             'events' => ['required', 'array', 'min:1'],
             'events.*' => ['required', 'string', 'max:64'],
             'is_active' => ['sometimes', 'boolean'],
             'retry_policy' => ['sometimes', 'nullable', 'array'],
             'headers' => ['sometimes', 'nullable', 'array'],
+            'headers.*' => ['string', 'regex:/^[^\r\n]+$/'],
             'batch_mode' => ['sometimes', 'boolean'],
             'batch_timeout' => ['sometimes', 'integer', 'min:100', 'max:300000'],
         ]);
+
+        if (isset($validated['headers'])) {
+            $validated['headers'] = $this->sanitizeHeaders($validated['headers']);
+        }
 
         $validated['secret'] = Str::random(64);
 
@@ -61,9 +72,10 @@ class WebhookController extends Controller
      *
      * GET /api/v1/webhooks/{id}
      */
-    public function show(string $id): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
         $webhook = Webhook::findOrFail($id);
+        $this->authorizeSpaceAccess($request, $webhook);
 
         return response()->json(['data' => $this->format($webhook)]);
     }
@@ -76,17 +88,23 @@ class WebhookController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         $webhook = Webhook::findOrFail($id);
+        $this->authorizeSpaceAccess($request, $webhook);
 
         $validated = $request->validate([
-            'url' => ['sometimes', 'url', 'max:2048', Rule::unique('webhooks')->where('space_id', $webhook->space_id)->ignore($webhook->id)],
+            'url' => ['sometimes', 'url', 'max:2048', new ExternalUrl, Rule::unique('webhooks')->where('space_id', $webhook->space_id)->ignore($webhook->id)],
             'events' => ['sometimes', 'array', 'min:1'],
             'events.*' => ['required_with:events', 'string', 'max:64'],
             'is_active' => ['sometimes', 'boolean'],
             'retry_policy' => ['sometimes', 'nullable', 'array'],
             'headers' => ['sometimes', 'nullable', 'array'],
+            'headers.*' => ['string', 'regex:/^[^\r\n]+$/'],
             'batch_mode' => ['sometimes', 'boolean'],
             'batch_timeout' => ['sometimes', 'integer', 'min:100', 'max:300000'],
         ]);
+
+        if (isset($validated['headers'])) {
+            $validated['headers'] = $this->sanitizeHeaders($validated['headers']);
+        }
 
         $webhook->update($validated);
 
@@ -98,15 +116,18 @@ class WebhookController extends Controller
      *
      * POST /api/v1/webhooks/{id}/rotate-secret
      */
-    public function rotateSecret(string $id): JsonResponse
+    public function rotateSecret(Request $request, string $id): JsonResponse
     {
         $webhook = Webhook::findOrFail($id);
-        $webhook->update(['secret' => Str::random(64)]);
+        $this->authorizeSpaceAccess($request, $webhook);
+
+        $newSecret = Str::random(64);
+        $webhook->update(['secret' => $newSecret]);
 
         return response()->json([
             'data' => [
                 'id' => $webhook->id,
-                'secret' => $webhook->secret,
+                'secret' => $newSecret,
             ],
         ]);
     }
@@ -116,31 +137,55 @@ class WebhookController extends Controller
      *
      * DELETE /api/v1/webhooks/{id}
      */
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
-        Webhook::findOrFail($id)->delete();
+        $webhook = Webhook::findOrFail($id);
+        $this->authorizeSpaceAccess($request, $webhook);
+
+        $webhook->delete();
 
         return response()->json(null, 204);
     }
 
     /**
-     * List delivery attempts for a webhook.
-     *
-     * GET /api/v1/webhooks/{id}/deliveries
+     * Verify the webhook belongs to a space the authenticated user is authorized to access.
+     * Aborts with 403 if the request includes a space_id that does not match the webhook's space.
      */
-    public function deliveries(Request $request, string $id): JsonResponse
+    private function authorizeSpaceAccess(Request $request, Webhook $webhook): void
     {
-        Webhook::findOrFail($id); // 404 if not found
+        $requestedSpaceId = $request->input('space_id') ?? $request->query('space_id');
 
-        $query = WebhookDelivery::where('webhook_id', $id)->latest('created_at');
+        if ($requestedSpaceId !== null && $requestedSpaceId !== $webhook->space_id) {
+            abort(403, 'This webhook does not belong to the specified space.');
+        }
+    }
 
-        if ($status = $request->query('status')) {
-            $query->where('status', $status);
+    /**
+     * Remove reserved headers and validate header key format.
+     * Keys must be alphanumeric with hyphens/underscores only.
+     *
+     * @param  array<string, string>  $headers
+     * @return array<string, string>
+     */
+    private function sanitizeHeaders(array $headers): array
+    {
+        $sanitized = [];
+
+        foreach ($headers as $key => $value) {
+            // Reject invalid key format
+            if (! preg_match('/^[a-zA-Z0-9_-]+$/', (string) $key)) {
+                continue;
+            }
+
+            // Reject reserved headers (case-insensitive)
+            if (in_array(strtolower((string) $key), self::RESERVED_HEADERS, true)) {
+                continue;
+            }
+
+            $sanitized[$key] = $value;
         }
 
-        $deliveries = $query->limit(100)->get();
-
-        return response()->json(['data' => $deliveries]);
+        return $sanitized;
     }
 
     private function format(Webhook $webhook): array
@@ -155,8 +200,8 @@ class WebhookController extends Controller
             'headers' => $webhook->headers,
             'batch_mode' => $webhook->batch_mode,
             'batch_timeout' => $webhook->batch_timeout,
-            'created_at' => $webhook->created_at?->toIso8601String(),
-            'updated_at' => $webhook->updated_at?->toIso8601String(),
+            'created_at' => $webhook->created_at->toIso8601String(),
+            'updated_at' => $webhook->updated_at->toIso8601String(),
         ];
     }
 }

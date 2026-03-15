@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Crypt;
 
 /**
  * @property string $id
@@ -52,6 +53,31 @@ class Webhook extends Model
         'batch_mode' => 'boolean',
         'batch_timeout' => 'integer',
     ];
+
+    /**
+     * Decrypt the secret when reading.
+     */
+    public function getSecretAttribute(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($value);
+        } catch (\Throwable) {
+            // Fallback for plaintext values during migration period
+            return $value;
+        }
+    }
+
+    /**
+     * Encrypt the secret when writing.
+     */
+    public function setSecretAttribute(string $value): void
+    {
+        $this->attributes['secret'] = Crypt::encryptString($value);
+    }
 
     public function space(): BelongsTo
     {

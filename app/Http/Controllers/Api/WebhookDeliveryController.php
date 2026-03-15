@@ -7,6 +7,7 @@ use App\Jobs\DeliverWebhook;
 use App\Models\Webhook;
 use App\Models\WebhookDelivery;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class WebhookDeliveryController extends Controller
 {
@@ -15,9 +16,10 @@ class WebhookDeliveryController extends Controller
      *
      * GET /api/v1/webhooks/{id}/deliveries
      */
-    public function index(string $id): JsonResponse
+    public function index(Request $request, string $id): JsonResponse
     {
         $webhook = Webhook::findOrFail($id);
+        $this->authorizeSpaceAccess($request, $webhook);
 
         $deliveries = WebhookDelivery::where('webhook_id', $webhook->id)
             ->latest('created_at')
@@ -32,9 +34,10 @@ class WebhookDeliveryController extends Controller
      *
      * GET /api/v1/webhooks/{id}/deliveries/{deliveryId}
      */
-    public function show(string $id, string $deliveryId): JsonResponse
+    public function show(Request $request, string $id, string $deliveryId): JsonResponse
     {
         $webhook = Webhook::findOrFail($id);
+        $this->authorizeSpaceAccess($request, $webhook);
 
         $delivery = WebhookDelivery::where('webhook_id', $webhook->id)
             ->findOrFail($deliveryId);
@@ -47,9 +50,10 @@ class WebhookDeliveryController extends Controller
      *
      * POST /api/v1/webhooks/{id}/deliveries/{deliveryId}/redeliver
      */
-    public function redeliver(string $id, string $deliveryId): JsonResponse
+    public function redeliver(Request $request, string $id, string $deliveryId): JsonResponse
     {
         $webhook = Webhook::findOrFail($id);
+        $this->authorizeSpaceAccess($request, $webhook);
 
         $original = WebhookDelivery::where('webhook_id', $webhook->id)
             ->findOrFail($deliveryId);
@@ -71,5 +75,17 @@ class WebhookDeliveryController extends Controller
         DeliverWebhook::dispatch($redelivery, $payload);
 
         return response()->json(['data' => $redelivery], 202);
+    }
+
+    /**
+     * Verify the webhook belongs to a space the authenticated user is authorized to access.
+     */
+    private function authorizeSpaceAccess(Request $request, Webhook $webhook): void
+    {
+        $requestedSpaceId = $request->input('space_id') ?? $request->query('space_id');
+
+        if ($requestedSpaceId !== null && $requestedSpaceId !== $webhook->space_id) {
+            abort(403, 'This webhook does not belong to the specified space.');
+        }
     }
 }

@@ -72,16 +72,19 @@ Route::prefix('v1')->group(function () {
             return response()->json(['data' => ['status' => 'approved']]);
         });
 
-        // Webhooks — management CRUD + delivery log
-        Route::get('/webhooks', [WebhookController::class, 'index']);
-        Route::post('/webhooks', [WebhookController::class, 'store']);
-        Route::get('/webhooks/{id}', [WebhookController::class, 'show']);
-        Route::put('/webhooks/{id}', [WebhookController::class, 'update']);
-        Route::delete('/webhooks/{id}', [WebhookController::class, 'destroy']);
-        Route::post('/webhooks/{id}/rotate-secret', [WebhookController::class, 'rotateSecret']);
-        Route::get('/webhooks/{id}/deliveries', [WebhookDeliveryController::class, 'index']);
-        Route::get('/webhooks/{id}/deliveries/{deliveryId}', [WebhookDeliveryController::class, 'show']);
-        Route::post('/webhooks/{id}/deliveries/{deliveryId}/redeliver', [WebhookDeliveryController::class, 'redeliver']);
+        // Webhooks — management CRUD + delivery log (rate-limited: 60/min overall, 10/min on redeliver)
+        Route::middleware('throttle:60,1')->group(function () {
+            Route::get('/webhooks', [WebhookController::class, 'index']);
+            Route::post('/webhooks', [WebhookController::class, 'store']);
+            Route::get('/webhooks/{id}', [WebhookController::class, 'show']);
+            Route::put('/webhooks/{id}', [WebhookController::class, 'update']);
+            Route::delete('/webhooks/{id}', [WebhookController::class, 'destroy']);
+            Route::post('/webhooks/{id}/rotate-secret', [WebhookController::class, 'rotateSecret']);
+            Route::get('/webhooks/{id}/deliveries', [WebhookDeliveryController::class, 'index']);
+            Route::get('/webhooks/{id}/deliveries/{deliveryId}', [WebhookDeliveryController::class, 'show']);
+            Route::post('/webhooks/{id}/deliveries/{deliveryId}/redeliver', [WebhookDeliveryController::class, 'redeliver'])
+                ->middleware('throttle:10,1');
+        });
 
         // Personas
         Route::get('/personas', function () {

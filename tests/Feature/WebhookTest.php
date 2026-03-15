@@ -44,7 +44,7 @@ class WebhookTest extends TestCase
 
         Webhook::factory()->create(['space_id' => $this->space->id]);
 
-        $this->getJson('/api/v1/webhooks')
+        $this->getJson('/api/v1/webhooks?space_id='.$this->space->id)
             ->assertOk()
             ->assertJsonStructure(['data']);
     }
