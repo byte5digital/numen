@@ -6,11 +6,13 @@ use App\Agents\AgentFactory;
 use App\Events\Content\ContentPublished;
 use App\Events\Content\ContentUnpublished;
 use App\Listeners\IndexContentForSearch;
+use App\Listeners\RemoveFromKnowledgeGraphListener;
 use App\Listeners\RemoveFromSearchIndex;
+use App\Listeners\UpdateKnowledgeGraphListener;
 use App\Models\Content;
-use App\Models\ContentPipeline;
 use App\Models\Setting;
-use App\Policies\ContentPipelinePolicy;
+use App\Plugin\HookRegistry;
+use App\Plugin\PluginLoader;
 use App\Policies\ContentPolicy;
 use App\Services\AI\CostTracker;
 use App\Services\AI\ImageManager;
@@ -42,6 +44,10 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         // ── Authorization ──────────────────────────────────────────────────
+        // ── Plugin system ──────────────────────────────────────────────────────
+        $this->app->singleton(HookRegistry::class);
+        $this->app->singleton(PluginLoader::class, fn ($app) => new PluginLoader($app));
+
         $this->app->singleton(AuthorizationService::class);
         $this->app->singleton(PermissionRegistrar::class);
 
@@ -109,23 +115,26 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Register content access policies
-        // Global admin bypass — admins can do anything
-        Gate::before(function ($user, string $ability): ?bool {
-            if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
-                return true;
-            }
-
-            return null;
-        });
-
         Gate::policy(Content::class, ContentPolicy::class);
-        Gate::policy(ContentPipeline::class, ContentPipelinePolicy::class);
 
         // Load DB settings into config (overrides .env defaults)
         Setting::loadIntoConfig();
+        // Boot plugin system
+        $this->app->make(PluginLoader::class)->boot();
+
+        // Wire plugin-registered LLM providers into LLMManager
+        $hookRegistry = $this->app->make(HookRegistry::class);
+        $llmManager = $this->app->make(LLMManager::class);
+        foreach ($hookRegistry->getLLMProviders() as $name => $provider) {
+            $llmManager->registerProvider($name, $provider);
+        }
 
         // Register search event listeners
         Event::listen(ContentPublished::class, IndexContentForSearch::class);
         Event::listen(ContentUnpublished::class, RemoveFromSearchIndex::class);
+
+        // Register knowledge graph event listeners
+        Event::listen(ContentPublished::class, UpdateKnowledgeGraphListener::class);
+        Event::listen(ContentUnpublished::class, RemoveFromKnowledgeGraphListener::class);
     }
 }

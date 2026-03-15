@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\BriefController;
+use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\ContentTaxonomyController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Api\MediaEditController;
 use App\Http\Controllers\Api\MediaFolderController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\PluginAdminController;
 use App\Http\Controllers\Api\PublicMediaController;
 use App\Http\Controllers\Api\RepurposingController;
 use App\Http\Controllers\Api\RoleController;
@@ -299,6 +301,17 @@ Route::prefix('v1')->group(function () {
         Route::patch('/format-templates/{template}', [FormatTemplateController::class, 'update']);
         Route::delete('/format-templates/{template}', [FormatTemplateController::class, 'destroy']);
     });
+
+    // Plugin admin API
+    Route::prefix('admin/plugins')->middleware(['auth:sanctum'])->group(function () {
+        Route::get('/', [PluginAdminController::class, 'index']);
+        Route::get('/{name}', [PluginAdminController::class, 'show']);
+        Route::post('/{name}/install', [PluginAdminController::class, 'install']);
+        Route::post('/{name}/activate', [PluginAdminController::class, 'activate']);
+        Route::post('/{name}/deactivate', [PluginAdminController::class, 'deactivate']);
+        Route::post('/{name}/uninstall', [PluginAdminController::class, 'uninstall']);
+        Route::patch('/{name}/settings', [PluginAdminController::class, 'updateSettings']);
+    });
 });
 
 // Public media API (for headless/CDN use — no auth required)
@@ -306,4 +319,29 @@ Route::prefix('v1/public')->middleware('throttle:120,1')->group(function () {
     Route::get('/media', [PublicMediaController::class, 'index']);
     Route::get('/media/collections/{collection}', [PublicMediaController::class, 'collection']);
     Route::get('/media/{asset}', [PublicMediaController::class, 'show']);
+});
+
+// Knowledge Graph API
+use App\Http\Controllers\Api\GraphController;
+
+Route::prefix('v1/graph')->middleware('auth:sanctum')->group(function () {
+    Route::get('/related/{contentId}', [GraphController::class, 'related']);
+    Route::get('/clusters', [GraphController::class, 'clusters']);
+    Route::get('/clusters/{clusterId}', [GraphController::class, 'clusterContents']);
+    Route::get('/gaps', [GraphController::class, 'gaps']);
+    Route::get('/path/{fromId}/{toId}', [GraphController::class, 'path']);
+    Route::get('/node/{contentId}', [GraphController::class, 'node']);
+    Route::post('/reindex/{contentId}', [GraphController::class, 'reindex']);
+});
+
+// Chat / Conversational CMS API
+Route::prefix('v1/chat')->middleware(['auth:sanctum', 'throttle:20,1'])->group(function () {
+    Route::get('/conversations', [ChatController::class, 'conversations']);
+    Route::post('/conversations', [ChatController::class, 'createConversation']);
+    Route::delete('/conversations/{id}', [ChatController::class, 'deleteConversation']);
+    Route::get('/conversations/{id}/messages', [ChatController::class, 'messages']);
+    Route::post('/conversations/{id}/messages', [ChatController::class, 'sendMessage']);
+    Route::post('/conversations/{id}/confirm', [ChatController::class, 'confirmAction']);
+    Route::delete('/conversations/{id}/confirm', [ChatController::class, 'cancelAction']);
+    Route::get('/suggestions', [ChatController::class, 'suggestions']);
 });

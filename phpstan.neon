@@ -11,3 +11,6 @@ parameters:
     ignoreErrors:
         - '#Access to an undefined property .*(User|Role)::.*pivot#'
         - '#Parameter.*callback of method.*map.*expects callable.*Closure.*given#'
+    phpVersion: 80200
+    parallel:
+        maximumNumberOfProcesses: 1

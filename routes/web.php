@@ -4,8 +4,7 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BriefAdminController;
 use App\Http\Controllers\Admin\ContentAdminController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\LocaleAdminController;
-use App\Http\Controllers\Admin\MediaAdminController;
+use App\Http\Controllers\Admin\GraphController;
 use App\Http\Controllers\Admin\PageAdminController;
 use App\Http\Controllers\Admin\PersonaAdminController;
 use App\Http\Controllers\Admin\PipelineAdminController;
@@ -14,12 +13,12 @@ use App\Http\Controllers\Admin\QueueMonitorController;
 use App\Http\Controllers\Admin\SettingsAdminController;
 use App\Http\Controllers\Admin\TaxonomyAdminController;
 use App\Http\Controllers\Admin\TokenAdminController;
-use App\Http\Controllers\Admin\TranslationAdminController;
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Public\BlogController;
 use App\Http\Controllers\Public\HomeController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,6 +60,8 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
+
+Route::get('/chat', fn () => Inertia::render('Chat/Index'))->name('chat.index')->middleware('auth');
 
 /*
 |--------------------------------------------------------------------------
@@ -148,12 +149,6 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/taxonomy/terms/{termId}/move', [TaxonomyAdminController::class, 'moveTerm'])->name('admin.taxonomy.terms.move');
     Route::post('/taxonomy/terms/reorder', [TaxonomyAdminController::class, 'reorderTerms'])->name('admin.taxonomy.terms.reorder');
 
-    // Media Library
-    Route::get('/media', [MediaAdminController::class, 'index'])->name('admin.media');
-    Route::get('/media/{id}', [MediaAdminController::class, 'show'])->name('admin.media.show');
-    Route::delete('/media/{id}', [MediaAdminController::class, 'destroy'])->name('admin.media.destroy');
-
-    // i18n / Locale management
-    Route::get('/settings/locales', [LocaleAdminController::class, 'index'])->name('admin.settings.locales');
-    Route::get('/content/{content}/translations', [TranslationAdminController::class, 'show'])->name('admin.content.translations');
+    // Knowledge Graph
+    Route::get('/graph', [GraphController::class, 'index'])->name('graph.index');
 });
