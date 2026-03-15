@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\GenerateVariantsJob;
 use App\Models\MediaAsset;
 use App\Models\MediaFolder;
 use App\Models\Space;
@@ -81,6 +82,10 @@ class MediaUploadService
             'source' => 'upload',
             'is_public' => true,
         ]);
+
+        if (str_starts_with($mimeType, 'image/') && $mimeType !== 'image/svg+xml') {
+            GenerateVariantsJob::dispatch($asset);
+        }
 
         return $asset;
     }

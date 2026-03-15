@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\MediaController;
+use App\Http\Controllers\Api\MediaEditController;
 use App\Http\Controllers\Api\MediaFolderController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\Versioning\AutoSaveController;
@@ -123,6 +124,8 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{asset}', [MediaController::class, 'destroy']);
             Route::patch('/{asset}/move', [MediaController::class, 'move']);
             Route::get('/{asset}/usage', [MediaController::class, 'usage']);
+            Route::post('/{asset}/edit', [MediaEditController::class, 'edit']);
+            Route::get('/{asset}/variants', [MediaEditController::class, 'variants']);
         });
 
         // Media Folders
