@@ -250,7 +250,6 @@ Route::prefix('v1')->group(function () {
             Route::get('/content-gaps', [SearchAdminController::class, 'contentGaps']);
         });
 
-
         // Media Library — CRUD for assets, folders, collections, editing
         Route::prefix('/media')->group(function () {
             // Asset listing, upload, fetch, update, delete
@@ -284,7 +283,6 @@ Route::prefix('v1')->group(function () {
         // Public Media CDN API (no auth required)
         Route::prefix('/media/public')->group(function () {
             Route::get('/{publicUrl}', [PublicMediaController::class, 'serve']);
-            Route::head('/{publicUrl}', [PublicMediaController::class, 'head']);
         });
         // Analytics
         Route::get('/analytics/costs', function () {
