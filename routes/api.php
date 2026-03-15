@@ -132,3 +132,16 @@ Route::prefix('v1')->group(function () {
         });
     });
 });
+
+// Locale management (outside v1 prefix group to keep flat structure)
+Route::prefix('v1/locales')->group(function () {
+    Route::get('/supported', [LocaleController::class, 'supported']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/', [LocaleController::class, 'index']);
+        Route::post('/', [LocaleController::class, 'store']);
+        Route::patch('/{locale}', [LocaleController::class, 'update']);
+        Route::delete('/{locale}', [LocaleController::class, 'destroy']);
+        Route::post('/{locale}/set-default', [LocaleController::class, 'setDefault']);
+    });
+});
