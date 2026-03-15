@@ -4,14 +4,19 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\FormatTemplate;
+use App\Services\AuthorizationService;
 use App\Services\FormatAdapterService;
 use App\Services\FormatTemplateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class FormatTemplateController extends Controller
 {
-    public function __construct(private readonly FormatTemplateService $service) {}
+    public function __construct(
+        private readonly FormatTemplateService $service,
+        private readonly AuthorizationService $authz,
+    ) {}
 
     /**
      * List all templates for the authenticated space.
@@ -23,6 +28,9 @@ class FormatTemplateController extends Controller
     {
         $spaceId = $request->user()->current_space_id
             ?? $request->input('space_id');
+
+        // Require at minimum read access to this space.
+        $this->authz->authorize($request->user(), 'content.read', (string) $spaceId);
 
         $templates = $this->service->getAllForSpace((int) $spaceId);
 
@@ -48,6 +56,9 @@ class FormatTemplateController extends Controller
             'is_active' => ['boolean'],
         ]);
 
+        // Verify the authenticated user has content management rights for that space.
+        $this->authz->authorize($request->user(), 'content.update', (string) $validated['space_id']);
+
         $template = $this->service->createTemplate($validated);
 
         return response()->json(['data' => $template], 201);
@@ -60,6 +71,14 @@ class FormatTemplateController extends Controller
      */
     public function update(Request $request, FormatTemplate $template): JsonResponse
     {
+        // Global templates (space_id IS NULL) are read-only for regular users.
+        if ($template->space_id === null) {
+            return response()->json(['message' => 'Global default templates cannot be modified. Create a space-specific override instead.'], 403);
+        }
+
+        // Verify the authenticated user can manage content in the template's space.
+        $this->authz->authorize($request->user(), 'content.update', (string) $template->space_id);
+
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -81,11 +100,14 @@ class FormatTemplateController extends Controller
      *
      * DELETE /v1/format-templates/{template}
      */
-    public function destroy(FormatTemplate $template): JsonResponse
+    public function destroy(Request $request, FormatTemplate $template): JsonResponse
     {
         if ($template->space_id === null) {
             return response()->json(['message' => 'Global default templates cannot be deleted.'], 403);
         }
+
+        // Verify the authenticated user can manage content in the template's space.
+        $this->authz->authorize($request->user(), 'content.update', (string) $template->space_id);
 
         $this->service->deleteTemplate($template);
 

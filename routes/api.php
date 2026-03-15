@@ -136,11 +136,17 @@ Route::prefix('v1')->group(function () {
             return response()->json(['data' => $logs]);
         });
         // Content repurposing
-        Route::get('/content/{content}/repurposed', [RepurposingController::class, 'index']);
-        Route::post('/content/{content}/repurpose', [RepurposingController::class, 'store']);
-        Route::get('/repurposed/{repurposedContent}', [RepurposingController::class, 'show']);
-        Route::get('/spaces/{space}/repurpose/estimate', [RepurposingController::class, 'estimateCost']);
-        Route::post('/spaces/{space}/repurpose/batch', [RepurposingController::class, 'batch']);
+        // Read endpoints — moderate throttle (30/min)
+        Route::middleware('throttle:30,1')->group(function () {
+            Route::get('/content/{content}/repurposed', [RepurposingController::class, 'index']);
+            Route::get('/repurposed/{repurposedContent}', [RepurposingController::class, 'show']);
+            Route::get('/spaces/{space}/repurpose/estimate', [RepurposingController::class, 'estimateCost']);
+        });
+        // Write/AI endpoints — strict throttle (10/min) to guard against cost attacks
+        Route::middleware('throttle:10,1')->group(function () {
+            Route::post('/content/{content}/repurpose', [RepurposingController::class, 'store']);
+            Route::post('/spaces/{space}/repurpose/batch', [RepurposingController::class, 'batch']);
+        });
 
         // Format templates
         Route::get('/format-templates', [FormatTemplateController::class, 'index']);
