@@ -25,7 +25,7 @@ class SearchAdminApiTest extends TestCase
         parent::setUp();
         // Seed roles so admin role exists
         $this->seed(\Database\Seeders\RoleSeeder::class);
-        
+
         /** @var User $admin */
         $admin = User::factory()->admin()->create();
         // Assign admin role to user

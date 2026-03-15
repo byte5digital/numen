@@ -5,19 +5,21 @@ use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\ContentTaxonomyController;
-use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\FormatTemplateController;
 use App\Http\Controllers\Api\PageController;
+use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\RepurposingController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TaxonomyController;
 use App\Http\Controllers\Api\TaxonomyTermController;
 use App\Http\Controllers\Api\UserRoleController;
+use App\Http\Controllers\Api\V1\Admin\SearchAdminController;
+use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\Versioning\AutoSaveController;
 use App\Http\Controllers\Api\Versioning\DiffController;
 use App\Http\Controllers\Api\Versioning\VersionController;
 use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\WebhookDeliveryController;
-use App\Http\Controllers\Api\V1\SearchController;
-use App\Http\Controllers\Api\V1\Admin\SearchAdminController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -64,6 +66,10 @@ Route::prefix('v1')->group(function () {
     Route::post('/search/click', [SearchController::class, 'recordClick']);
 
     // Management API (authenticated)
+
+    // Format templates — public endpoint
+    Route::get('/format-templates/supported', [FormatTemplateController::class, 'supported']);
+
     Route::middleware('auth:sanctum')->group(function () {
 
         // Component type registration (AI agents register new block types here)
@@ -138,7 +144,7 @@ Route::prefix('v1')->group(function () {
             Route::put('/roles/{role}', [RoleController::class, 'update']);
             Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
         });
-        
+
         // Permissions API (requires roles.manage)
         Route::get('/permissions', [PermissionController::class, 'index'])->middleware('permission:roles.manage');
 
@@ -227,12 +233,12 @@ Route::prefix('v1')->group(function () {
             Route::post('/synonyms', [SearchAdminController::class, 'storeSynonym']);
             Route::put('/synonyms/{id}', [SearchAdminController::class, 'updateSynonym']);
             Route::delete('/synonyms/{id}', [SearchAdminController::class, 'destroySynonym']);
-            
+
             Route::get('/promoted', [SearchAdminController::class, 'promoted']);
             Route::post('/promoted', [SearchAdminController::class, 'storePromoted']);
             Route::put('/promoted/{id}', [SearchAdminController::class, 'updatePromoted']);
             Route::delete('/promoted/{id}', [SearchAdminController::class, 'destroyPromoted']);
-            
+
             Route::get('/health', [SearchAdminController::class, 'health']);
             Route::post('/reindex', [SearchAdminController::class, 'reindex']);
             Route::get('/analytics', [SearchAdminController::class, 'analytics']);
@@ -257,5 +263,22 @@ Route::prefix('v1')->group(function () {
 
             return response()->json(['data' => $logs]);
         });
+
+        // Content repurposing
+        Route::middleware('throttle:30,1')->group(function () {
+            Route::get('/content/{content}/repurposed', [RepurposingController::class, 'index']);
+            Route::get('/repurposed/{repurposedContent}', [RepurposingController::class, 'show']);
+            Route::get('/spaces/{space}/repurpose/estimate', [RepurposingController::class, 'estimateCost']);
+        });
+        Route::middleware('throttle:10,1')->group(function () {
+            Route::post('/content/{content}/repurpose', [RepurposingController::class, 'store']);
+            Route::post('/spaces/{space}/repurpose/batch', [RepurposingController::class, 'batch']);
+        });
+
+        // Format templates
+        Route::get('/format-templates', [FormatTemplateController::class, 'index']);
+        Route::post('/format-templates', [FormatTemplateController::class, 'store']);
+        Route::patch('/format-templates/{template}', [FormatTemplateController::class, 'update']);
+        Route::delete('/format-templates/{template}', [FormatTemplateController::class, 'destroy']);
     });
 });
