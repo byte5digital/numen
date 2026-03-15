@@ -26,16 +26,17 @@ return new class extends Migration
 
             // Soft deletes
             $table->softDeletes();
-
-            // Composite unique: one URL per space
-            $table->unique(['space_id', 'url']);
         });
+
+        // SQLite-compatible unique index (avoids url(500) prefix syntax)
+        \DB::statement('CREATE UNIQUE INDEX IF NOT EXISTS webhooks_space_id_url_unique ON webhooks (space_id, url)');
     }
 
     public function down(): void
     {
+        \DB::statement('DROP INDEX IF EXISTS webhooks_space_id_url_unique');
+
         Schema::table('webhooks', function (Blueprint $table) {
-            $table->dropUnique(['space_id', 'url']);
             $table->dropSoftDeletes();
             $table->dropColumn(['retry_policy', 'headers', 'batch_mode', 'batch_timeout']);
             $table->string('url')->change();
