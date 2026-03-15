@@ -3,18 +3,18 @@
 use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
-use App\Http\Controllers\Api\FormatTemplateController;
 use App\Http\Controllers\Api\PageController;
-use App\Http\Controllers\Api\RepurposingController;
+use App\Http\Controllers\Api\AuditLogController;
+use App\Http\Controllers\Api\UserRoleController;
+use App\Http\Controllers\Api\ContentTaxonomyController;
+use App\Http\Controllers\Api\TaxonomyTermController;
+use App\Http\Controllers\Api\TaxonomyController;
+use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\Versioning\AutoSaveController;
 use App\Http\Controllers\Api\Versioning\DiffController;
 use App\Http\Controllers\Api\Versioning\VersionController;
 use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\WebhookDeliveryController;
-use Illuminate\Support\Facades\Route;
-
-/*
-|--------------------------------------------------------------------------
 | Numen Public Content Delivery API
 |--------------------------------------------------------------------------
 |
