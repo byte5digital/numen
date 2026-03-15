@@ -27,15 +27,17 @@ return new class extends Migration
             // Soft deletes
             $table->softDeletes();
 
-            // Composite unique: one URL per space
-            $table->unique(['space_id', 'url']);
+            // Note: unique index added separately below (raw statement for utf8mb4 prefix support)
         });
+
+        \DB::statement('ALTER TABLE webhooks ADD UNIQUE webhooks_space_id_url_unique (space_id, url(500))');
     }
 
     public function down(): void
     {
+        \DB::statement('ALTER TABLE webhooks DROP INDEX webhooks_space_id_url_unique');
+
         Schema::table('webhooks', function (Blueprint $table) {
-            $table->dropUnique(['space_id', 'url']);
             $table->dropSoftDeletes();
             $table->dropColumn(['retry_policy', 'headers', 'batch_mode', 'batch_timeout']);
             $table->string('url')->change();
