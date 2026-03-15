@@ -8,7 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('content_translation_jobs', function (Blueprint $table) {
+        if (! Schema::hasTable('content_translation_jobs')) {
+            Schema::create('content_translation_jobs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('space_id')->constrained()->cascadeOnDelete();
             $table->foreignId('source_content_id')->constrained('contents')->cascadeOnDelete();
@@ -24,6 +25,7 @@ return new class extends Migration
             $table->index(['space_id', 'status']);
             $table->index(['source_content_id', 'target_locale']);
         });
+        }
     }
 
     public function down(): void
