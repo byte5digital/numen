@@ -10,20 +10,20 @@ return new class extends Migration
     {
         if (! Schema::hasTable('format_templates')) {
             Schema::create('format_templates', function (Blueprint $table) {
-            $table->id();
-            $table->string('space_id', 26)->nullable()->index(); // null = global default
-            $table->string('format_key', 50); // twitter_thread, linkedin_post, newsletter_section, etc.
-            $table->string('name', 100);
-            $table->text('description')->nullable();
-            $table->text('system_prompt'); // LLM system instruction
-            $table->text('user_prompt_template'); // uses {{title}}, {{body}}, {{tone}} placeholders
-            $table->json('output_schema')->nullable(); // expected output structure
-            $table->unsignedSmallInteger('max_tokens')->default(1000);
-            $table->boolean('is_default')->default(false);
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-            $table->index('format_key');
-        });
+                $table->id();
+                $table->string('space_id', 26)->nullable()->index(); // null = global default
+                $table->string('format_key', 50); // twitter_thread, linkedin_post, newsletter_section, etc.
+                $table->string('name', 100);
+                $table->text('description')->nullable();
+                $table->text('system_prompt'); // LLM system instruction
+                $table->text('user_prompt_template'); // uses {{title}}, {{body}}, {{tone}} placeholders
+                $table->json('output_schema')->nullable(); // expected output structure
+                $table->unsignedSmallInteger('max_tokens')->default(1000);
+                $table->boolean('is_default')->default(false);
+                $table->boolean('is_active')->default(true);
+                $table->timestamps();
+                $table->index('format_key');
+            });
         }
 
         // SQLite-compatible unique index (avoids MySQL-specific column prefix syntax)
