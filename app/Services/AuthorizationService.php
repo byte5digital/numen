@@ -169,6 +169,13 @@ class AuthorizationService
             $user->load('roles');
         }
 
+        // Legacy fallback: users with the admin role column but no RBAC roles assigned
+        // are granted full wildcard permissions. This covers admin accounts created before
+        // the RBAC pivot was in place (issue #28).
+        if ($user->isAdmin() && $user->roles->isEmpty()) {
+            return ['*'];
+        }
+
         $permissions = [];
 
         foreach ($user->roles as $role) {

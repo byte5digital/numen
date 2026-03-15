@@ -17,8 +17,6 @@ class RepurposeBatchJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public string $queue = 'ai-pipeline';
-
     public int $tries = 1;
 
     public int $timeout = 60;
@@ -26,7 +24,9 @@ class RepurposeBatchJob implements ShouldQueue
     public function __construct(
         public readonly RepurposingBatch $batch,
         public readonly ?int $personaId = null,
-    ) {}
+    ) {
+        $this->onQueue('ai-pipeline');
+    }
 
     public function handle(RepurposingService $service): void
     {

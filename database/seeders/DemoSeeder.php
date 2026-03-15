@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\ContentPipeline;
 use App\Models\ContentType;
 use App\Models\Persona;
+use App\Models\Role;
 use App\Models\Space;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -14,8 +15,8 @@ class DemoSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create admin user
-        User::firstOrCreate(
+        // Create admin user and ensure they have the RBAC Admin role assigned
+        $adminUser = User::firstOrCreate(
             ['email' => 'admin@byte5.de'],
             [
                 'name' => 'byte5 Admin',
@@ -23,6 +24,12 @@ class DemoSeeder extends Seeder
                 'role' => 'admin',
             ]
         );
+
+        // Assign the RBAC Admin role so the user has proper RBAC permissions (#28)
+        $adminRole = Role::where('slug', 'admin')->whereNull('space_id')->first();
+        if ($adminRole && ! $adminUser->roles()->where('role_user.space_id', null)->whereKey($adminRole->id)->exists()) {
+            $adminUser->roles()->attach($adminRole->id, ['space_id' => null]);
+        }
 
         $this->command->info('✅ Admin user created: admin@byte5.de / byte5labs');
 
