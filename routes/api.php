@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\Versioning\DiffController;
 use App\Http\Controllers\Api\Versioning\VersionController;
 use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\WebhookDeliveryController;
+use App\Http\Controllers\Api\MediaCollectionController;
+use App\Http\Controllers\Api\PublicMediaController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -132,6 +134,15 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('media/folders', MediaFolderController::class)->except(['show']);
         Route::patch('media/folders/{folder}/move', [MediaFolderController::class, 'move']);
 
+        // Media Collections
+        Route::get('/media/collections', [MediaCollectionController::class, 'index']);
+        Route::post('/media/collections', [MediaCollectionController::class, 'store']);
+        Route::get('/media/collections/{collection}', [MediaCollectionController::class, 'show']);
+        Route::patch('/media/collections/{collection}', [MediaCollectionController::class, 'update']);
+        Route::delete('/media/collections/{collection}', [MediaCollectionController::class, 'destroy']);
+        Route::post('/media/collections/{collection}/items', [MediaCollectionController::class, 'addItem']);
+        Route::delete('/media/collections/{collection}/items/{asset}', [MediaCollectionController::class, 'removeItem']);
+
         // Analytics
         Route::get('/analytics/costs', function () {
             $logs = \App\Models\AIGenerationLog::selectRaw('
@@ -151,4 +162,11 @@ Route::prefix('v1')->group(function () {
             return response()->json(['data' => $logs]);
         });
     });
+});
+
+// Public media API (for headless/CDN use — no auth required)
+Route::prefix('v1/public')->middleware('throttle:120,1')->group(function () {
+    Route::get('/media', [PublicMediaController::class, 'index']);
+    Route::get('/media/collections/{collection}', [PublicMediaController::class, 'collection']);
+    Route::get('/media/{asset}', [PublicMediaController::class, 'show']);
 });
