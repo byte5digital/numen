@@ -160,6 +160,167 @@ Watch the queue worker terminal — you'll see each stage fire in sequence. Cont
 
 ---
 
+## CLI Reference
+
+Numen ships a full artisan-based CLI for server-side automation, scripted workflows, and CI/CD integration.
+
+> **Security note:** The CLI runs with full application privileges. Restrict server access accordingly — CLI is not intended for untrusted users.
+
+### Installation
+
+The CLI is available automatically via artisan once the app is installed:
+
+```bash
+php artisan list numen
+```
+
+### Commands
+
+#### `numen:status` — System Health Check
+
+```bash
+# Quick health overview
+php artisan numen:status
+
+# With AI provider model details
+php artisan numen:status --details
+```
+
+Shows: database connectivity, content stats, cache, queue driver, and AI provider configuration.
+
+---
+
+#### `numen:content:list` — List Content
+
+```bash
+# List all content (latest 20)
+php artisan numen:content:list
+
+# Filter by type and status
+php artisan numen:content:list --type=blog_post --status=published --limit=50
+```
+
+---
+
+#### `numen:content:import` — Bulk Import from JSON
+
+```bash
+# Import from file
+php artisan numen:content:import --file=storage/exports/content.json
+
+# Preview without writing (dry run)
+php artisan numen:content:import --file=storage/exports/content.json --dry-run
+
+# Import into specific space
+php artisan numen:content:import --file=content.json --space-id=<uuid>
+```
+
+**Import file format (JSON array):**
+
+```json
+[
+  {
+    "slug": "my-first-article",
+    "title": "My First Article",
+    "content_type": "blog_post",
+    "status": "draft",
+    "locale": "en",
+    "excerpt": "A short summary of the article.",
+    "body": "Full article body in HTML or Markdown.",
+    "seo_data": {
+      "meta_title": "My First Article | Numen",
+      "meta_description": "A short summary."
+    }
+  }
+]
+```
+
+Valid `status` values: `draft`, `published`, `archived` (invalid values default to `draft`).
+
+---
+
+#### `numen:content:export` — Export to JSON or Markdown
+
+```bash
+# Export all content to storage/exports/ (default)
+php artisan numen:content:export
+
+# Export as Markdown to a specific file
+php artisan numen:content:export --format=markdown --output=/tmp/export.md
+
+# Filter by type and status
+php artisan numen:content:export --type=blog_post --status=published
+
+# Export a single item by ID
+php artisan numen:content:export --id=<uuid>
+```
+
+When `--output` is omitted, exports default to `storage/exports/<timestamp>.json`.
+
+---
+
+#### `numen:brief:create` — Create a Content Brief
+
+```bash
+# Create a brief and trigger the pipeline
+php artisan numen:brief:create --title="10 Tips for Laravel Performance"
+
+# Full options
+php artisan numen:brief:create \
+  --title="SEO Guide 2026" \
+  --type=guide \
+  --persona=seo-expert \
+  --priority=high \
+  --keywords=laravel --keywords=performance \
+  --description="Comprehensive SEO guide for developers"
+
+# Create without running the pipeline
+php artisan numen:brief:create --title="Draft Idea" --no-run
+```
+
+Valid `--priority` values: `low`, `normal`, `high`, `urgent` (invalid values default to `normal`).
+
+---
+
+#### `numen:brief:list` — List Briefs
+
+```bash
+# List latest 20 briefs
+php artisan numen:brief:list
+
+# Filter by status and space
+php artisan numen:brief:list --status=pending --limit=50
+```
+
+---
+
+#### `numen:pipeline:run` — Trigger Pipeline Run
+
+```bash
+# Run the active pipeline for a brief
+php artisan numen:pipeline:run --brief-id=<uuid>
+
+# Run a specific pipeline
+php artisan numen:pipeline:run --brief-id=<uuid> --pipeline-id=<uuid>
+```
+
+---
+
+#### `numen:pipeline:status` — Check Pipeline Status
+
+```bash
+# Show recent pipeline runs
+php artisan numen:pipeline:status
+
+# Show only running pipelines
+php artisan numen:pipeline:status --running
+
+# Show more history
+php artisan numen:pipeline:status --limit=50
+```
+
+---
+
 ## API Reference
 
 ### Authentication
