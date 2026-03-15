@@ -40,6 +40,38 @@ class ContentPolicy
     }
 
     /**
+     * Create new content.
+     */
+    public function create(User $user): bool
+    {
+        return $user->role === 'editor';
+    }
+
+    /**
+     * Delete content.
+     */
+    public function delete(User $user, Content $content): bool
+    {
+        return $user->role === 'editor' && $this->inSpace($user, $content);
+    }
+
+    /**
+     * Update content.
+     */
+    public function update(User $user, Content $content): bool
+    {
+        return $user->role === 'editor' && $this->inSpace($user, $content);
+    }
+
+    /**
+     * Unpublish content.
+     */
+    public function unpublish(User $user, Content $content): bool
+    {
+        return $user->role === 'editor' && $this->inSpace($user, $content);
+    }
+
+    /**
      * View versioning details (index, show, diff).
      */
     public function view(User $user, Content $content): bool
