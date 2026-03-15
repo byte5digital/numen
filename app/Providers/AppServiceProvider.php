@@ -6,7 +6,9 @@ use App\Agents\AgentFactory;
 use App\Events\Content\ContentPublished;
 use App\Events\Content\ContentUnpublished;
 use App\Listeners\IndexContentForSearch;
+use App\Listeners\RemoveFromKnowledgeGraphListener;
 use App\Listeners\RemoveFromSearchIndex;
+use App\Listeners\UpdateKnowledgeGraphListener;
 use App\Models\Content;
 use App\Models\Setting;
 use App\Policies\ContentPolicy;
@@ -115,5 +117,9 @@ class AppServiceProvider extends ServiceProvider
         // Register search event listeners
         Event::listen(ContentPublished::class, IndexContentForSearch::class);
         Event::listen(ContentUnpublished::class, RemoveFromSearchIndex::class);
+
+        // Register knowledge graph event listeners
+        Event::listen(ContentPublished::class, UpdateKnowledgeGraphListener::class);
+        Event::listen(ContentUnpublished::class, RemoveFromKnowledgeGraphListener::class);
     }
 }
