@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Jobs\GenerateVariantsJob;
 use App\Models\MediaAsset;
+use App\Services\AuthorizationService;
 use App\Services\MediaTransformService;
 use App\Services\MediaUploadService;
 use Illuminate\Http\JsonResponse;
@@ -15,6 +16,7 @@ class MediaEditController extends Controller
     public function __construct(
         private readonly MediaTransformService $transformService,
         private readonly MediaUploadService $uploadService,
+        private readonly AuthorizationService $authz,
     ) {}
 
     /**
@@ -25,6 +27,8 @@ class MediaEditController extends Controller
      */
     public function edit(Request $request, MediaAsset $asset): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'media.update', $asset->space_id);
+
         $validated = $request->validate([
             'operation' => ['required', 'string', 'in:crop,rotate,resize'],
             'params' => ['required', 'array'],
@@ -77,6 +81,8 @@ class MediaEditController extends Controller
      */
     public function variants(Request $request, MediaAsset $asset): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'media.read', $asset->space_id);
+
         $variants = $asset->variants ?? [];
         $metaVariants = $asset->metadata['variants'] ?? [];
 

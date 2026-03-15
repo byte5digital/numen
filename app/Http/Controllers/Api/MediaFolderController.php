@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\MediaFolder;
+use App\Services\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MediaFolderController extends Controller
 {
+    public function __construct(private readonly AuthorizationService $authz) {}
+
     /**
      * List all folders for a space, including parent_id, slug, and asset_count.
      */
@@ -18,7 +21,10 @@ class MediaFolderController extends Controller
             'space_id' => ['required', 'ulid', 'exists:spaces,id'],
         ]);
 
-        $folders = MediaFolder::forSpace($request->input('space_id'))
+        $spaceId = $request->input('space_id');
+        $this->authz->authorize($request->user(), 'media.read', $spaceId);
+
+        $folders = MediaFolder::forSpace($spaceId)
             ->withCount('assets')
             ->orderBy('parent_id')
             ->orderBy('sort_order')
@@ -47,6 +53,15 @@ class MediaFolderController extends Controller
             'parent_id' => ['nullable', 'integer', 'exists:media_folders,id'],
         ]);
 
+        $this->authz->authorize($request->user(), 'media.update', $data['space_id']);
+
+        // If parent_id provided, verify it belongs to the same space
+        if (! empty($data['parent_id'])) {
+            MediaFolder::where('id', $data['parent_id'])
+                ->where('space_id', $data['space_id'])
+                ->firstOrFail();
+        }
+
         $slug = \Illuminate\Support\Str::slug($data['name']);
 
         $folder = MediaFolder::create([
@@ -72,6 +87,8 @@ class MediaFolderController extends Controller
      */
     public function update(Request $request, MediaFolder $folder): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'media.update', $folder->space_id);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
         ]);
@@ -95,8 +112,10 @@ class MediaFolderController extends Controller
     /**
      * Delete a folder — only if it contains no assets and no child folders.
      */
-    public function destroy(MediaFolder $folder): JsonResponse
+    public function destroy(Request $request, MediaFolder $folder): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'media.delete', $folder->space_id);
+
         if ($folder->assets()->exists()) {
             return response()->json([
                 'message' => 'Cannot delete a folder that contains assets.',
@@ -119,14 +138,21 @@ class MediaFolderController extends Controller
      */
     public function move(Request $request, MediaFolder $folder): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'media.update', $folder->space_id);
+
         $data = $request->validate([
             'parent_id' => ['nullable', 'integer', 'exists:media_folders,id'],
         ]);
 
-        // Prevent moving a folder into itself or into one of its own descendants
         $newParentId = $data['parent_id'] ?? null;
 
         if ($newParentId !== null) {
+            // Verify target parent belongs to same space (prevents cross-space moves)
+            MediaFolder::where('id', $newParentId)
+                ->where('space_id', $folder->space_id)
+                ->firstOrFail();
+
+            // Prevent moving a folder into itself or into one of its own descendants
             $descendantIds = $this->collectDescendantIds($folder);
             if ($newParentId === $folder->id || in_array($newParentId, $descendantIds, true)) {
                 return response()->json([

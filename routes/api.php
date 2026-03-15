@@ -3,17 +3,17 @@
 use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
+use App\Http\Controllers\Api\MediaCollectionController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\MediaEditController;
 use App\Http\Controllers\Api\MediaFolderController;
 use App\Http\Controllers\Api\PageController;
+use App\Http\Controllers\Api\PublicMediaController;
 use App\Http\Controllers\Api\Versioning\AutoSaveController;
 use App\Http\Controllers\Api\Versioning\DiffController;
 use App\Http\Controllers\Api\Versioning\VersionController;
 use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\WebhookDeliveryController;
-use App\Http\Controllers\Api\MediaCollectionController;
-use App\Http\Controllers\Api\PublicMediaController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -120,7 +120,7 @@ Route::prefix('v1')->group(function () {
         // Media Library
         Route::prefix('/media')->group(function () {
             Route::get('/', [MediaController::class, 'index']);
-            Route::post('/', [MediaController::class, 'store']);
+            Route::post('/', [MediaController::class, 'store'])->middleware('throttle:20,1');
             Route::get('/{asset}', [MediaController::class, 'show']);
             Route::patch('/{asset}', [MediaController::class, 'update']);
             Route::delete('/{asset}', [MediaController::class, 'destroy']);

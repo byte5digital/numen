@@ -5,17 +5,18 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\MediaAsset;
 use App\Models\Space;
+use App\Services\AuthorizationService;
 use App\Services\MediaUploadService;
 use App\Services\MediaUsageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class MediaController extends Controller
 {
     public function __construct(
         private readonly MediaUploadService $uploadService,
         private readonly MediaUsageService $usageService,
+        private readonly AuthorizationService $authz,
     ) {}
 
     /**
@@ -34,18 +35,17 @@ class MediaController extends Controller
             'per_page' => ['nullable', 'integer', 'min:1', 'max:200'],
         ]);
 
-        $query = MediaAsset::where('space_id', $request->input('space_id'));
+        $spaceId = $request->input('space_id');
+        $this->authz->authorize($request->user(), 'media.read', $spaceId);
+
+        $query = MediaAsset::where('space_id', $spaceId);
 
         if ($request->filled('folder_id')) {
             $query->where('folder_id', $request->input('folder_id'));
-        } else {
-            // Default to root-level assets when folder_id not specified
-            // If ?folder_id=null explicitly passed, handled above; otherwise show all
         }
 
         if ($request->filled('mime_type')) {
             $mimeType = $request->input('mime_type');
-            // Support prefix match, e.g. "image" matches "image/jpeg", "image/png"
             if (! str_contains($mimeType, '/')) {
                 $query->where('mime_type', 'like', $mimeType.'/%');
             } else {
@@ -100,11 +100,19 @@ class MediaController extends Controller
             'tags.*' => ['string', 'max:100'],
         ]);
 
+        $spaceId = $request->input('space_id');
+        $this->authz->authorize($request->user(), 'media.upload', $spaceId);
+
         /** @var Space $space */
-        $space = Space::findOrFail($request->input('space_id'));
-        $folder = $request->filled('folder_id')
-            ? \App\Models\MediaFolder::findOrFail($request->input('folder_id'))
-            : null;
+        $space = Space::findOrFail($spaceId);
+
+        // If folder_id provided, verify it belongs to this space (prevents cross-space folder injection)
+        $folder = null;
+        if ($request->filled('folder_id')) {
+            $folder = \App\Models\MediaFolder::where('id', $request->input('folder_id'))
+                ->where('space_id', $spaceId)
+                ->firstOrFail();
+        }
 
         $asset = $this->uploadService->upload($request->file('file'), $space, $folder);
 
@@ -124,9 +132,12 @@ class MediaController extends Controller
 
     /**
      * Get a single asset with its URL resolved.
+     * Verifies asset belongs to a space the user can access.
      */
-    public function show(MediaAsset $asset): JsonResponse
+    public function show(Request $request, MediaAsset $asset): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'media.read', $asset->space_id);
+
         return response()->json([
             'data' => array_merge($asset->toArray(), [
                 'url' => $this->uploadService->getUrl($asset),
@@ -139,14 +150,23 @@ class MediaController extends Controller
      */
     public function update(Request $request, MediaAsset $asset): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'media.update', $asset->space_id);
+
         $request->validate([
             'alt_text' => ['nullable', 'string', 'max:500'],
             'caption' => ['nullable', 'string'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:100'],
-            'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
+            'folder_id' => ['nullable', 'integer'],
             'is_public' => ['nullable', 'boolean'],
         ]);
+
+        // If folder_id is being changed, verify the target folder belongs to same space
+        if ($request->has('folder_id') && $request->input('folder_id') !== null) {
+            \App\Models\MediaFolder::where('id', $request->input('folder_id'))
+                ->where('space_id', $asset->space_id)
+                ->firstOrFail();
+        }
 
         $asset->update($request->only(['alt_text', 'caption', 'tags', 'folder_id', 'is_public']));
 
@@ -156,8 +176,10 @@ class MediaController extends Controller
     /**
      * Delete a media asset and its storage file.
      */
-    public function destroy(MediaAsset $asset): JsonResponse
+    public function destroy(Request $request, MediaAsset $asset): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'media.delete', $asset->space_id);
+
         $this->uploadService->delete($asset);
 
         return response()->json(null, 204);
@@ -168,9 +190,18 @@ class MediaController extends Controller
      */
     public function move(Request $request, MediaAsset $asset): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'media.update', $asset->space_id);
+
         $request->validate([
             'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
         ]);
+
+        // Verify target folder belongs to same space
+        if ($request->filled('folder_id')) {
+            \App\Models\MediaFolder::where('id', $request->input('folder_id'))
+                ->where('space_id', $asset->space_id)
+                ->firstOrFail();
+        }
 
         $asset->update(['folder_id' => $request->input('folder_id')]);
 
@@ -180,8 +211,10 @@ class MediaController extends Controller
     /**
      * Get content items that use a specific media asset.
      */
-    public function usage(MediaAsset $asset): JsonResponse
+    public function usage(Request $request, MediaAsset $asset): JsonResponse
     {
+        $this->authz->authorize($request->user(), 'media.read', $asset->space_id);
+
         $usages = $this->usageService->getUsagesForAsset($asset);
 
         return response()->json([
