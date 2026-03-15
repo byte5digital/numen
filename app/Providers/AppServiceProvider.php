@@ -122,6 +122,10 @@ class AppServiceProvider extends ServiceProvider
             $app->make(ScrapeCrawler::class),
             $app->make(ApiCrawler::class),
         ]));
+        // ── Competitor Fingerprinting + Similarity ────────────────────────
+        $this->app->singleton(\App\Services\Competitor\SimilarityCalculator::class);
+        $this->app->singleton(\App\Services\Competitor\SimilarContentFinder::class);
+        $this->app->singleton(\App\Services\Competitor\ContentFingerprintService::class);
 
     }
 
@@ -145,6 +149,9 @@ class AppServiceProvider extends ServiceProvider
         // Register search event listeners
         Event::listen(ContentPublished::class, IndexContentForSearch::class);
         Event::listen(ContentUnpublished::class, RemoveFromSearchIndex::class);
+
+        // Register competitor fingerprinting event listeners
+        Event::listen(ContentPublished::class, \App\Listeners\FingerprintPublishedContent::class);
 
         // Register knowledge graph event listeners
         Event::listen(ContentPublished::class, UpdateKnowledgeGraphListener::class);
