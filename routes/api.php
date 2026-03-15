@@ -6,6 +6,9 @@ use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\WebhookDeliveryController;
+use App\Http\Controllers\Api\Versioning\AutoSaveController;
+use App\Http\Controllers\Api\Versioning\DiffController;
+use App\Http\Controllers\Api\Versioning\VersionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -73,7 +76,7 @@ Route::prefix('v1')->group(function () {
         });
 
         // Webhooks — management CRUD + delivery log (rate-limited: 60/min overall, 10/min on redeliver)
-        Route::middleware('throttle:60,1')->group(function () {
+        Route::middleware(['throttle:60,1', 'permission:webhooks.manage'])->group(function () {
             Route::get('/webhooks', [WebhookController::class, 'index']);
             Route::post('/webhooks', [WebhookController::class, 'store']);
             Route::get('/webhooks/{id}', [WebhookController::class, 'show']);
@@ -85,6 +88,24 @@ Route::prefix('v1')->group(function () {
             Route::post('/webhooks/{id}/deliveries/{deliveryId}/redeliver', [WebhookDeliveryController::class, 'redeliver'])
                 ->middleware('throttle:10,1');
         });
+
+        // Versioning
+        Route::prefix('/content/{content}/versions')->group(function () {
+            Route::get('/', [VersionController::class, 'index']);
+            Route::get('/{version}', [VersionController::class, 'show']);
+            Route::post('/draft', [VersionController::class, 'createDraft']);
+            Route::patch('/{version}', [VersionController::class, 'update']);
+            Route::post('/{version}/publish', [VersionController::class, 'publish']);
+            Route::post('/{version}/schedule', [VersionController::class, 'schedule']);
+            Route::delete('/{version}/schedule', [VersionController::class, 'cancelSchedule']);
+            Route::post('/{version}/label', [VersionController::class, 'label']);
+            Route::post('/{version}/rollback', [VersionController::class, 'rollback']);
+            Route::post('/{version}/branch', [VersionController::class, 'branch']);
+        });
+        Route::post('/content/{content}/autosave', [AutoSaveController::class, 'save']);
+        Route::get('/content/{content}/autosave', [AutoSaveController::class, 'show']);
+        Route::delete('/content/{content}/autosave', [AutoSaveController::class, 'discard']);
+        Route::get('/content/{content}/diff', [DiffController::class, 'compare']);
 
         // Personas
         Route::get('/personas', function () {
