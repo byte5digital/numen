@@ -11,7 +11,7 @@ class ContentExportCommand extends Command
 {
     protected $signature = 'numen:content:export
         {--format=json : Export format (json or markdown)}
-        {--output= : Output file path (defaults to stdout)}
+        {--output= : Output file path (defaults to storage/exports/<timestamp>.json)}
         {--type= : Filter by content type slug}
         {--status= : Filter by status}
         {--id= : Export a single content item by ID}';
@@ -57,14 +57,77 @@ class ContentExportCommand extends Command
 
         $outputPath = $this->option('output');
 
-        if ($outputPath) {
-            File::put($outputPath, $output);
-            $this->info("Exported {$contents->count()} item(s) to {$outputPath}");
+        if ($outputPath !== null) {
+            // Resolve and validate output path
+            $resolvedOutput = $this->resolveOutputPath($outputPath);
+
+            if ($resolvedOutput === null) {
+                return self::FAILURE;
+            }
+
+            $outputPath = $resolvedOutput;
         } else {
-            $this->line($output);
+            // Default to storage/exports/<timestamp>.<ext>
+            $ext = $format === 'markdown' ? 'md' : 'json';
+            $exportsDir = storage_path('exports');
+
+            if (! File::isDirectory($exportsDir)) {
+                File::makeDirectory($exportsDir, 0755, true);
+            }
+
+            $outputPath = $exportsDir.DIRECTORY_SEPARATOR.date('Ymd_His').'.'.$ext;
+            $this->info("No --output given; defaulting to: {$outputPath}");
         }
 
+        File::put($outputPath, $output);
+        $this->info("Exported {$contents->count()} item(s) to {$outputPath}");
+
         return self::SUCCESS;
+    }
+
+    /**
+     * Resolve and validate the output path.
+     * Returns null and emits an error if the path is unsafe.
+     */
+    private function resolveOutputPath(string $outputPath): ?string
+    {
+        // Reject path traversal sequences
+        $normalizedInput = str_replace('\\', '/', $outputPath);
+        if (str_contains($normalizedInput, '../') || str_contains($normalizedInput, './..')) {
+            $this->error('Path traversal detected in --output. Use an absolute or clean relative path.');
+
+            return null;
+        }
+
+        // Resolve parent dir (file may not exist yet)
+        $dir = dirname($outputPath);
+        $resolvedDir = realpath($dir);
+
+        if ($resolvedDir === false) {
+            // Dir doesn't exist yet — try to create it
+            if (! File::makeDirectory($dir, 0755, true, true)) {
+                $this->error("Cannot create output directory: {$dir}");
+
+                return null;
+            }
+            $resolvedDir = realpath($dir);
+        }
+
+        if ($resolvedDir === false) {
+            $this->error("Cannot resolve output directory: {$dir}");
+
+            return null;
+        }
+
+        $resolvedOutput = $resolvedDir.DIRECTORY_SEPARATOR.basename($outputPath);
+
+        // Warn if writing outside app base_path
+        $appRoot = realpath(base_path()) ?: base_path();
+        if (! str_starts_with($resolvedOutput, $appRoot)) {
+            $this->warn("Warning: output path is outside the application root ({$appRoot}). Writing to: {$resolvedOutput}");
+        }
+
+        return $resolvedOutput;
     }
 
     /**

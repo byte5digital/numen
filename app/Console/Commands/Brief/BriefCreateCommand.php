@@ -24,6 +24,9 @@ class BriefCreateCommand extends Command
 
     protected $description = 'Create a content brief and optionally trigger the pipeline';
 
+    /** @var string[] */
+    private const ALLOWED_PRIORITIES = ['low', 'normal', 'high', 'urgent'];
+
     public function handle(PipelineExecutor $executor): int
     {
         $title = $this->option('title');
@@ -66,6 +69,14 @@ class BriefCreateCommand extends Command
             }
         }
 
+        // Whitelist priority — default to 'normal' if value is invalid
+        $rawPriority = $this->option('priority') ?? 'normal';
+        $priority = in_array($rawPriority, self::ALLOWED_PRIORITIES, true) ? $rawPriority : 'normal';
+
+        if ($priority !== $rawPriority) {
+            $this->warn("Invalid --priority '{$rawPriority}'. Valid values: ".implode(', ', self::ALLOWED_PRIORITIES).". Defaulting to 'normal'.");
+        }
+
         $brief = ContentBrief::create([
             'space_id' => $spaceId,
             'title' => $title,
@@ -75,7 +86,7 @@ class BriefCreateCommand extends Command
             'target_locale' => 'en',
             'persona_id' => $personaId,
             'source' => 'cli',
-            'priority' => $this->option('priority') ?? 'normal',
+            'priority' => $priority,
             'status' => 'pending',
         ]);
 

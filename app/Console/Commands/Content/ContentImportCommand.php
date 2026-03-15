@@ -19,6 +19,9 @@ class ContentImportCommand extends Command
 
     protected $description = 'Import content from a JSON file';
 
+    /** @var string[] */
+    private const ALLOWED_STATUSES = ['draft', 'published', 'archived'];
+
     public function handle(): int
     {
         $filePath = $this->option('file');
@@ -29,13 +32,36 @@ class ContentImportCommand extends Command
             return self::FAILURE;
         }
 
-        if (! File::exists($filePath)) {
-            $this->error("File not found: {$filePath}");
+        // Resolve realpath to detect and reject traversal attacks
+        $resolvedPath = realpath($filePath);
+
+        if ($resolvedPath === false) {
+            $this->error("File not found or unresolvable path: {$filePath}");
 
             return self::FAILURE;
         }
 
-        $json = File::get($filePath);
+        // Reject path traversal: if input differs from resolved path in a suspicious way
+        $normalizedInput = str_replace('\\', '/', $filePath);
+        if (str_contains($normalizedInput, '../') || str_contains($normalizedInput, './..')) {
+            $this->error('Path traversal detected. Use an absolute or clean relative path.');
+
+            return self::FAILURE;
+        }
+
+        if (! is_readable($resolvedPath)) {
+            $this->error("File is not readable: {$resolvedPath}");
+
+            return self::FAILURE;
+        }
+
+        // Warn (but don't block) if file is outside storage_path — CLI is privileged
+        $storagePath = realpath(storage_path()) ?: storage_path();
+        if (! str_starts_with($resolvedPath, $storagePath)) {
+            $this->warn("Note: file is outside storage_path() ({$storagePath}). Proceeding anyway (CLI is trusted).");
+        }
+
+        $json = File::get($resolvedPath);
         $items = json_decode($json, true);
 
         if (! is_array($items)) {
@@ -106,11 +132,19 @@ class ContentImportCommand extends Command
                         $contentType = ContentType::where('slug', $typeSlug)->first();
                     }
 
+                    // Whitelist status — default to 'draft' if value is invalid or missing
+                    $rawStatus = $item['status'] ?? 'draft';
+                    $status = in_array($rawStatus, self::ALLOWED_STATUSES, true) ? $rawStatus : 'draft';
+
+                    if ($status !== $rawStatus) {
+                        $this->warn("Item '{$slug}': invalid status '{$rawStatus}' — defaulting to 'draft'.");
+                    }
+
                     $content = Content::create([
                         'space_id' => $spaceId,
                         'content_type_id' => $contentType ? $contentType->id : (ContentType::where('space_id', $spaceId)->first()?->id),
                         'slug' => $slug,
-                        'status' => $item['status'] ?? 'draft',
+                        'status' => $status,
                         'locale' => $item['locale'] ?? 'en',
                     ]);
 
