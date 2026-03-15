@@ -27,7 +27,6 @@ use Illuminate\Support\Facades\Route;
 | Management endpoints require Sanctum authentication.
 |
 */
-
 Route::prefix('v1')->group(function () {
 
     // Content delivery (read-only, public)
@@ -46,6 +45,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/component-types', [ComponentDefinitionController::class, 'index']);
         Route::get('/component-types/{type}', [ComponentDefinitionController::class, 'show']);
     });
+
+    // Taxonomy content listing (public read-only)
+    Route::get('/taxonomies/{vocabSlug}/terms/{termSlug}/content', [TaxonomyTermController::class, 'content']);
+    Route::get('/content/{slug}/terms', [ContentTaxonomyController::class, 'terms']);
 
     // Taxonomy content listing (public read-only)
     Route::get('/taxonomies/{vocabSlug}/terms/{termSlug}/content', [TaxonomyTermController::class, 'content']);
@@ -83,6 +86,48 @@ Route::prefix('v1')->group(function () {
             ]);
 
             return response()->json(['data' => ['status' => 'approved']]);
+        });
+
+        // Audit logs (requires audit.view permission)
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->middleware('permission:audit.view');
+
+        // User roles (requires users.roles.assign or roles.manage)
+        Route::post('/users/{user}/roles', [UserRoleController::class, 'assignRole'])->middleware('permission:users.roles.assign');
+        Route::delete('/users/{user}/roles/{role}', [UserRoleController::class, 'revokeRole'])->middleware('permission:users.roles.assign');
+        Route::get('/users/{user}/roles', [UserRoleController::class, 'userRoles']);
+        Route::get('/roles/{role}/users', [UserRoleController::class, 'roleUsers'])->middleware('permission:roles.manage');
+
+        // Create new content
+        Route::post('/content', [ContentController::class, 'store'])->middleware('permission:content.create');
+
+        // Taxonomies API
+        Route::get('/taxonomies', [TaxonomyController::class, 'index']);
+        Route::post('/taxonomies', [TaxonomyController::class, 'store'])->middleware('permission:content.create');
+        Route::get('/taxonomies/{vocabSlug}', [TaxonomyController::class, 'show']);
+        Route::put('/taxonomies/{id}', [TaxonomyController::class, 'update'])->middleware('permission:content.update');
+        Route::delete('/taxonomies/{id}', [TaxonomyController::class, 'destroy'])->middleware('permission:content.delete');
+
+        // Taxonomy Terms API
+        Route::get('/taxonomies/{vocabSlug}/terms', [TaxonomyTermController::class, 'index']);
+        Route::post('/taxonomies/{vocabId}/terms', [TaxonomyTermController::class, 'store'])->middleware('permission:content.create');
+        Route::get('/taxonomies/{vocabSlug}/terms/{termSlug}', [TaxonomyTermController::class, 'show']);
+        Route::put('/taxonomies/terms/{id}', [TaxonomyTermController::class, 'update'])->middleware('permission:content.update');
+        Route::post('/taxonomies/terms/{id}/move', [TaxonomyTermController::class, 'move'])->middleware('permission:content.update');
+        Route::delete('/taxonomies/terms/{id}', [TaxonomyTermController::class, 'destroy'])->middleware('permission:content.delete');
+        Route::post('/taxonomies/terms/reorder', [TaxonomyTermController::class, 'reorder'])->middleware('permission:content.update');
+
+        // Content Taxonomy Assignment API
+        Route::post('/content/{id}/terms', [ContentTaxonomyController::class, 'assign']);
+        Route::put('/content/{id}/terms', [ContentTaxonomyController::class, 'sync']);
+        Route::delete('/content/{id}/terms/{termId}', [ContentTaxonomyController::class, 'remove']);
+        Route::post('/content/{id}/auto-categorize', [ContentTaxonomyController::class, 'autoCategorize']);
+
+        // Roles API (list requires roles.read or roles.manage, create/edit/delete requires roles.manage)
+        Route::get('/roles', [RoleController::class, 'index']);
+        Route::middleware('permission:roles.manage')->group(function () {
+            Route::post('/roles', [RoleController::class, 'store']);
+            Route::put('/roles/{role}', [RoleController::class, 'update']);
+            Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
         });
 
         // Webhooks — management CRUD + delivery log (rate-limited: 60/min overall, 10/min on redeliver)
