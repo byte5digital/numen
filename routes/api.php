@@ -347,8 +347,6 @@ Route::prefix('v1/chat')->middleware(['auth:sanctum', 'throttle:20,1'])->group(f
 });
 
 // Knowledge Graph API
-use App\Http\Controllers\Api\GraphController;
-
 Route::prefix('v1/graph')->middleware('auth:sanctum')->group(function () {
     Route::get('/related/{contentId}', [GraphController::class, 'related']);
     Route::get('/clusters', [GraphController::class, 'clusters']);
