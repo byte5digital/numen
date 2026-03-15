@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\SettingsAdminController;
 use App\Http\Controllers\Admin\TaxonomyAdminController;
 use App\Http\Controllers\Admin\TokenAdminController;
 use App\Http\Controllers\Admin\UserAdminController;
+use App\Http\Controllers\Admin\WebhookAdminController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Public\BlogController;
 use App\Http\Controllers\Public\HomeController;
@@ -125,6 +126,15 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/tokens', [TokenAdminController::class, 'index'])->name('admin.tokens.index')->middleware('permission:tokens.list');
     Route::post('/tokens', [TokenAdminController::class, 'store'])->name('admin.tokens.store')->middleware('permission:tokens.create');
     Route::delete('/tokens/{id}', [TokenAdminController::class, 'destroy'])->name('admin.tokens.destroy')->middleware('permission:tokens.delete');
+
+    // Webhooks
+    Route::get('/webhooks', [WebhookAdminController::class, 'index'])->name('admin.webhooks');
+    Route::post('/webhooks', [WebhookAdminController::class, 'store'])->name('admin.webhooks.store');
+    Route::put('/webhooks/{id}', [WebhookAdminController::class, 'update'])->name('admin.webhooks.update');
+    Route::delete('/webhooks/{id}', [WebhookAdminController::class, 'destroy'])->name('admin.webhooks.destroy');
+    Route::post('/webhooks/{id}/rotate-secret', [WebhookAdminController::class, 'rotateSecret'])->name('admin.webhooks.rotate-secret');
+    Route::get('/webhooks/{id}/deliveries', [WebhookAdminController::class, 'deliveries'])->name('admin.webhooks.deliveries');
+    Route::post('/webhooks/{id}/deliveries/{deliveryId}/redeliver', [WebhookAdminController::class, 'redeliver'])->name('admin.webhooks.redeliver');
 
     // Pages
     Route::get('/pages', [PageAdminController::class, 'index'])->name('admin.pages');
