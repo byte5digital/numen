@@ -22,3 +22,9 @@ Schedule::call(fn () => app(\App\Services\Graph\ClusteringService::class)->compu
     ->everySixHours()
     ->name('graph:compute-clusters')
     ->withoutOverlapping();
+
+// Knowledge graph prune: remove orphaned nodes/edges weekly
+Schedule::command('graph:prune')
+    ->weekly()
+    ->withoutOverlapping()
+    ->runInBackground();
