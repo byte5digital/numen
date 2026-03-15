@@ -23,8 +23,14 @@ class SearchAdminApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // Seed roles so admin role exists
+        $this->seed(\Database\Seeders\RoleSeeder::class);
+        
         /** @var User $admin */
         $admin = User::factory()->admin()->create();
+        // Assign admin role to user
+        $adminRole = \App\Models\Role::where('slug', 'admin')->firstOrFail();
+        $admin->roles()->attach($adminRole);
         $this->admin = $admin;
         /** @var Space $space */
         $space = Space::factory()->create();

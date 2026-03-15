@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\ContentTaxonomyController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TaxonomyController;
@@ -15,6 +16,8 @@ use App\Http\Controllers\Api\Versioning\DiffController;
 use App\Http\Controllers\Api\Versioning\VersionController;
 use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\WebhookDeliveryController;
+use App\Http\Controllers\Api\V1\SearchController;
+use App\Http\Controllers\Api\V1\Admin\SearchAdminController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -53,6 +56,12 @@ Route::prefix('v1')->group(function () {
     // Taxonomy content listing (public read-only)
     Route::get('/taxonomies/{vocabSlug}/terms/{termSlug}/content', [TaxonomyTermController::class, 'content']);
     Route::get('/content/{slug}/terms', [ContentTaxonomyController::class, 'terms']);
+
+    // Search API (public search endpoint)
+    Route::get('/search', [SearchController::class, 'search']);
+    Route::get('/search/suggest', [SearchController::class, 'suggest']);
+    Route::post('/search/ask', [SearchController::class, 'ask']);
+    Route::post('/search/click', [SearchController::class, 'recordClick']);
 
     // Management API (authenticated)
     Route::middleware('auth:sanctum')->group(function () {
@@ -129,6 +138,9 @@ Route::prefix('v1')->group(function () {
             Route::put('/roles/{role}', [RoleController::class, 'update']);
             Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
         });
+        
+        // Permissions API (requires roles.manage)
+        Route::get('/permissions', [PermissionController::class, 'index'])->middleware('permission:roles.manage');
 
         // Webhooks — management CRUD + delivery log (rate-limited: 60/min overall, 10/min on redeliver)
         Route::middleware(['throttle:60,1', 'permission:webhooks.manage'])->group(function () {
@@ -207,6 +219,24 @@ Route::prefix('v1')->group(function () {
         // Personas
         Route::get('/personas', function () {
             return response()->json(['data' => \App\Models\Persona::where('is_active', true)->get()]);
+        });
+
+        // Admin search management (requires authentication + search.admin permission)
+        Route::prefix('admin/search')->middleware(['auth:sanctum', 'permission:search.admin'])->group(function () {
+            Route::get('/synonyms', [SearchAdminController::class, 'synonyms']);
+            Route::post('/synonyms', [SearchAdminController::class, 'storeSynonym']);
+            Route::put('/synonyms/{id}', [SearchAdminController::class, 'updateSynonym']);
+            Route::delete('/synonyms/{id}', [SearchAdminController::class, 'destroySynonym']);
+            
+            Route::get('/promoted', [SearchAdminController::class, 'promoted']);
+            Route::post('/promoted', [SearchAdminController::class, 'storePromoted']);
+            Route::put('/promoted/{id}', [SearchAdminController::class, 'updatePromoted']);
+            Route::delete('/promoted/{id}', [SearchAdminController::class, 'destroyPromoted']);
+            
+            Route::get('/health', [SearchAdminController::class, 'health']);
+            Route::post('/reindex', [SearchAdminController::class, 'reindex']);
+            Route::get('/analytics', [SearchAdminController::class, 'analytics']);
+            Route::get('/content-gaps', [SearchAdminController::class, 'contentGaps']);
         });
 
         // Analytics

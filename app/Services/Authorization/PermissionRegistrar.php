@@ -85,6 +85,9 @@ class PermissionRegistrar
             ],
             'personas' => [
                 'persona.view' => 'View persona configurations',
+            'search' => [
+                'search.admin' => 'Manage search settings, synonyms, and promoted results',
+            ],
             ],
         ];
     }
