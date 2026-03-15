@@ -16,11 +16,14 @@ class RoleController extends Controller
 
     /**
      * List all roles (optionally scoped to a space).
-     * Requires roles.manage permission.
+     * Requires roles.read or roles.manage permission.
      */
     public function index(Request $request): JsonResponse
     {
-        $this->authz->authorize($request->user(), 'roles.manage');
+        $user = $request->user();
+        if (! $this->authz->check($user, 'roles.read') && ! $this->authz->check($user, 'roles.manage')) {
+            throw new \App\Exceptions\PermissionDeniedException('roles.read');
+        }
 
         $query = Role::query()->orderBy('name');
 

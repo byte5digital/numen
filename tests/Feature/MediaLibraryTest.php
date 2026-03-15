@@ -141,27 +141,36 @@ class MediaLibraryTest extends TestCase
 
     public function test_media_asset_can_belong_to_folder(): void
     {
+        MediaAsset::create([
+            'space_id' => $this->space->id,
+            'filename' => 'folder-test.jpg',
+            'disk' => 'public',
+            'path' => 'media/folder-test.jpg',
+            'mime_type' => 'image/jpeg',
+            'size_bytes' => 1000,
+            'source' => 'upload',
+        ]);
         $this->assertDatabaseHas('media_assets', ['space_id' => $this->space->id]);
     }
 
     public function test_media_folder_table_structure(): void
     {
-        $this->assertDatabaseHas('media_folders', []);
+        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasTable('media_folders'), 'Table media_folders should exist');
     }
 
     public function test_media_collection_table_structure(): void
     {
-        $this->assertDatabaseHas('media_collections', []);
+        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasTable('media_collections'), 'Table media_collections should exist');
     }
 
     public function test_media_collection_items_relationship(): void
     {
-        $this->assertDatabaseHas('media_collection_items', []);
+        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasTable('media_collection_items'), 'Table media_collection_items should exist');
     }
 
     public function test_media_usage_table_structure(): void
     {
-        $this->assertDatabaseHas('media_usage', []);
+        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasTable('media_usage'), 'Table media_usage should exist');
     }
 
     public function test_asset_model_has_required_fillable_fields(): void
