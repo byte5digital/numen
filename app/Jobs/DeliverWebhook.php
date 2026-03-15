@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\WebhookDelivery;
+use App\Rules\ExternalUrl;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -31,6 +32,19 @@ class DeliverWebhook implements ShouldQueue
     public function handle(): void
     {
         $webhook = $this->delivery->webhook;
+
+        // Re-validate the URL at delivery time to protect against DNS rebinding attacks.
+        // A URL may pass validation at registration time but resolve to an internal address
+        // later if the DNS record changes.
+        $externalUrlRule = new ExternalUrl;
+        if (! $externalUrlRule->resolveAndValidate($webhook->url)) {
+            $this->delivery->update([
+                'status' => WebhookDelivery::STATUS_ABANDONED,
+                'error_message' => 'Delivery aborted: webhook URL resolved to a blocked (internal/private) address at delivery time.',
+            ]);
+
+            return;
+        }
 
         $body = json_encode($this->payload, JSON_UNESCAPED_UNICODE);
         $hmac = hash_hmac('sha256', $body, $webhook->secret);

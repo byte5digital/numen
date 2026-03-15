@@ -63,12 +63,9 @@ class Webhook extends Model
             return null;
         }
 
-        try {
-            return Crypt::decryptString($value);
-        } catch (\Throwable) {
-            // Fallback for plaintext values during migration period
-            return $value;
-        }
+        // Migration period is over — all secrets must be encrypted.
+        // No plaintext fallback: if decryption fails, propagate the exception.
+        return Crypt::decryptString($value);
     }
 
     /**

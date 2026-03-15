@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Jobs\DeliverWebhook;
 use App\Models\Webhook;
 use App\Models\WebhookDelivery;
+use App\Services\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class WebhookDeliveryController extends Controller
 {
+    public function __construct(private readonly AuthorizationService $authz) {}
+
     /**
      * List delivery history for a webhook.
      *
@@ -49,6 +52,8 @@ class WebhookDeliveryController extends Controller
      * Retry a failed or abandoned delivery.
      *
      * POST /api/v1/webhooks/{id}/deliveries/{deliveryId}/redeliver
+     *
+     * Returns 422 if the original delivery already succeeded, unless ?force=true is passed.
      */
     public function redeliver(Request $request, string $id, string $deliveryId): JsonResponse
     {
@@ -57,6 +62,13 @@ class WebhookDeliveryController extends Controller
 
         $original = WebhookDelivery::where('webhook_id', $webhook->id)
             ->findOrFail($deliveryId);
+
+        // Guard: prevent accidental replay of already-succeeded deliveries
+        if ($original->status === WebhookDelivery::STATUS_DELIVERED && ! $request->boolean('force')) {
+            return response()->json([
+                'error' => 'Delivery already succeeded — use force=true to replay.',
+            ], 422);
+        }
 
         $payload = $original->payload ?? [];
 
@@ -79,6 +91,9 @@ class WebhookDeliveryController extends Controller
 
     /**
      * Verify the webhook belongs to a space the authenticated user is authorized to access.
+     * Checks both space ownership and that the user has webhooks.manage permission for that space.
+     *
+     * @throws \App\Exceptions\PermissionDeniedException
      */
     private function authorizeSpaceAccess(Request $request, Webhook $webhook): void
     {
@@ -87,5 +102,8 @@ class WebhookDeliveryController extends Controller
         if ($requestedSpaceId !== null && $requestedSpaceId !== $webhook->space_id) {
             abort(403, 'This webhook does not belong to the specified space.');
         }
+
+        // Verify user ↔ space membership and permission (guards against IDOR)
+        $this->authz->authorize($request->user(), 'webhooks.manage', $webhook->space_id);
     }
 }

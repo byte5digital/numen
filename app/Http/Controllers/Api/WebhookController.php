@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Webhook;
 use App\Rules\ExternalUrl;
+use App\Services\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -17,6 +18,8 @@ class WebhookController extends Controller
      */
     private const RESERVED_HEADERS = ['x-numen-signature', 'content-type', 'user-agent'];
 
+    public function __construct(private readonly AuthorizationService $authz) {}
+
     /**
      * List all webhooks for a space.
      *
@@ -27,6 +30,9 @@ class WebhookController extends Controller
         $validated = $request->validate([
             'space_id' => ['required', 'string', 'exists:spaces,id'],
         ]);
+
+        $user = $request->user();
+        $this->authz->authorize($user, 'webhooks.manage', $validated['space_id']);
 
         $webhooks = Webhook::where('space_id', $validated['space_id'])
             ->latest()
@@ -55,6 +61,9 @@ class WebhookController extends Controller
             'batch_mode' => ['sometimes', 'boolean'],
             'batch_timeout' => ['sometimes', 'integer', 'min:100', 'max:300000'],
         ]);
+
+        $user = $request->user();
+        $this->authz->authorize($user, 'webhooks.manage', $validated['space_id']);
 
         if (isset($validated['headers'])) {
             $validated['headers'] = $this->sanitizeHeaders($validated['headers']);
@@ -149,7 +158,9 @@ class WebhookController extends Controller
 
     /**
      * Verify the webhook belongs to a space the authenticated user is authorized to access.
-     * Aborts with 403 if the request includes a space_id that does not match the webhook's space.
+     * Checks both space ownership and that the user has webhooks.manage permission for that space.
+     *
+     * @throws \App\Exceptions\PermissionDeniedException
      */
     private function authorizeSpaceAccess(Request $request, Webhook $webhook): void
     {
@@ -158,6 +169,9 @@ class WebhookController extends Controller
         if ($requestedSpaceId !== null && $requestedSpaceId !== $webhook->space_id) {
             abort(403, 'This webhook does not belong to the specified space.');
         }
+
+        // Verify user ↔ space membership and permission (guards against IDOR)
+        $this->authz->authorize($request->user(), 'webhooks.manage', $webhook->space_id);
     }
 
     /**
