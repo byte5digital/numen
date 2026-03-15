@@ -10,17 +10,17 @@ return new class extends Migration
     {
         if (! Schema::hasTable('space_locales')) {
             Schema::create('space_locales', function (Blueprint $table) {
-            $table->id();
-            $table->string('space_id', 26)->index();
-            $table->string('locale', 10); // e.g. en, fr, de, zh-TW
-            $table->string('label', 100); // e.g. "English", "Français"
-            $table->boolean('is_default')->default(false);
-            $table->boolean('is_active')->default(true);
-            $table->string('fallback_locale', 10)->nullable(); // e.g. en-AU falls back to en
-            $table->integer('sort_order')->default(0);
-            $table->timestamps();
-            $table->unique(['space_id', 'locale']);
-        });
+                $table->id();
+                $table->string('space_id', 26)->index();
+                $table->string('locale', 10); // e.g. en, fr, de, zh-TW
+                $table->string('label', 100); // e.g. "English", "Français"
+                $table->boolean('is_default')->default(false);
+                $table->boolean('is_active')->default(true);
+                $table->string('fallback_locale', 10)->nullable(); // e.g. en-AU falls back to en
+                $table->integer('sort_order')->default(0);
+                $table->timestamps();
+                $table->unique(['space_id', 'locale']);
+            });
         }
     }
 
