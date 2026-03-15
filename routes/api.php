@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\ContentTaxonomyController;
 use App\Http\Controllers\Api\FormatTemplateController;
+use App\Http\Controllers\Api\LocaleController;
 use App\Http\Controllers\Api\MediaCollectionController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\MediaEditController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Api\RepurposingController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TaxonomyController;
 use App\Http\Controllers\Api\TaxonomyTermController;
+use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\UserRoleController;
 use App\Http\Controllers\Api\V1\Admin\SearchAdminController;
 use App\Http\Controllers\Api\V1\SearchController;
@@ -278,6 +280,21 @@ Route::prefix('v1')->group(function () {
             Route::post('/spaces/{space}/repurpose/batch', [RepurposingController::class, 'batch']);
         });
 
+        // Locales — space locale management
+        Route::get('/locales/supported', [LocaleController::class, 'supported']);
+        Route::get('/locales', [LocaleController::class, 'index']);
+        Route::post('/locales', [LocaleController::class, 'store']);
+        Route::patch('/locales/{locale}', [LocaleController::class, 'update']);
+        Route::delete('/locales/{locale}', [LocaleController::class, 'destroy']);
+        Route::post('/locales/{locale}/set-default', [LocaleController::class, 'setDefault']);
+
+        // Translations — AI translation jobs
+        Route::get('/translations/matrix', [TranslationController::class, 'matrix']);
+        Route::delete('/translations/{job}', [TranslationController::class, 'cancel']);
+        Route::post('/translations/{job}/retry', [TranslationController::class, 'retry']);
+        Route::get('/content/{content}/translations', [TranslationController::class, 'status']);
+        Route::post('/content/{content}/translate', [TranslationController::class, 'translate']);
+        Route::get('/content/{content}/translate/estimate', [TranslationController::class, 'estimateCost']);
         // Format templates
         Route::get('/format-templates', [FormatTemplateController::class, 'index']);
         Route::post('/format-templates', [FormatTemplateController::class, 'store']);
