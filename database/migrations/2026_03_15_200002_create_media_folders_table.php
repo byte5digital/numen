@@ -18,7 +18,6 @@ return new class extends Migration
             $table->integer('sort_order')->default(0);
             $table->timestamps();
 
-            $table->index(['space_id', 'parent_id']);
             $table->index(['space_id', 'slug', 'parent_id']); // uniqueness enforced at app layer (SQLite-safe)
         });
 
