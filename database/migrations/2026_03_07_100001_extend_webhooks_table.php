@@ -38,33 +38,30 @@ return new class extends Migration
             }
         });
 
-        // Add unique index — cross-database compatible
-        // SQLite: CREATE UNIQUE INDEX with IF NOT EXISTS
-        // MySQL: use url(500) prefix to stay within 3072-byte key length limit
-        $driver = \DB::getDriverName();
-        if ($driver === 'sqlite') {
-            \DB::statement('CREATE UNIQUE INDEX IF NOT EXISTS webhooks_space_id_url_unique ON webhooks (space_id, url)');
-        } else {
-            try {
+        // Add unique index — cross-database compatible (works on MySQL and SQLite)
+        if (! Schema::hasIndex('webhooks', 'webhooks_space_id_url_unique')) {
+            $driver = \DB::getDriverName();
+            if ($driver === 'mysql') {
+                // MySQL requires a column prefix for long varchar columns to stay within key length limit
                 \DB::statement('CREATE UNIQUE INDEX webhooks_space_id_url_unique ON webhooks (space_id, url(500))');
-            } catch (\Throwable $e) {
-                if (! str_contains($e->getMessage(), 'Duplicate key name')) {
-                    throw $e;
-                }
+            } else {
+                Schema::table('webhooks', function (Blueprint $table) {
+                    $table->unique(['space_id', 'url'], 'webhooks_space_id_url_unique');
+                });
             }
         }
     }
 
     public function down(): void
     {
-        $driver = \DB::getDriverName();
-        if ($driver === 'sqlite') {
-            \DB::statement('DROP INDEX IF EXISTS webhooks_space_id_url_unique');
-        } else {
-            try {
+        if (Schema::hasIndex('webhooks', 'webhooks_space_id_url_unique')) {
+            $driver = \DB::getDriverName();
+            if ($driver === 'mysql') {
                 \DB::statement('ALTER TABLE webhooks DROP INDEX webhooks_space_id_url_unique');
-            } catch (\Throwable $e) {
-                // Index doesn't exist — safe to ignore
+            } else {
+                Schema::table('webhooks', function (Blueprint $table) {
+                    $table->dropUnique('webhooks_space_id_url_unique');
+                });
             }
         }
 
