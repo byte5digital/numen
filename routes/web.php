@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BriefAdminController;
 use App\Http\Controllers\Admin\ContentAdminController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\LocaleAdminController;
 use App\Http\Controllers\Admin\MediaAdminController;
 use App\Http\Controllers\Admin\PageAdminController;
 use App\Http\Controllers\Admin\PersonaAdminController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Admin\QueueMonitorController;
 use App\Http\Controllers\Admin\SettingsAdminController;
 use App\Http\Controllers\Admin\TaxonomyAdminController;
 use App\Http\Controllers\Admin\TokenAdminController;
+use App\Http\Controllers\Admin\TranslationAdminController;
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Public\BlogController;
@@ -150,4 +152,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/media', [MediaAdminController::class, 'index'])->name('admin.media');
     Route::get('/media/{id}', [MediaAdminController::class, 'show'])->name('admin.media.show');
     Route::delete('/media/{id}', [MediaAdminController::class, 'destroy'])->name('admin.media.destroy');
+
+    // i18n / Locale management
+    Route::get('/settings/locales', [LocaleAdminController::class, 'index'])->name('admin.settings.locales');
+    Route::get('/content/{content}/translations', [TranslationAdminController::class, 'show'])->name('admin.content.translations');
 });
