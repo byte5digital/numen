@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\MediaController;
+use App\Http\Controllers\Api\MediaFolderController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\Versioning\AutoSaveController;
 use App\Http\Controllers\Api\Versioning\DiffController;
@@ -122,6 +123,10 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{asset}', [MediaController::class, 'destroy']);
             Route::patch('/{asset}/move', [MediaController::class, 'move']);
         });
+
+        // Media Folders
+        Route::apiResource('media/folders', MediaFolderController::class)->except(['show']);
+        Route::patch('media/folders/{folder}/move', [MediaFolderController::class, 'move']);
 
         // Analytics
         Route::get('/analytics/costs', function () {
