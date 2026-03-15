@@ -114,9 +114,10 @@ class RepurposeContentJob implements ShouldQueue
 
     private function maybeFinalizeBatch(RepurposedContent $item): void
     {
+        /** @var \App\Models\RepurposingBatch|null $batch */
         $batch = $item->batch()->lockForUpdate()->first();
 
-        if (! $batch) {
+        if (! $batch instanceof \App\Models\RepurposingBatch) {
             return;
         }
 

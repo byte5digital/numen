@@ -127,7 +127,7 @@ class FormatTemplateController extends Controller
             return [
                 'format_key' => $key,
                 'label' => $meta['label'],
-                'description' => $meta['description'] ?? null,
+                'description' => $meta['description'],
             ];
         })->values();
 

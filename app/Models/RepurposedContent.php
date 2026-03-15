@@ -124,7 +124,7 @@ class RepurposedContent extends Model
             return true;
         }
 
-        $sourceUpdated = $this->sourceContent?->updated_at;
+        $sourceUpdated = $this->sourceContent->updated_at;
 
         if ($sourceUpdated === null) {
             return false;

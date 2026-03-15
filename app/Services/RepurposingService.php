@@ -9,7 +9,6 @@ use App\Models\Persona;
 use App\Models\RepurposedContent;
 use App\Models\RepurposingBatch;
 use App\Models\Space;
-use App\Services\AI\LLMManager;
 use Illuminate\Support\Collection;
 use RuntimeException;
 
@@ -21,9 +20,6 @@ class RepurposingService
     /** Average tokens used per content item (used for cost estimation). */
     private const TOKENS_PER_ITEM = 2000;
 
-    /** Default model used for cost estimation calculations. */
-    private const ESTIMATE_MODEL = 'claude-sonnet-4-6';
-
     /** Approximate input cost per million tokens for the estimate model (USD). */
     private const ESTIMATE_INPUT_COST_PER_M = 3.0;
 
@@ -32,7 +28,6 @@ class RepurposingService
 
     public function __construct(
         private readonly FormatTemplateService $templateService,
-        private readonly LLMManager $llm,
     ) {}
 
     /**
@@ -44,7 +39,7 @@ class RepurposingService
      */
     public function repurpose(Content $content, string $formatKey, ?Persona $persona = null): RepurposedContent
     {
-        $template = $this->templateService->getForSpace($content->space_id, $formatKey);
+        $template = $this->templateService->getForSpace((int) $content->space_id, $formatKey);
 
         $item = RepurposedContent::create([
             'space_id' => $content->space_id,

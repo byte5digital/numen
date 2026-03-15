@@ -75,7 +75,7 @@ class FormatTemplate extends Model
     /**
      * Return templates that are either space-specific or global (space_id IS NULL).
      */
-    public function scopeForSpace(Builder $query, ?int $spaceId): Builder
+    public function scopeForSpace(Builder $query, string|int|null $spaceId): Builder
     {
         return $query->where(function (Builder $q) use ($spaceId) {
             $q->where('space_id', $spaceId)
@@ -96,7 +96,7 @@ class FormatTemplate extends Model
      * Resolve the best template for a given space + format.
      * Space-specific templates take priority over global defaults.
      */
-    public static function getForSpace(int $spaceId, string $formatKey): ?self
+    public static function getForSpace(string|int $spaceId, string $formatKey): ?self
     {
         $templates = static::query()
             ->active()

@@ -41,9 +41,7 @@ class TranslationMatrixResource extends JsonResource
             $localeCompletion[$locale] = [
                 'completed' => $counts['completed'],
                 'total' => $counts['total'],
-                'completion_percentage' => $counts['total'] > 0
-                    ? round(($counts['completed'] / $counts['total']) * 100, 1)
-                    : 0.0,
+                'completion_percentage' => round(($counts['completed'] / $counts['total']) * 100, 1),
             ];
         }
 

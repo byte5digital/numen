@@ -17,7 +17,7 @@ class RepurposeContentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'format_key' => ['required', 'string', Rule::in(app(FormatAdapterService::class)->getSupportedFormats()->keys())],
+            'format_key' => ['required', 'string', Rule::in(array_keys(app(FormatAdapterService::class)->getSupportedFormats()))],
             'persona_id' => 'nullable|integer|exists:personas,id',
         ];
     }

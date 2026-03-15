@@ -11,7 +11,7 @@ class FormatTemplateService
      * Resolve the best template for a given space + format.
      * Space-specific first, fall back to global (space_id IS NULL).
      */
-    public function getForSpace(int $spaceId, string $formatKey): ?FormatTemplate
+    public function getForSpace(string|int $spaceId, string $formatKey): ?FormatTemplate
     {
         return FormatTemplate::getForSpace($spaceId, $formatKey);
     }
@@ -22,7 +22,7 @@ class FormatTemplateService
      *
      * @return Collection<int, FormatTemplate>
      */
-    public function getAllForSpace(int $spaceId): Collection
+    public function getAllForSpace(string|int $spaceId): Collection
     {
         $templates = FormatTemplate::query()
             ->active()

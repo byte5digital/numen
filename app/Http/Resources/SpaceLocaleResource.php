@@ -18,7 +18,7 @@ class SpaceLocaleResource extends JsonResource
             'is_active' => $this->is_active,
             'fallback_locale' => $this->fallback_locale,
             'sort_order' => $this->sort_order,
-            'created_at' => $this->created_at?->toISOString(),
+            'created_at' => $this->created_at->toISOString(),
         ];
     }
 }

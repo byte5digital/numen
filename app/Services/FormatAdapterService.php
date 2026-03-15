@@ -122,13 +122,15 @@ class FormatAdapterService
 
     private function extractBody(Content $content): string
     {
-        if (! empty($content->body)) {
-            return (string) $content->body;
+        $version = $content->currentVersion;
+
+        if ($version !== null && ! empty($version->body)) {
+            return (string) $version->body;
         }
 
         // Attempt to flatten content blocks if available.
-        if ($content->relationLoaded('blocks') && $content->blocks->isNotEmpty()) {
-            return $content->blocks
+        if ($version !== null && $version->relationLoaded('blocks') && $version->blocks->isNotEmpty()) {
+            return $version->blocks
                 ->pluck('content')
                 ->filter()
                 ->implode("\n\n");
@@ -200,8 +202,8 @@ class FormatAdapterService
             } elseif ($current !== '') {
                 $current .= "\n".$line;
             } elseif ($line !== '') {
-                // Pre-numbered preamble — attach to first tweet.
-                $current .= ($current !== '' ? "\n" : '').$line;
+                // Pre-numbered preamble — attach to first tweet (current is empty here).
+                $current .= $line;
             }
         }
 
