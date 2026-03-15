@@ -43,11 +43,11 @@ class RepurposingTest extends TestCase
     public function can_list_repurposed_content_for_content_item(): void
     {
         RepurposedContent::factory()
-            ->for($this->content)
+            ->for($this->content, 'sourceContent')
             ->create(['format_key' => 'twitter_thread', 'status' => 'completed']);
 
         RepurposedContent::factory()
-            ->for($this->content)
+            ->for($this->content, 'sourceContent')
             ->create(['format_key' => 'linkedin_post', 'status' => 'pending']);
 
         $response = $this->actingAs($this->user)
@@ -155,7 +155,7 @@ class RepurposingTest extends TestCase
     public function can_get_repurposed_content_status(): void
     {
         $repurposed = RepurposedContent::factory()
-            ->for($this->content)
+            ->for($this->content, 'sourceContent')
             ->create(['status' => 'processing', 'format_key' => 'twitter_thread']);
 
         $response = $this->actingAs($this->user)
@@ -216,7 +216,7 @@ class RepurposingTest extends TestCase
     public function repurposed_content_has_correct_relationships(): void
     {
         $repurposed = RepurposedContent::factory()
-            ->for($this->content)
+            ->for($this->content, 'sourceContent')
             ->create(['status' => 'completed']);
 
         $this->assertEquals($this->content->id, $repurposed->content_id);
@@ -246,7 +246,7 @@ class RepurposingTest extends TestCase
     public function repurposed_content_tracks_status_transitions(): void
     {
         $repurposed = RepurposedContent::factory()
-            ->for($this->content)
+            ->for($this->content, 'sourceContent')
             ->create(['status' => 'pending']);
 
         $this->assertEquals('pending', $repurposed->status);
