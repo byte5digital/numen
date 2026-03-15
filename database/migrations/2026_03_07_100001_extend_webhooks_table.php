@@ -13,22 +13,33 @@ return new class extends Migration
             $table->string('url', 2048)->change();
 
             // Add retry policy (exponential backoff config)
-            $table->json('retry_policy')->nullable()->after('is_active');
+            if (! Schema::hasColumn('webhooks', 'retry_policy')) {
+                $table->json('retry_policy')->nullable()->after('is_active');
+            }
 
             // Custom headers to send with each delivery
-            $table->json('headers')->nullable()->after('retry_policy');
+            if (! Schema::hasColumn('webhooks', 'headers')) {
+                $table->json('headers')->nullable()->after('retry_policy');
+            }
 
             // Batch mode: aggregate events before sending
-            $table->boolean('batch_mode')->default(false)->after('headers');
+            if (! Schema::hasColumn('webhooks', 'batch_mode')) {
+                $table->boolean('batch_mode')->default(false)->after('headers');
+            }
 
             // Batch timeout in milliseconds (default 5 seconds)
-            $table->unsignedInteger('batch_timeout')->default(5000)->after('batch_mode');
+            if (! Schema::hasColumn('webhooks', 'batch_timeout')) {
+                $table->unsignedInteger('batch_timeout')->default(5000)->after('batch_mode');
+            }
 
             // Soft deletes
-            $table->softDeletes();
+            if (! Schema::hasColumn('webhooks', 'deleted_at')) {
+                $table->softDeletes();
+            }
         });
 
-        // SQLite-compatible unique index (avoids url(500) prefix syntax)
+        // SQLite-compatible unique index (no url(500) prefix — SQLite doesn't support it)
+        // For MySQL: the full url column is used; enforce at app layer if key length is an issue
         \DB::statement('CREATE UNIQUE INDEX IF NOT EXISTS webhooks_space_id_url_unique ON webhooks (space_id, url)');
     }
 
@@ -37,8 +48,16 @@ return new class extends Migration
         \DB::statement('DROP INDEX IF EXISTS webhooks_space_id_url_unique');
 
         Schema::table('webhooks', function (Blueprint $table) {
-            $table->dropSoftDeletes();
-            $table->dropColumn(['retry_policy', 'headers', 'batch_mode', 'batch_timeout']);
+            if (Schema::hasColumn('webhooks', 'deleted_at')) {
+                $table->dropSoftDeletes();
+            }
+
+            $cols = ['retry_policy', 'headers', 'batch_mode', 'batch_timeout'];
+            $existing = array_filter($cols, fn ($c) => Schema::hasColumn('webhooks', $c));
+            if ($existing) {
+                $table->dropColumn(array_values($existing));
+            }
+
             $table->string('url')->change();
         });
     }
