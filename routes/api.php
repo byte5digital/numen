@@ -4,11 +4,11 @@ use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\PageController;
-use App\Http\Controllers\Api\WebhookController;
-use App\Http\Controllers\Api\WebhookDeliveryController;
 use App\Http\Controllers\Api\Versioning\AutoSaveController;
 use App\Http\Controllers\Api\Versioning\DiffController;
 use App\Http\Controllers\Api\Versioning\VersionController;
+use App\Http\Controllers\Api\WebhookController;
+use App\Http\Controllers\Api\WebhookDeliveryController;
 use Illuminate\Support\Facades\Route;
 
 /*

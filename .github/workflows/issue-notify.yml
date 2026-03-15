@@ -1,0 +1,79 @@
+name: Issue Notifications
+
+on:
+  issues:
+    types: [opened, labeled, closed]
+  issue_comment:
+    types: [created]
+
+jobs:
+  notify-discord:
+    runs-on: ubuntu-latest
+    if: >
+      github.actor != 'weegy' &&
+      github.actor != 'byte5-bot' &&
+      github.actor != 'github-actions[bot]'
+    steps:
+      - name: Set event details
+        id: details
+        run: |
+          if [ "${{ github.event_name }}" = "issue_comment" ]; then
+            echo "title=${{ github.event.issue.title }}" >> "$GITHUB_OUTPUT"
+            echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+            echo "url=${{ github.event.comment.html_url }}" >> "$GITHUB_OUTPUT"
+            echo "author=${{ github.event.comment.user.login }}" >> "$GITHUB_OUTPUT"
+            echo "action=commented on" >> "$GITHUB_OUTPUT"
+            BODY=$(echo "${{ github.event.comment.body }}" | head -c 300)
+            {
+              echo "body<<GHEOF"
+              echo "$BODY"
+              echo "GHEOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "title=${{ github.event.issue.title }}" >> "$GITHUB_OUTPUT"
+            echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+            echo "url=${{ github.event.issue.html_url }}" >> "$GITHUB_OUTPUT"
+            echo "author=${{ github.event.issue.user.login }}" >> "$GITHUB_OUTPUT"
+            echo "action=${{ github.event.action }}" >> "$GITHUB_OUTPUT"
+            BODY=$(echo "${{ github.event.issue.body }}" | head -c 300)
+            {
+              echo "body<<GHEOF"
+              echo "$BODY"
+              echo "GHEOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post to Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          EMOJI="📋"
+          COLOR=5814783
+          if [ "${{ steps.details.outputs.action }}" = "opened" ]; then
+            EMOJI="🆕"
+            COLOR=3066993
+          elif [ "${{ steps.details.outputs.action }}" = "closed" ]; then
+            EMOJI="✅"
+            COLOR=10038562
+          elif [ "${{ steps.details.outputs.action }}" = "labeled" ]; then
+            EMOJI="🏷️"
+            COLOR=16776960
+          elif [ "${{ steps.details.outputs.action }}" = "commented on" ]; then
+            EMOJI="💬"
+            COLOR=3447003
+          fi
+
+          BODY_ESCAPED=$(echo '${{ steps.details.outputs.body }}' | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+
+          curl -s -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"${EMOJI} Issue #${{ steps.details.outputs.number }}: ${{ steps.details.outputs.title }}\",
+                \"url\": \"${{ steps.details.outputs.url }}\",
+                \"description\": \"**${{ steps.details.outputs.author }}** ${{ steps.details.outputs.action }} this issue\\n\\n${BODY_ESCAPED}\",
+                \"color\": ${COLOR},
+                \"footer\": {\"text\": \"byte5digital/numen\"},
+                \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+              }]
+            }" \
+            "$DISCORD_WEBHOOK_URL"

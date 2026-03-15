@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Jobs\DeliverWebhook;
+use App\Models\Role;
 use App\Models\Space;
 use App\Models\User;
 use App\Models\Webhook;
@@ -27,6 +28,16 @@ class WebhookEdgeCasesTest extends TestCase
         parent::setUp();
         $this->space = Space::factory()->create();
         $this->user = User::factory()->create();
+
+        // Give the test user webhooks.manage permission (global role — covers all spaces)
+        $role = Role::create([
+            'name' => 'Webhook Manager',
+            'slug' => 'webhook-manager-'.uniqid(),
+            'permissions' => ['webhooks.manage'],
+            'is_system' => false,
+        ]);
+        $this->user->roles()->attach($role->id, ['space_id' => null]);
+        $this->user->load('roles');
     }
 
     public function test_inactive_webhooks_are_not_triggered(): void
