@@ -9,6 +9,37 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+
+## [0.8.0] — 2026-03-15
+
+### Added
+
+**AI Content Repurposing Engine** ([Discussion #10](https://github.com/byte5digital/numen/discussions/10))
+
+One-click content repurposing to 8 formats with AI-powered tone preservation and brand consistency.
+
+**Features:**
+- **8 supported formats:** Twitter thread, LinkedIn post, Newsletter section, Instagram caption, Podcast script outline, Product page copy, FAQ section, YouTube description
+- **AI-powered:** Uses existing Persona/LLM system for tone-aware, brand-consistent repurposing
+- **Async processing:** Leverages `ai-pipeline` queue for background repurposing tasks
+- **Batch operations:** Repurpose up to 50 items in a single request with cost estimation
+- **Custom templates:** Per-space format templates with global defaults
+- **Staleness detection:** Automatic re-repurposing when source content is updated
+- **REST API:** Full CRUD endpoints for templates, single and batch repurposing, status polling, and cost estimation
+
+**Endpoints:**
+- `POST /v1/content/{content}/repurpose` — Trigger single repurposing
+- `GET /v1/content/{content}/repurposed` — List repurposed items
+- `GET /v1/repurposed/{id}` — Poll repurposing status
+- `GET /v1/spaces/{space}/repurpose/estimate` — Cost estimation
+- `POST /v1/spaces/{space}/repurpose/batch` — Batch repurposing (50 item limit)
+- `GET /v1/format-templates` — List templates
+- `POST /v1/format-templates` — Create template
+- `PATCH /v1/format-templates/{template}` — Update template
+- `DELETE /v1/format-templates/{template}` — Delete template
+- `GET /v1/format-templates/supported` — List 8 supported formats
+
+---
 ## [Unreleased]
 
 ### Planned
