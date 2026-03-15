@@ -18,8 +18,8 @@ class QualityDimensionResultTest extends TestCase
     public function test_make_stores_items_and_metadata(): void
     {
         $items = [['type' => 'info', 'message' => 'ok']];
-        $meta  = ['word_count' => 100];
-        $r     = QualityDimensionResult::make(75.0, $items, $meta);
+        $meta = ['word_count' => 100];
+        $r = QualityDimensionResult::make(75.0, $items, $meta);
         $this->assertSame(75.0, $r->getScore());
         $this->assertCount(1, $r->getItems());
         $this->assertSame(100, $r->getMetadata()['word_count']);
