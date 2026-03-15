@@ -17,8 +17,6 @@ return new class extends Migration
             $table->boolean('is_smart')->default(false); // smart collections use saved search criteria
             $table->json('criteria')->nullable(); // query criteria for smart collections
             $table->timestamps();
-
-            $table->index(['space_id']);
         });
 
         Schema::create('media_collection_items', function (Blueprint $table) {

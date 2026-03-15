@@ -26,8 +26,12 @@ return new class extends Migration
             });
         }
 
-        // SQLite-compatible unique index (avoids MySQL-specific column prefix syntax)
-        \DB::statement('CREATE UNIQUE INDEX IF NOT EXISTS format_templates_space_id_format_key_unique ON format_templates (space_id, format_key)');
+        // Cross-database compatible unique index guard (works on MySQL and SQLite)
+        if (! Schema::hasIndex('format_templates', 'format_templates_space_id_format_key_unique')) {
+            Schema::table('format_templates', function (Blueprint $table) {
+                $table->unique(['space_id', 'format_key'], 'format_templates_space_id_format_key_unique');
+            });
+        }
     }
 
     public function down(): void
