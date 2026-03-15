@@ -179,4 +179,16 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Knowledge Graph Configuration
+    |--------------------------------------------------------------------------
+    */
+    'graph' => [
+        'enabled' => env('GRAPH_ENABLED', true),
+        'similarity_threshold' => (float) env('GRAPH_SIMILARITY_THRESHOLD', 0.75),
+        'max_edges_per_type' => (int) env('GRAPH_MAX_EDGES_PER_TYPE', 20),
+        'queue' => env('GRAPH_QUEUE', 'graph'),
+    ],
+
 ];
