@@ -5,8 +5,10 @@ namespace Tests\Feature;
 use App\Models\Content;
 use App\Models\FormatTemplate;
 use App\Models\RepurposedContent;
+use App\Models\Role;
 use App\Models\Space;
 use App\Models\User;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -23,9 +25,12 @@ class RepurposingTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seed(RoleSeeder::class);
 
         /** @var User $user */
         $user = User::factory()->create();
+        $editor = Role::where('slug', 'editor')->first();
+        $user->roles()->attach($editor->id, ['space_id' => null]);
         $this->user = $user;
 
         /** @var Space $space */
@@ -104,7 +109,7 @@ class RepurposingTest extends TestCase
      */
     public function batch_repurposing_enforces_50_item_limit(): void
     {
-        $contents = Content::factory(55)->create(['space_id' => $this->space->id]);
+        $contents = Content::factory(55)->published()->create(['space_id' => $this->space->id]);
 
         FormatTemplate::factory()->create([
             'space_id' => $this->space->id,
@@ -116,7 +121,7 @@ class RepurposingTest extends TestCase
         $contentIds = $contents->pluck('id')->toArray();
 
         $response = $this->actingAs($this->user)
-            ->postJson('/api/v1/spaces/{$this->space->id}/repurpose/batch', [
+            ->postJson("/api/v1/spaces/{$this->space->id}/repurpose/batch", [
                 'content_ids' => $contentIds,
                 'format_key' => 'linkedin_post',
             ]);
@@ -129,7 +134,7 @@ class RepurposingTest extends TestCase
      */
     public function batch_repurposing_works_within_limit(): void
     {
-        $contents = Content::factory(40)->create(['space_id' => $this->space->id]);
+        $contents = Content::factory(40)->published()->create(['space_id' => $this->space->id]);
 
         FormatTemplate::factory()->create([
             'space_id' => $this->space->id,
@@ -141,7 +146,7 @@ class RepurposingTest extends TestCase
         $contentIds = $contents->pluck('id')->toArray();
 
         $response = $this->actingAs($this->user)
-            ->postJson('/api/v1/spaces/{$this->space->id}/repurpose/batch', [
+            ->postJson("/api/v1/spaces/{$this->space->id}/repurpose/batch", [
                 'content_ids' => $contentIds,
                 'format_key' => 'twitter_thread',
             ]);
@@ -186,7 +191,7 @@ class RepurposingTest extends TestCase
 
         // Verify space-specific template shadows global template
         /** @var ?FormatTemplate $result */
-        $result = FormatTemplate::getForSpace((int) $this->space->id, 'twitter_thread');
+        $result = FormatTemplate::getForSpace($this->space->id, 'twitter_thread');
         $this->assertNotNull($result);
         $this->assertEquals($spaceTemplate->id, $result->id);
     }
@@ -205,7 +210,7 @@ class RepurposingTest extends TestCase
 
         // Verify fallback to global template when no space-specific
         /** @var ?FormatTemplate $result */
-        $result = FormatTemplate::getForSpace((int) $this->space->id, 'linkedin_post');
+        $result = FormatTemplate::getForSpace($this->space->id, 'linkedin_post');
         $this->assertNotNull($result);
         $this->assertEquals($globalTemplate->id, $result->id);
     }
@@ -236,7 +241,7 @@ class RepurposingTest extends TestCase
         ]);
 
         $this->assertEquals('email', $template->format_key);
-        $this->assertEquals((int) $this->space->id, $template->space_id);
+        $this->assertEquals($this->space->id, $template->space_id);
         $this->assertStringContainsString('email expert', $template->system_prompt);
     }
 

@@ -62,7 +62,7 @@ class RepurposingController extends Controller
 
         $item = $this->service->repurpose($content, $validated['format_key'], $persona);
 
-        return response()->json(['data' => $item], 202);
+        return response()->json(['data' => $item], 201);
     }
 
     /**
@@ -135,6 +135,6 @@ class RepurposingController extends Controller
             ], 422);
         }
 
-        return response()->json(['data' => $batch], 202);
+        return response()->json(['data' => $batch], 201);
     }
 }
