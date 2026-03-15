@@ -40,6 +40,16 @@ Each stage is a queued job. The pipeline is event-driven. Stages are defined in 
 ### Content Generation Pipeline
 Submit a brief → AI agents generate, illustrate, optimize, and quality-gate content → auto-publish or human review.
 
+### Conversational CMS
+**New in v0.9.0.** Talk to your CMS — create content, run pipelines, query data, all via natural language.
+- Natural language admin: describe what you want, the AI figures out the action
+- Intent routing to real CMS operations: create, update, delete, publish, query, pipeline trigger
+- Real-time SSE streaming with typed chunks (`text`, `intent`, `action`, `confirm`, `error`, `done`)
+- Confirmation flow for destructive actions — nothing irreversible without your approval
+- Sliding-window + summarization context management for long conversations
+- Per-user rate limiting (20 req/min) and daily cost budget (configurable)
+- Context-aware suggestion chips based on current UI route
+
 ### AI Content Repurposing Engine
 **New in v0.8.0.** One-click content repurposing to 8 formats:
 - **Twitter thread**, LinkedIn post, Newsletter section, Instagram caption

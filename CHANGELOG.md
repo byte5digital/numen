@@ -10,6 +10,44 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ---
 
 
+## [0.9.0] — 2026-03-15
+
+### Added
+
+**Conversational CMS** ([Discussion #11](https://github.com/byte5digital/numen/discussions/11))
+
+Talk to your CMS — create content, run pipelines, query data, all via natural language.
+
+**Key Capabilities:**
+- **Natural language admin** — Manage content and trigger pipelines using plain English. No need to navigate menus or know the API.
+- **Intent routing** — AI extracts structured CMS intents (action, entity, params, confidence) from free-form messages and maps them to real service calls.
+- **SSE streaming** — Responses stream in real time via Server-Sent Events. Chunk types: `text`, `intent`, `action`, `confirm`, `error`, `done`.
+- **Confirmation flow** — Destructive actions (`content.delete`, `content.update`, etc.) pause for explicit user confirmation before executing.
+- **Context management** — Conversation history is summarized automatically when it grows long, keeping LLM context lean without losing continuity.
+- **Rate limiting** — Per-user message rate limit (20/min) and per-user daily AI cost budget (configurable via `CHAT_MAX_DAILY_COST`). Standard `X-RateLimit-*` headers on all responses.
+- **Suggestion chips** — Context-aware quick-action chips based on the current UI route and space.
+
+**New Environment Variables:**
+- `CHAT_ENABLED` — Enable/disable the chat API (default: `true`)
+- `CHAT_DEFAULT_MODEL` — LLM model alias for chat (default: `haiku`)
+- `CHAT_MAX_DAILY_COST` — Per-user daily AI spend cap in USD (default: `1.00`)
+- `CHAT_MAX_MESSAGES_PER_MINUTE` — Rate limit per user (default: `20`)
+- `CHAT_CONTEXT_WINDOW_SIZE` — Messages to keep in context before summarizing (default: `15`)
+- `CHAT_CONFIRMATION_REQUIRED_ACTIONS` — Comma-separated list of actions requiring confirmation
+
+**API Endpoints (8 total):**
+- `GET /v1/chat/conversations` — List conversations
+- `POST /v1/chat/conversations` — Create conversation
+- `DELETE /v1/chat/conversations/{id}` — Delete conversation
+- `GET /v1/chat/conversations/{id}/messages` — Message history
+- `POST /v1/chat/conversations/{id}/messages` — Send message (SSE stream)
+- `POST /v1/chat/conversations/{id}/confirm` — Execute pending action
+- `DELETE /v1/chat/conversations/{id}/confirm` — Cancel pending action
+- `GET /v1/chat/suggestions` — Context-aware suggestion chips
+
+**Documentation:** See `docs/chat-api.md` for full endpoint reference, SSE format, and intent action catalogue.
+
+---
 ## [0.8.0] — 2026-03-15
 
 ### Added
