@@ -7,10 +7,10 @@ use App\Jobs\IndexContentForSearchJob;
 use App\Models\ContentEmbedding;
 use App\Models\PromotedResult;
 use App\Models\SearchSynonym;
+use App\Services\AuthorizationService;
 use App\Services\Search\SearchAnalyticsService;
 use App\Services\Search\SearchCapabilityDetector;
 use App\Services\Search\SynonymSyncService;
-use App\Services\AuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -33,7 +33,7 @@ class SearchAdminController extends Controller
     public function analytics(Request $request): JsonResponse
     {
         $this->authz->authorize($request->user(), 'search.admin');
-        
+
         $spaceId = (string) ($request->input('space_id') ?? 'default');
         $period = (string) ($request->input('period', '7d'));
 
