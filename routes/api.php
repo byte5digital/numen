@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\MediaEditController;
 use App\Http\Controllers\Api\MediaFolderController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\PluginAdminController;
 use App\Http\Controllers\Api\PublicMediaController;
 use App\Http\Controllers\Api\RepurposingController;
 use App\Http\Controllers\Api\RoleController;
@@ -281,6 +282,17 @@ Route::prefix('v1')->group(function () {
         Route::post('/format-templates', [FormatTemplateController::class, 'store']);
         Route::patch('/format-templates/{template}', [FormatTemplateController::class, 'update']);
         Route::delete('/format-templates/{template}', [FormatTemplateController::class, 'destroy']);
+    });
+
+    // Plugin admin API
+    Route::prefix('admin/plugins')->middleware(['auth:sanctum'])->group(function () {
+        Route::get('/', [PluginAdminController::class, 'index']);
+        Route::get('/{name}', [PluginAdminController::class, 'show']);
+        Route::post('/{name}/install', [PluginAdminController::class, 'install']);
+        Route::post('/{name}/activate', [PluginAdminController::class, 'activate']);
+        Route::post('/{name}/deactivate', [PluginAdminController::class, 'deactivate']);
+        Route::post('/{name}/uninstall', [PluginAdminController::class, 'uninstall']);
+        Route::patch('/{name}/settings', [PluginAdminController::class, 'updateSettings']);
     });
 });
 

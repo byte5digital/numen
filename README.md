@@ -72,6 +72,9 @@ Role-based access control (Admin, Editor, Author, Viewer) with space-scoped perm
 - See [docs/graphql-api.md](docs/graphql-api.md) for the full guide
 
 
+### Plugin & Extension System
+First-class plugin architecture. Extend pipelines, register custom LLM providers, add admin UI, and react to content events — all from a self-contained plugin package.
+
 ## Architecture
 
 ```

@@ -24,6 +24,7 @@ const navigation = [
     { name: 'Users', href: '/admin/users', icon: '👥' },
     { name: 'API Tokens', href: '/admin/tokens', icon: '🔑' },
     { name: 'Settings', href: '/admin/settings', icon: '⚙️' },
+    { name: 'Plugins', href: '/admin/plugins', icon: '🧩' },
 ];
 </script>
 

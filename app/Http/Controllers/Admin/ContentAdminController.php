@@ -9,6 +9,7 @@ use App\Models\ContentBrief;
 use App\Models\ContentPipeline;
 use App\Models\TaxonomyTerm;
 use App\Pipelines\PipelineExecutor;
+use App\Plugin\HookRegistry;
 use App\Services\Taxonomy\TaxonomyService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -278,6 +279,9 @@ class ContentAdminController extends Controller
         }
 
         $content->update($updates);
+
+        // Fire plugin content event hooks
+        app(HookRegistry::class)->fireContentEvent('content.'.$validated['status'], $content);
 
         return back()->with('success', "Status updated to {$validated['status']}.");
     }
