@@ -61,6 +61,16 @@ Role-based access control (Admin, Editor, Author, Viewer) with space-scoped perm
 ### CLI for Automation
 8 commands for content, briefs, and pipeline management — perfect for CI/CD hooks and server-side workflows.
 
+### GraphQL API Layer
+**New in v0.9.0.** A full-featured GraphQL API powered by Lighthouse PHP.
+- **Endpoint:** `POST /graphql` — all Numen resources in one schema
+- **20+ types** with cursor-based pagination (Relay-spec)
+- **Mutations** for content, briefs, media, and pipeline operations
+- **Real-time subscriptions** for content events and pipeline progress
+- **Automatic Persisted Queries (APQ)**, complexity scoring, field-level caching
+- **GraphiQL explorer** at `/graphiql` for interactive development
+- See [docs/graphql-api.md](docs/graphql-api.md) for the full guide
+
 
 ## Architecture
 
