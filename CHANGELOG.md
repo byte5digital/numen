@@ -14,40 +14,36 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-**Conversational CMS** ([Discussion #11](https://github.com/byte5digital/numen/discussions/11))
+**AI-Powered Content Knowledge Graph** ([Discussion #14](https://github.com/byte5digital/numen/discussions/14))
 
-Talk to your CMS — create content, run pipelines, query data, all via natural language.
+Automatically maps relationships between content items into an interactive knowledge graph, enabling related content discovery, topic clustering, content gap analysis, and D3.js visualization.
 
-**Key Capabilities:**
-- **Natural language admin** — Manage content and trigger pipelines using plain English. No need to navigate menus or know the API.
-- **Intent routing** — AI extracts structured CMS intents (action, entity, params, confidence) from free-form messages and maps them to real service calls.
-- **SSE streaming** — Responses stream in real time via Server-Sent Events. Chunk types: `text`, `intent`, `action`, `confirm`, `error`, `done`.
-- **Confirmation flow** — Destructive actions (`content.delete`, `content.update`, etc.) pause for explicit user confirmation before executing.
-- **Context management** — Conversation history is summarized automatically when it grows long, keeping LLM context lean without losing continuity.
-- **Rate limiting** — Per-user message rate limit (20/min) and per-user daily AI cost budget (configurable via `CHAT_MAX_DAILY_COST`). Standard `X-RateLimit-*` headers on all responses.
-- **Suggestion chips** — Context-aware quick-action chips based on the current UI route and space.
+**Features:**
+- **Entity extraction:** AI extracts named entities (persons, organizations, locations, concepts) from content body using Claude
+- **5 edge types:** Semantic similarity (vector embeddings), co-tag (shared taxonomy), co-author (same author), sequential (series order), co-entity (shared named entities)
+- **Topic clustering:** DBSCAN/k-means clustering groups semantically related content into named topic clusters
+- **Content gap analysis:** Identifies under-covered topic clusters relative to audience demand signals, with suggested topics
+- **D3.js visualization:** Force-directed interactive graph in Numen Studio at `/studio/graph/{spaceId}` — nodes colour-coded by cluster, edge thickness indicates weight
+- **Related content widget:** `GET /api/v1/graph/related/{contentId}` powers headless frontend sidebars and bottom-of-page recommendations
+- **Shortest path:** Finds the connection path between any two content nodes for content journey debugging
+- **REST API:** 7 endpoints covering related content, clusters, cluster contents, content gaps, shortest path, node metadata, and manual reindex
 
-**New Environment Variables:**
-- `CHAT_ENABLED` — Enable/disable the chat API (default: `true`)
-- `CHAT_DEFAULT_MODEL` — LLM model alias for chat (default: `haiku`)
-- `CHAT_MAX_DAILY_COST` — Per-user daily AI spend cap in USD (default: `1.00`)
-- `CHAT_MAX_MESSAGES_PER_MINUTE` — Rate limit per user (default: `20`)
-- `CHAT_CONTEXT_WINDOW_SIZE` — Messages to keep in context before summarizing (default: `15`)
-- `CHAT_CONFIRMATION_REQUIRED_ACTIONS` — Comma-separated list of actions requiring confirmation
+**Endpoints:**
+- `GET /api/v1/graph/related/{contentId}` — Related content with edge type filtering
+- `GET /api/v1/graph/clusters` — Topic cluster summaries for a space
+- `GET /api/v1/graph/clusters/{clusterId}` — Contents of a specific cluster
+- `GET /api/v1/graph/gaps` — Content gap analysis with gap scores
+- `GET /api/v1/graph/path/{fromId}/{toId}` — Shortest path between two nodes
+- `GET /api/v1/graph/node/{contentId}` — Graph node metadata
+- `POST /api/v1/graph/reindex/{contentId}` — Trigger re-indexing (admin)
 
-**API Endpoints (8 total):**
-- `GET /v1/chat/conversations` — List conversations
-- `POST /v1/chat/conversations` — Create conversation
-- `DELETE /v1/chat/conversations/{id}` — Delete conversation
-- `GET /v1/chat/conversations/{id}/messages` — Message history
-- `POST /v1/chat/conversations/{id}/messages` — Send message (SSE stream)
-- `POST /v1/chat/conversations/{id}/confirm` — Execute pending action
-- `DELETE /v1/chat/conversations/{id}/confirm` — Cancel pending action
-- `GET /v1/chat/suggestions` — Context-aware suggestion chips
-
-**Documentation:** See `docs/chat-api.md` for full endpoint reference, SSE format, and intent action catalogue.
+**New environment variables:**
+- `GRAPH_ENABLED=true`
+- `GRAPH_SIMILARITY_THRESHOLD=0.75`
+- `GRAPH_MAX_EDGES_PER_TYPE=20`
 
 ---
+
 ## [0.8.0] — 2026-03-15
 
 ### Added

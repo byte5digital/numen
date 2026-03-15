@@ -181,20 +181,14 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Chat Configuration
+    | Knowledge Graph Configuration
     |--------------------------------------------------------------------------
-    | Settings for the Conversational CMS chat feature.
     */
-    'chat' => [
-        'enabled' => env('CHAT_ENABLED', true),
-        'max_messages_per_minute' => env('CHAT_MAX_MESSAGES_PER_MINUTE', 20),
-        'max_daily_cost_per_user' => env('CHAT_MAX_DAILY_COST_PER_USER', 1.00),
-        'context_window_size' => env('CHAT_CONTEXT_WINDOW_SIZE', 15),
-        'summarize_after' => env('CHAT_SUMMARIZE_AFTER', 30),
-        'default_model' => env('CHAT_DEFAULT_MODEL', 'haiku'),
-        'confirmation_required_actions' => array_filter(
-            explode(',', env('CHAT_CONFIRMATION_REQUIRED_ACTIONS', ''))
-        ),
+    'graph' => [
+        'enabled' => env('GRAPH_ENABLED', true),
+        'similarity_threshold' => (float) env('GRAPH_SIMILARITY_THRESHOLD', 0.75),
+        'max_edges_per_type' => (int) env('GRAPH_MAX_EDGES_PER_TYPE', 20),
+        'queue' => env('GRAPH_QUEUE', 'graph'),
     ],
 
 ];
