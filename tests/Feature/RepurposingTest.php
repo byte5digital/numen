@@ -51,7 +51,7 @@ class RepurposingTest extends TestCase
             ->create(['space_id' => $this->space->id, 'format_key' => 'linkedin_post', 'status' => 'pending']);
 
         $response = $this->actingAs($this->user)
-            ->getJson("/api/content/{$this->content->id}/repurposed");
+            ->getJson("/api/v1/content/{$this->content->id}/repurposed");
 
         $response->assertOk();
         $response->assertJsonCount(2, 'data');
@@ -70,7 +70,7 @@ class RepurposingTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->postJson("/api/content/{$this->content->id}/repurpose", [
+            ->postJson("/api/v1/content/{$this->content->id}/repurpose", [
                 'format_key' => 'twitter_thread',
             ]);
 
@@ -91,7 +91,7 @@ class RepurposingTest extends TestCase
     public function repurposing_validates_format_key(): void
     {
         $response = $this->actingAs($this->user)
-            ->postJson("/api/content/{$this->content->id}/repurpose", [
+            ->postJson("/api/v1/content/{$this->content->id}/repurpose", [
                 'format_key' => 'invalid_format_xyz',
             ]);
 
@@ -116,7 +116,7 @@ class RepurposingTest extends TestCase
         $contentIds = $contents->pluck('id')->toArray();
 
         $response = $this->actingAs($this->user)
-            ->postJson('/api/repurposing/batch', [
+            ->postJson('/api/v1/spaces/{$this->space->id}/repurpose/batch', [
                 'content_ids' => $contentIds,
                 'format_key' => 'linkedin_post',
             ]);
@@ -141,7 +141,7 @@ class RepurposingTest extends TestCase
         $contentIds = $contents->pluck('id')->toArray();
 
         $response = $this->actingAs($this->user)
-            ->postJson('/api/repurposing/batch', [
+            ->postJson('/api/v1/spaces/{$this->space->id}/repurpose/batch', [
                 'content_ids' => $contentIds,
                 'format_key' => 'twitter_thread',
             ]);
@@ -159,7 +159,7 @@ class RepurposingTest extends TestCase
             ->create(['space_id' => $this->space->id, 'status' => 'processing', 'format_key' => 'twitter_thread']);
 
         $response = $this->actingAs($this->user)
-            ->getJson("/api/repurposed/{$repurposed->id}");
+            ->getJson("/api/v1/repurposed/{$repurposed->id}");
 
         $response->assertOk();
         $response->assertJsonPath('data.status', 'processing');
