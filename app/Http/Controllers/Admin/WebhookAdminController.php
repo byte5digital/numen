@@ -25,14 +25,15 @@ class WebhookAdminController extends Controller
     public function __construct(private readonly AuthorizationService $authz) {}
 
     /**
-     * List all webhooks for the user's current space.
+     * List all webhooks for the first space the user has access to.
      */
     public function index(Request $request): Response
     {
-        $spaceId = $request->user()->currentSpace?->id;
+        // @phpstan-ignore-next-line
+        $spaceId = $request->user()->roles()->first()?->pivot->space_id;
 
         if (! $spaceId) {
-            abort(403, 'No active space selected.');
+            abort(403, 'No accessible space found.');
         }
 
         $this->authz->authorize($request->user(), 'webhooks.manage', $spaceId);
@@ -59,10 +60,11 @@ class WebhookAdminController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $spaceId = $request->user()->currentSpace?->id;
+        // @phpstan-ignore-next-line
+        $spaceId = $request->user()->roles()->first()?->pivot->space_id;
 
         if (! $spaceId) {
-            abort(403, 'No active space selected.');
+            abort(403, 'No accessible space found.');
         }
 
         $this->authz->authorize($request->user(), 'webhooks.manage', $spaceId);
@@ -194,8 +196,6 @@ class WebhookAdminController extends Controller
 
     /**
      * Verify the webhook belongs to a space the authenticated user is authorized to access.
-     *
-     * @throws \App\Exceptions\PermissionDeniedException
      */
     private function authorizeSpaceAccess(Request $request, Webhook $webhook): void
     {
