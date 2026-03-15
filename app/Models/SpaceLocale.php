@@ -6,6 +6,19 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property string $space_id
+ * @property string $locale
+ * @property string $label
+ * @property bool $is_default
+ * @property bool $is_active
+ * @property string|null $fallback_locale
+ * @property int $sort_order
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ * @property-read Space $space
+ */
 class SpaceLocale extends Model
 {
     protected $fillable = [

@@ -31,7 +31,7 @@ class RepurposingController extends Controller
     public function index(Request $request, Content $content): JsonResponse
     {
         // Verify the authenticated user has read access to this content's space.
-        $this->authz->authorize($request->user(), 'content.read', $content->space_id);
+        $this->authz->authorize($request->user(), 'content.read', (string) $content->space_id);
 
         $results = $this->service->getResults($content);
 
@@ -47,7 +47,7 @@ class RepurposingController extends Controller
     public function store(Request $request, Content $content): JsonResponse
     {
         // Verify the authenticated user can update content in this space.
-        $this->authz->authorize($request->user(), 'content.update', $content->space_id);
+        $this->authz->authorize($request->user(), 'content.update', (string) $content->space_id);
 
         $supportedFormats = array_keys($this->formats->getSupportedFormats());
 
@@ -73,7 +73,7 @@ class RepurposingController extends Controller
     public function show(Request $request, RepurposedContent $repurposedContent): JsonResponse
     {
         // Verify the authenticated user has read access to the space this belongs to.
-        $this->authz->authorize($request->user(), 'content.read', $repurposedContent->space_id);
+        $this->authz->authorize($request->user(), 'content.read', (string) $repurposedContent->space_id);
 
         $repurposedContent->refresh();
 
@@ -88,7 +88,7 @@ class RepurposingController extends Controller
     public function estimateCost(Request $request, Space $space): JsonResponse
     {
         // Verify the authenticated user has read access to this space.
-        $this->authz->authorize($request->user(), 'content.read', $space->id);
+        $this->authz->authorize($request->user(), 'content.read', (string) $space->id);
 
         $supportedFormats = array_keys($this->formats->getSupportedFormats());
 
@@ -111,7 +111,7 @@ class RepurposingController extends Controller
     public function batch(Request $request, Space $space): JsonResponse
     {
         // Verify the authenticated user can update content in this space.
-        $this->authz->authorize($request->user(), 'content.update', $space->id);
+        $this->authz->authorize($request->user(), 'content.update', (string) $space->id);
 
         $supportedFormats = array_keys($this->formats->getSupportedFormats());
 

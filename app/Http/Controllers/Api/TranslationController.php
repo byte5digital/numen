@@ -10,7 +10,6 @@ use App\Models\Persona;
 use App\Models\Space;
 use App\Services\AITranslationService;
 use App\Services\AuthorizationService;
-use App\Services\LocaleService;
 use App\Services\TranslationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,7 +24,6 @@ class TranslationController extends Controller
         private readonly TranslationService $translationService,
         private readonly AITranslationService $aiTranslationService,
         private readonly AuthorizationService $authz,
-        private readonly LocaleService $localeService,
     ) {}
 
     /**

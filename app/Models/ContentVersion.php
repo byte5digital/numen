@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $body_format
  * @property array|null $structured_fields
  * @property array|null $seo_data
+ * @property string|null $meta_description
  * @property string $author_type
  * @property string $author_id
  * @property string|null $change_reason
@@ -162,5 +163,13 @@ class ContentVersion extends Model
         ]);
 
         return hash('sha256', (string) $payload);
+    }
+
+    /**
+     * Get meta_description from seo_data array.
+     */
+    public function getMetaDescriptionAttribute(): ?string
+    {
+        return isset($this->seo_data['meta_description']) ? (string) $this->seo_data['meta_description'] : null;
     }
 }

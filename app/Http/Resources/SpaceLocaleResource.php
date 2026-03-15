@@ -2,8 +2,10 @@
 
 namespace App\Http\Resources;
 
+use App\Models\SpaceLocale;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/** @mixin SpaceLocale */
 class SpaceLocaleResource extends JsonResource
 {
     public function toArray($request): array

@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Services\Repurposing\FormatAdapterService;
+use App\Services\FormatAdapterService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

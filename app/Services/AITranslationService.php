@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Content;
+use App\Models\ContentVersion;
 use App\Models\Persona;
 use App\Services\AI\LLMManager;
 
@@ -83,13 +84,14 @@ class AITranslationService
             .'Preserve formatting, HTML tags, and structure exactly. Return only a valid JSON object with keys: '
             .'title, body, excerpt, meta_description. Do not include any explanation or markdown fences.';
 
+        /** @var ContentVersion|null $version */
         $version = $source->currentVersion;
 
         $payload = [
-            'title' => $version?->title ?? '',
-            'body' => $version?->body ?? '',
-            'excerpt' => $version?->excerpt ?? null,
-            'meta_description' => $version?->meta_description ?? null,
+            'title' => $version !== null ? $version->title : '',
+            'body' => $version !== null ? $version->body : '',
+            'excerpt' => $version !== null ? $version->excerpt : null,
+            'meta_description' => $version !== null ? $version->meta_description : null,
         ];
 
         $user = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
@@ -104,13 +106,14 @@ class AITranslationService
      */
     public function estimateCost(Content $content): array
     {
+        /** @var ContentVersion|null $version */
         $version = $content->currentVersion;
 
         $text = implode(' ', array_filter([
-            $version?->title ?? '',
-            $version?->body ?? '',
-            $version?->excerpt ?? '',
-            $version?->meta_description ?? '',
+            $version !== null ? $version->title : '',
+            $version !== null ? $version->body : '',
+            $version !== null ? ($version->excerpt ?? '') : '',
+            $version !== null ? ($version->meta_description ?? '') : '',
         ]));
 
         // Rough estimate: 1 token ≈ 4 characters
@@ -132,12 +135,13 @@ class AITranslationService
      */
     private function assertContentSizeWithinLimit(Content $content): void
     {
+        /** @var ContentVersion|null $version */
         $version = $content->currentVersion;
 
-        $totalChars = mb_strlen($version?->title ?? '')
-            + mb_strlen($version?->body ?? '')
-            + mb_strlen($version?->excerpt ?? '')
-            + mb_strlen($version?->meta_description ?? '');
+        $totalChars = mb_strlen($version !== null ? $version->title : '')
+            + mb_strlen($version !== null ? $version->body : '')
+            + mb_strlen($version !== null ? ($version->excerpt ?? '') : '')
+            + mb_strlen($version !== null ? ($version->meta_description ?? '') : '');
 
         if ($totalChars > self::MAX_CONTENT_CHARS) {
             throw new \RuntimeException(

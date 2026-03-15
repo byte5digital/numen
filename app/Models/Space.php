@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, ApiKey> $apiKeys
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Webhook> $webhooks
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Vocabulary> $vocabularies
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, SpaceLocale> $locales
  */
 class Space extends Model
 {
@@ -74,5 +75,11 @@ class Space extends Model
     public function vocabularies(): HasMany
     {
         return $this->hasMany(Vocabulary::class)->orderBy('sort_order');
+    }
+
+    /** @return HasMany<SpaceLocale, $this> */
+    public function locales(): HasMany
+    {
+        return $this->hasMany(SpaceLocale::class);
     }
 }
