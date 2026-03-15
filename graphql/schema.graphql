@@ -1,0 +1,174 @@
+"A datetime string with format `Y-m-d H:i:s`, e.g. `2018-05-23 13:43:32`."
+scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+
+"Arbitrary data encoded in JavaScript Object Notation. See https://www.json.org/."
+scalar JSON @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\JSON")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Root Query
+# ─────────────────────────────────────────────────────────────────────────────
+
+type Query {
+    # ── Public queries (no auth required) ──────────────────────────────────
+    "Fetch a single piece of content by its slug and locale."
+    contentBySlug(slug: String!, locale: String! = "en", spaceSlug: String!): Content
+        @field(resolver: "App\\GraphQL\\Queries\\ContentBySlugQuery")
+
+    "List published contents (public read)."
+    contents(
+        spaceSlug: String!
+        locale: String
+        contentType: String
+        status: String
+        first: Int = 20
+        page: Int
+    ): ContentPaginator
+        @field(resolver: "App\\GraphQL\\Queries\\ContentsQuery")
+
+    # ── Authenticated queries (@guard) ────────────────────────────────────
+
+    "Get a single space by ID."
+    space(id: ID!): Space @guard @find(model: "App\\Models\\Space")
+
+    "List all spaces."
+    spaces: [Space!]! @guard @all(model: "App\\Models\\Space")
+
+    "Get a single content entry by ID (admin)."
+    content(id: ID!): Content @guard @find(model: "App\\Models\\Content")
+
+    "List all content types in a space."
+    contentTypes(spaceId: ID!): [ContentType!]!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\ContentTypesQuery")
+
+    "Get a single content version."
+    contentVersion(id: ID!): ContentVersion
+        @guard
+        @find(model: "App\\Models\\ContentVersion")
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Types
+# ─────────────────────────────────────────────────────────────────────────────
+
+type Space {
+    id: ID!
+    name: String!
+    slug: String!
+    settings: JSON
+    api_config: JSON
+    created_at: DateTime!
+    updated_at: DateTime!
+
+    "Content types defined in this space."
+    contentTypes: [ContentType!]! @hasMany
+
+    "Content entries belonging to this space."
+    contents(status: String, locale: String, first: Int = 20, page: Int): ContentPaginator
+        @field(resolver: "App\\GraphQL\\Queries\\SpaceContentsQuery")
+}
+
+type ContentType {
+    id: ID!
+    space_id: ID!
+    name: String!
+    slug: String!
+    schema: JSON!
+    generation_config: JSON
+    seo_config: JSON
+    created_at: DateTime!
+    updated_at: DateTime!
+
+    "Space this content type belongs to."
+    space: Space! @belongsTo
+
+    "Content entries of this type."
+    contents: [Content!]! @hasMany
+}
+
+type Content {
+    id: ID!
+    space_id: ID!
+    content_type_id: ID!
+    slug: String!
+    status: String!
+    locale: String!
+    canonical_id: ID
+    taxonomy: JSON
+    metadata: JSON
+    hero_image_id: ID
+    published_at: DateTime
+    expires_at: DateTime
+    refresh_at: DateTime
+    scheduled_publish_at: DateTime
+    created_at: DateTime!
+    updated_at: DateTime!
+    deleted_at: DateTime
+
+    "Space this content belongs to."
+    space: Space! @belongsTo
+
+    "Content type of this entry."
+    contentType: ContentType! @belongsTo(relation: "contentType")
+
+    "Currently published version."
+    currentVersion: ContentVersion @belongsTo(relation: "currentVersion")
+
+    "Current draft version."
+    draftVersion: ContentVersion @belongsTo(relation: "draftVersion")
+
+    "All versions ordered by version number descending."
+    versions: [ContentVersion!]! @hasMany
+}
+
+type ContentVersion {
+    id: ID!
+    content_id: ID!
+    version_number: Int!
+    label: String
+    status: String!
+    parent_version_id: ID
+    title: String!
+    excerpt: String
+    body: String
+    body_format: String!
+    structured_fields: JSON
+    seo_data: JSON
+    author_type: String!
+    author_id: String!
+    change_reason: String
+    ai_metadata: JSON
+    quality_score: String
+    seo_score: String
+    scheduled_at: DateTime
+    content_hash: String
+    locked_by: String
+    locked_at: DateTime
+    created_at: DateTime!
+    updated_at: DateTime!
+
+    "The content entry this version belongs to."
+    content: Content! @belongsTo
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Pagination wrappers
+# ─────────────────────────────────────────────────────────────────────────────
+
+type ContentPaginator {
+    "A list of content entries."
+    data: [Content!]!
+    "Pagination information."
+    paginatorInfo: PaginatorInfo!
+}
+
+type PaginatorInfo {
+    count: Int!
+    currentPage: Int!
+    firstItem: Int
+    hasMorePages: Boolean!
+    lastItem: Int
+    lastPage: Int!
+    perPage: Int!
+    total: Int!
+}
