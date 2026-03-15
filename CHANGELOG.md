@@ -48,6 +48,56 @@ One-click content repurposing to 8 formats with AI-powered tone preservation and
 
 ---
 
+## [0.9.0] — 2026-03-15
+
+### Added
+
+**Multi-Language & i18n Support** ([Discussion #7](https://github.com/byte5digital/numen/discussions/7))
+
+Full content localization with AI-powered translation, space-level locale management, and intelligent fallback chains.
+
+**Locale Management:**
+- Space-level locale configuration: add/remove/reorder locales, set default locale
+- Intelligent 5-step fallback chain (exact match → language prefix → fallback config → space default → `"en"`)
+- Prevents invalid locale codes with `Locale` validation class (BCP 47 compliant)
+
+**AI-Powered Translation:**
+- Tone-aware translation using existing Persona system — respects content creator's voice
+- Async job queue (`TranslateContentJob` on `ai-pipeline` queue) for background processing
+- Translation status tracking: pending → completed/failed with error logging
+- Job retry support with configurable backoff
+
+**Translation Workflow:**
+- Translation matrix view showing per-content, per-locale coverage and status
+- Side-by-side translation editor for reviewing AI-generated translations
+- Manual translation support via API
+- Batch translation operations with progress reporting
+
+**REST API Endpoints:**
+- **Locale Management:** `GET/POST/PATCH/DELETE /api/v1/locales` (space-scoped)
+- **Translation Workflow:** `POST /api/v1/content/{content}/translate`, `GET /api/v1/content/{content}/translations`
+- **Translation Matrix:** `GET /api/v1/translations/matrix` with pagination and status filters
+- **Supported Locales:** `GET /api/v1/locales/supported` for available BCP 47 codes
+
+**Locale Awareness:**
+- Middleware: `SetLocaleFromRequest` respects `Accept-Language` header, `?locale=` query param, and `X-Locale` header
+- API responses include current locale context; content delivery selects best-match locale automatically
+- Graceful fallback for missing translations (no errors, uses fallback chain)
+
+**CLI:**
+- `php artisan numen:setup-i18n {space_id}` — automated migration of existing spaces to i18n (adds default locale + tracks baseline)
+
+**Database Tables:**
+- `space_locales` — locale configurations per space (locale code, is_default, sort order)
+- `translation_jobs` — async translation job tracking (content_id, from_locale, to_locale, status, result)
+
+**Zero Breaking Changes:**
+- Feature is fully additive — existing single-language spaces work unchanged
+- No migrations required for spaces that don't use i18n
+- Backward compatible with all existing API routes
+
+
+
 ## [0.7.0] — 2026-03-15
 
 ### Added

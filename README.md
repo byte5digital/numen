@@ -796,6 +796,7 @@ config/
 
 ## Documentation
 
+- **[Multi-Language & i18n Support](docs/features/i18n.md)** — content localization, AI-powered translation, locale management, and fallback chains
 - **[Role-Based Access Control (RBAC)](docs/features/permissions.md)** — team access management, roles, permissions, space scoping, and audit logs
 - **[RBAC Technical Guide](docs/RBAC_GUIDE.md)** — detailed API reference and implementation guide
 - **[Permissions Architecture](docs/architecture/permissions-architecture.md)** — system design, data model, and security considerations
@@ -826,6 +827,7 @@ See [CHANGELOG.md](CHANGELOG.md) for what's in each release.
 - Role-Based Access Control (RBAC) with space-scoped roles, AI budget governance, and audit logs ✅
 - 134+ tests (up from 117 in 0.1.1) ✅
 - **Taxonomy & Content Organization** — hierarchical vocabularies, drag-and-drop term trees, AI auto-categorization, full REST API ([docs](docs/features/taxonomy.md)) ✅
+- **Multi-Language & i18n Support** — content localization, AI-powered translation, locale management, intelligent fallback chains, and translation workflow ([docs](docs/features/i18n.md)) ✅
 
 **Near-term (0.2.0):**
 - Deduplicate config `numen.anthropic` block (duplicates `numen.providers.anthropic`)
