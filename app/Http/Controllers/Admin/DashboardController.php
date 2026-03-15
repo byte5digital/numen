@@ -90,7 +90,7 @@ class DashboardController extends Controller
             'costToday' => $costTracker->getDailySpend(),
             'providers' => $providers,
             'fallbackChain' => $fallbackChain,
-            'defaultSpaceId' => Space::first()?->id ?? '',
+            'defaultSpaceId' => (Space::first() !== null ? Space::first()->id : ''),
         ]);
     }
 }

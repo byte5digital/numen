@@ -10,7 +10,9 @@ class GraphController extends Controller
 {
     public function index(): \Inertia\Response
     {
-        $spaceId = Space::first()?->id ?? '';
+        /** @var Space|null $firstSpace */
+        $firstSpace = Space::first();
+        $spaceId = $firstSpace !== null ? $firstSpace->id : '';
 
         return Inertia::render('Graph/Index', [
             'spaceId' => $spaceId,
