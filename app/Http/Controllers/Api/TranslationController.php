@@ -99,7 +99,7 @@ class TranslationController extends Controller
 
         $validated = $request->validate([
             'target_locale' => ['required', 'string', 'max:10', 'regex:/^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8})*$/'],
-            'persona_id'    => ['sometimes', 'nullable', 'integer', 'exists:personas,id'],
+            'persona_id' => ['sometimes', 'nullable', 'integer', 'exists:personas,id'],
         ]);
 
         // Validate persona belongs to the same space as the content (IDOR guard)
@@ -111,7 +111,7 @@ class TranslationController extends Controller
 
             if (! $persona) {
                 return response()->json([
-                    'error'   => 'Validation Error',
+                    'error' => 'Validation Error',
                     'message' => 'The selected persona does not belong to this space.',
                 ], 422);
             }
@@ -124,7 +124,7 @@ class TranslationController extends Controller
 
         if ($pendingCount >= self::MAX_PENDING_JOBS_PER_SPACE) {
             return response()->json([
-                'error'   => 'Too Many Requests',
+                'error' => 'Too Many Requests',
                 'message' => 'Maximum concurrent translation jobs per space reached. Please wait for existing jobs to complete.',
             ], 429);
         }
@@ -195,7 +195,7 @@ class TranslationController extends Controller
 
         if ($pendingCount >= self::MAX_PENDING_JOBS_PER_SPACE) {
             return response()->json([
-                'error'   => 'Too Many Requests',
+                'error' => 'Too Many Requests',
                 'message' => 'Maximum concurrent translation jobs per space reached. Please wait for existing jobs to complete.',
             ], 429);
         }
@@ -242,19 +242,19 @@ class TranslationController extends Controller
     private function formatJob(ContentTranslationJob $job): array
     {
         return [
-            'id'                => $job->id,
-            'space_id'          => $job->space_id,
+            'id' => $job->id,
+            'space_id' => $job->space_id,
             'source_content_id' => $job->source_content_id,
             'target_content_id' => $job->target_content_id,
-            'source_locale'     => $job->source_locale,
-            'target_locale'     => $job->target_locale,
-            'status'            => $job->status,
-            'persona_id'        => $job->persona_id,
-            'error_message'     => $job->error_message,
-            'started_at'        => $job->started_at?->toIso8601String(),
-            'completed_at'      => $job->completed_at?->toIso8601String(),
-            'created_at'        => $job->created_at->toIso8601String(),
-            'updated_at'        => $job->updated_at->toIso8601String(),
+            'source_locale' => $job->source_locale,
+            'target_locale' => $job->target_locale,
+            'status' => $job->status,
+            'persona_id' => $job->persona_id,
+            'error_message' => $job->error_message,
+            'started_at' => $job->started_at?->toIso8601String(),
+            'completed_at' => $job->completed_at?->toIso8601String(),
+            'created_at' => $job->created_at->toIso8601String(),
+            'updated_at' => $job->updated_at->toIso8601String(),
         ];
     }
 }

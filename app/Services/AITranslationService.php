@@ -55,9 +55,9 @@ class AITranslationService
         }
 
         return [
-            'title'            => $decoded['title'] ?? '',
-            'body'             => $decoded['body'] ?? '',
-            'excerpt'          => $decoded['excerpt'] ?? null,
+            'title' => $decoded['title'] ?? '',
+            'body' => $decoded['body'] ?? '',
+            'excerpt' => $decoded['excerpt'] ?? null,
             'meta_description' => $decoded['meta_description'] ?? null,
         ];
     }
@@ -86,9 +86,9 @@ class AITranslationService
         $version = $source->currentVersion;
 
         $payload = [
-            'title'            => $version?->title ?? '',
-            'body'             => $version?->body ?? '',
-            'excerpt'          => $version?->excerpt ?? null,
+            'title' => $version?->title ?? '',
+            'body' => $version?->body ?? '',
+            'excerpt' => $version?->excerpt ?? null,
             'meta_description' => $version?->meta_description ?? null,
         ];
 
@@ -120,7 +120,7 @@ class AITranslationService
         $estimatedOutputTokens = (int) ceil($inputTokens * 1.1);
 
         return [
-            'input_tokens'           => $inputTokens,
+            'input_tokens' => $inputTokens,
             'estimated_output_tokens' => $estimatedOutputTokens,
         ];
     }
