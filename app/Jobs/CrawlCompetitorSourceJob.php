@@ -45,6 +45,9 @@ class CrawlCompetitorSourceJob implements ShouldQueue
                 /** @var CompetitorContentItem $item */
                 $item->save();
                 $saved++;
+
+                // Dispatch fingerprinting after each new item is persisted
+                FingerprintContentJob::dispatch($item);
             } catch (\Throwable $e) {
                 Log::warning('CrawlCompetitorSourceJob: failed to save item', [
                     'source_id' => $this->source->id,
