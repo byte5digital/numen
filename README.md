@@ -232,6 +232,251 @@ curl http://localhost:8000/api/v1/component-types
 curl http://localhost:8000/api/v1/component-types/hero_banner
 ```
 
+
+### Webhooks
+
+Webhooks enable real-time event delivery to external systems. Subscribe to events like content publication, pipeline completion, or media uploads, and receive signed HTTP POST requests when they occur.
+
+#### Overview
+
+A webhook is a URL endpoint + event filter you configure in Numen. When a subscribed event fires, Numen serializes it into a JSON payload, signs it with HMAC-SHA256, and delivers it asynchronously to your endpoint with automatic retries.
+
+**Key features:**
+- **Event subscriptions** — Choose which events trigger deliveries (e.g., `content.published`, `pipeline.completed`, or `*` for all)
+- **HMAC-SHA256 signing** — Every delivery includes an `X-Numen-Signature` header. Verify it consumer-side to ensure authenticity.
+- **Secure secrets** — Webhook secrets are encrypted at rest; never logged or exposed in API responses.
+- **Audit trail** — Every delivery (attempt, success, failure) is recorded and queryable.
+- **Automatic retries** — Failed deliveries retry with exponential backoff (3 attempts, 60+ seconds apart).
+- **Rate limiting** — 60 webhook creations/minute per space; 10 manual redelivery attempts/minute per webhook.
+- **SSRF protection** — URLs are validated to prevent Server-Side Request Forgery (private IP ranges blocked).
+
+#### Event Catalog
+
+Subscribe to one or more events. Wildcards supported: `content.*`, `pipeline.*`, `media.*`, `user.*`, or `*` (all events).
+
+| Event | Payload Contains | Fired When |
+|---|---|---|
+| `content.published` | content_id, space_id, title, content_type, published_at, version | Content item published (either directly or after pipeline approval) |
+| `content.updated` | content_id, space_id, title, content_type, version | Content metadata updated (title, type, tags, etc.) |
+| `content.deleted` | content_id, space_id | Content permanently deleted |
+| `pipeline.started` | pipeline_id, space_id, run_id | New pipeline run initiated |
+| `pipeline.completed` | pipeline_id, space_id, run_id, ai_score, completed_at | Pipeline run finished successfully |
+| `pipeline.failed` | pipeline_id, space_id, run_id, stage, completed_at | Pipeline run failed at a stage |
+| `media.uploaded` | asset_id, space_id, filename, mime_type, url | Media asset uploaded |
+| `media.processed` | asset_id, space_id, filename, mime_type, url | Media processed (image generated, etc.) |
+| `media.deleted` | asset_id, space_id, filename | Media asset deleted |
+| `user.created` | user_id, space_id | User added to space |
+| `user.updated` | user_id, space_id | User permissions changed |
+| `user.deleted` | user_id, space_id | User removed from space |
+
+#### Webhook Payload Format
+
+Every webhook POST includes:
+
+```json
+{
+  "id": "evt_abc123def456",
+  "event": "content.published",
+  "timestamp": "2026-03-15T11:30:45.000Z",
+  "data": {
+    "content_id": "ctn_xyz789",
+    "space_id": "spc_001",
+    "title": "My First Article",
+    "content_type": "blog_post",
+    "published_at": "2026-03-15T11:30:00.000Z",
+    "version": 2
+  }
+}
+```
+
+**Headers included in every delivery:**
+- `Content-Type: application/json`
+- `X-Numen-Event: content.published` (event type)
+- `X-Numen-Delivery: <deliveryId>` (delivery record ID for audit trail)
+- `X-Numen-Signature: sha256=<hmac>` (HMAC-SHA256 signature)
+- Any custom headers you configure on the webhook
+
+#### HMAC Signature Verification
+
+Verify every incoming webhook by recomputing the HMAC and comparing it to the header.
+
+**PHP Example:**
+
+```php
+<?php
+// Get the signature from headers
+$signature = $_SERVER['HTTP_X_NUMEN_SIGNATURE'] ?? '';
+// Get the raw request body (BEFORE json_decode!)
+$body = file_get_contents('php://input');
+// Get your webhook secret (stored securely)
+$secret = env('NUMEN_WEBHOOK_SECRET');
+
+// Compute expected signature
+[$algo, $hash] = explode('=', $signature);
+$computed = hash_hmac($algo, $body, $secret);
+
+// Constant-time comparison to prevent timing attacks
+if (!hash_equals($hash, $computed)) {
+    http_response_code(401);
+    die('Unauthorized: Invalid signature');
+}
+
+// Safe to process
+$payload = json_decode($body, true);
+echo "✓ Event received: {$payload['event']}\n";
+```
+
+**JavaScript (Node.js) Example:**
+
+```javascript
+import crypto from 'crypto';
+import express from 'express';
+
+const app = express();
+const secret = process.env.NUMEN_WEBHOOK_SECRET;
+
+app.post('/webhook', express.json({ verify: (req, res, buf) => {
+  const signature = req.get('x-numen-signature');
+  const [algo, hash] = signature.split('=');
+  const computed = crypto
+    .createHmac(algo, secret)
+    .update(buf)
+    .digest('hex');
+
+  if (!crypto.timingSafeEqual(hash, computed)) {
+    throw new Error('Unauthorized: Invalid signature');
+  }
+}}), (req, res) => {
+  console.log(`✓ Event received: ${req.body.event}`);
+  res.json({ success: true });
+});
+
+app.listen(3000);
+```
+
+#### Quick Setup Example
+
+Create a webhook via API:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/webhooks \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "space_id": "spc_001",
+    "url": "https://my-app.example.com/webhooks/numen",
+    "events": ["content.published", "pipeline.completed"],
+    "is_active": true,
+    "headers": {
+      "X-Custom-Header": "my-value"
+    }
+  }'
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "id": "wbk_abc123",
+    "space_id": "spc_001",
+    "url": "https://my-app.example.com/webhooks/numen",
+    "events": ["content.published", "pipeline.completed"],
+    "is_active": true,
+    "secret": "wbk_secret_long_random_string_here",
+    "created_at": "2026-03-15T11:00:00.000Z"
+  }
+}
+```
+
+**Store the secret securely** — you'll need it to verify incoming signatures. Never share or log it.
+
+Listen at `https://my-app.example.com/webhooks/numen`:
+
+```javascript
+// Assume you already verified the signature (see above)
+const payload = req.body;
+
+switch (payload.event) {
+  case 'content.published':
+    console.log(`Article published: ${payload.data.title}`);
+    // Sync to search index, email subscribers, etc.
+    break;
+
+  case 'pipeline.completed':
+    console.log(`Pipeline ${payload.data.run_id} finished with score ${payload.data.ai_score}`);
+    // Update dashboard, notify stakeholders, etc.
+    break;
+}
+
+res.status(200).json({ received: true });
+```
+
+#### Rate Limits
+
+| Action | Limit |
+|---|---|
+| Create/update webhook | 60/min per space |
+| Redeliver webhook | 10/min per webhook |
+| HTTP delivery timeout | 10 seconds per attempt |
+
+Webhooks use standard HTTP 429 (Too Many Requests) when rate limits are exceeded. Check the `Retry-After` header for backoff.
+
+#### Audit & Troubleshooting
+
+List deliveries for a webhook:
+
+```bash
+curl http://localhost:8000/api/v1/webhooks/wbk_abc123/deliveries \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+Response includes status, HTTP response code, and response body (first 4KB):
+
+```json
+{
+  "data": [
+    {
+      "id": "dly_123",
+      "webhook_id": "wbk_abc123",
+      "event_id": "evt_abc123",
+      "event_type": "content.published",
+      "status": "delivered",
+      "http_status": 200,
+      "attempt_number": 1,
+      "scheduled_at": "2026-03-15T11:05:00.000Z",
+      "delivered_at": "2026-03-15T11:05:01.000Z"
+    },
+    {
+      "id": "dly_456",
+      "webhook_id": "wbk_abc123",
+      "event_id": "evt_def456",
+      "event_type": "pipeline.completed",
+      "status": "abandoned",
+      "http_status": null,
+      "attempt_number": 3,
+      "scheduled_at": "2026-03-15T11:06:00.000Z",
+      "response_body": "Connection timeout"
+    }
+  ]
+}
+```
+
+**Status values:**
+- `pending` — Scheduled, waiting to be delivered
+- `delivered` — Successfully delivered (HTTP 2xx)
+- `abandoned` — Failed after 3 retry attempts; needs manual redeliver or debugging
+
+Manually retry a failed delivery:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/webhooks/wbk_abc123/deliveries/dly_456/redeliver \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+---
+
+
 ---
 
 ## Model Allocation

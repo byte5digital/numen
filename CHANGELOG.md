@@ -41,6 +41,89 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.6.0] — Webhooks & Event System
+
+### Added
+
+#### Webhooks CRUD API
+- `POST /api/v1/webhooks` — Create a webhook with event subscriptions, custom headers, and retry policy
+- `GET /api/v1/webhooks` — List all webhooks for a space (with pagination)
+- `GET /api/v1/webhooks/{id}` — Inspect webhook configuration (space-scoped)
+- `PUT /api/v1/webhooks/{id}` — Update webhook URL, events, headers, or batch settings
+- `DELETE /api/v1/webhooks/{id}` — Delete webhook (soft-deleted, recoverable)
+- `POST /api/v1/webhooks/{id}/rotate-secret` — Rotate webhook secret for security rotation
+
+#### Webhook Deliveries API
+- `GET /api/v1/webhooks/{id}/deliveries` — List all deliveries with status (pending/delivered/abandoned)
+- `GET /api/v1/webhooks/{id}/deliveries/{deliveryId}` — Inspect a single delivery (request, response body, HTTP status)
+- `POST /api/v1/webhooks/{id}/deliveries/{deliveryId}/redeliver` — Manually retry a failed delivery (rate limited: 10/min per webhook)
+
+#### Event Catalog
+Webhooks support subscriptions to system events. EventMapper automatically transforms domain models into webhook payloads:
+- **Content events**: `content.published`, `content.updated`, `content.deleted`
+- **Pipeline events**: `pipeline.started`, `pipeline.completed`, `pipeline.failed`
+- **Media events**: `media.uploaded`, `media.processed`, `media.deleted`
+- **User events**: `user.created`, `user.updated`, `user.deleted`
+
+Wildcards supported: `content.*`, `pipeline.*`, `*` (all events)
+
+#### Security & Reliability
+- **HMAC-SHA256 signing**: Every webhook delivery includes `X-Numen-Signature: sha256=HASH` header. Signature computed over JSON payload using webhook secret. Consumer-side verification example in docs.
+- **Encrypted secrets at rest**: Webhook secrets encrypted via Laravel's `Crypt` (configured cipher, APP_KEY-derived)
+- **SSRF prevention**: `ExternalUrl` validation rule blocks private IP ranges (10.0.0.0/8, 172.16.0.0/12, 127.0.0.0/8, etc.)
+- **Async delivery**: DeliverWebhook queued job with exponential backoff (3 attempts, 60+ seconds between retries)
+- **Delivery audit trail**: Full `WebhookDelivery` record stored for every attempt: request body, response HTTP status, response body (first 4KB), timestamp
+- **Rate limiting**: 60 webhook creations/min per space; 10 redeliver attempts/min per webhook
+- **Space-scoped authorization**: All webhook routes enforce space membership. Cross-space access denied.
+
+#### Batch Mode (Optional)
+- Configure `batch_mode: true` and `batch_timeout: (ms)` to collect multiple events into a single HTTP delivery
+- Useful for high-event-volume applications to reduce webhook payload volume
+
+---
+
+
+## [0.6.0] — Webhooks & Event System
+
+### Added
+
+#### Webhooks CRUD API
+- `POST /api/v1/webhooks` — Create a webhook with event subscriptions, custom headers, and retry policy
+- `GET /api/v1/webhooks` — List all webhooks for a space (with pagination)
+- `GET /api/v1/webhooks/{id}` — Inspect webhook configuration (space-scoped)
+- `PUT /api/v1/webhooks/{id}` — Update webhook URL, events, headers, or batch settings
+- `DELETE /api/v1/webhooks/{id}` — Delete webhook (soft-deleted, recoverable)
+- `POST /api/v1/webhooks/{id}/rotate-secret` — Rotate webhook secret for security rotation
+
+#### Webhook Deliveries API
+- `GET /api/v1/webhooks/{id}/deliveries` — List all deliveries with status (pending/delivered/abandoned)
+- `GET /api/v1/webhooks/{id}/deliveries/{deliveryId}` — Inspect a single delivery (request, response body, HTTP status)
+- `POST /api/v1/webhooks/{id}/deliveries/{deliveryId}/redeliver` — Manually retry a failed delivery (rate limited: 10/min per webhook)
+
+#### Event Catalog
+Webhooks support subscriptions to system events. EventMapper automatically transforms domain models into webhook payloads:
+- **Content events**: `content.published`, `content.updated`, `content.deleted`
+- **Pipeline events**: `pipeline.started`, `pipeline.completed`, `pipeline.failed`
+- **Media events**: `media.uploaded`, `media.processed`, `media.deleted`
+- **User events**: `user.created`, `user.updated`, `user.deleted`
+
+Wildcards supported: `content.*`, `pipeline.*`, `*` (all events)
+
+#### Security & Reliability
+- **HMAC-SHA256 signing**: Every webhook delivery includes `X-Numen-Signature: sha256=HASH` header. Signature computed over JSON payload using webhook secret. Consumer-side verification example in docs.
+- **Encrypted secrets at rest**: Webhook secrets encrypted via Laravel's `Crypt` (configured cipher, APP_KEY-derived)
+- **SSRF prevention**: `ExternalUrl` validation rule blocks private IP ranges (10.0.0.0/8, 172.16.0.0/12, 127.0.0.0/8, etc.)
+- **Async delivery**: DeliverWebhook queued job with exponential backoff (3 attempts, 60+ seconds between retries)
+- **Delivery audit trail**: Full `WebhookDelivery` record stored for every attempt: request body, response HTTP status, response body (first 4KB), timestamp
+- **Rate limiting**: 60 webhook creations/min per space; 10 redeliver attempts/min per webhook
+- **Space-scoped authorization**: All webhook routes enforce space membership. Cross-space access denied.
+
+#### Batch Mode (Optional)
+- Configure `batch_mode: true` and `batch_timeout: (ms)` to collect multiple events into a single HTTP delivery
+- Useful for high-event-volume applications to reduce webhook payload volume
+
+---
+
 ## [0.1.1] — 2026-03-06
 
 ### Added
