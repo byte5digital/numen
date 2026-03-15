@@ -134,7 +134,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::delete('/webhooks/{id}', [WebhookAdminController::class, 'destroy'])->name('admin.webhooks.destroy');
     Route::post('/webhooks/{id}/rotate-secret', [WebhookAdminController::class, 'rotateSecret'])->name('admin.webhooks.rotate-secret');
     Route::get('/webhooks/{id}/deliveries', [WebhookAdminController::class, 'deliveries'])->name('admin.webhooks.deliveries');
-    Route::post('/webhooks/{id}/deliveries/{deliveryId}/redeliver', [WebhookAdminController::class, 'redeliver'])->name('admin.webhooks.redeliver');
+    Route::post('/webhooks/{id}/deliveries/{deliveryId}/redeliver', [WebhookAdminController::class, 'redeliver'])
+        ->name('admin.webhooks.redeliver')
+        ->middleware('throttle:10,1');
 
     // Pages
     Route::get('/pages', [PageAdminController::class, 'index'])->name('admin.pages');

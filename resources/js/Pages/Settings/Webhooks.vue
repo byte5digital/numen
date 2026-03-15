@@ -171,7 +171,7 @@ function statusColor(status) {
 
         <div v-if="newSecret" class="bg-emerald-950 border border-emerald-700 rounded-xl p-5 space-y-3">
             <div class="flex items-center gap-2 text-emerald-400 font-semibold">
-                <span>✅</span> Secret rotated — copy it now, it won't be shown again.
+                <span>✅</span> Signing secret — copy it now, it won't be shown again.
             </div>
             <div class="flex items-center gap-3">
                 <code class="flex-1 text-sm text-emerald-300 bg-emerald-900/40 px-4 py-2.5 rounded-lg font-mono break-all select-all">{{ newSecret }}</code>

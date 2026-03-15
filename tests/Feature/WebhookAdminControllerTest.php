@@ -100,7 +100,7 @@ class WebhookAdminControllerTest extends TestCase
     public function test_update_forbidden(): void
     {
         $w = Webhook::factory()->create(['space_id' => $this->space->id]);
-        $this->actingAs($this->userWithoutPermission)->put(route('admin.webhooks.update', $w), ['url' => 'https://new.com/hook'])->assertForbidden();
+        $this->actingAs($this->userWithoutPermission)->put(route('admin.webhooks.update', $w), ['url' => 'https://new.com/hook'])->assertNotFound() /* IDOR fix: cross-space returns 404 */;
     }
 
     public function test_update_url(): void
@@ -130,7 +130,7 @@ class WebhookAdminControllerTest extends TestCase
     public function test_destroy_forbidden(): void
     {
         $w = Webhook::factory()->create(['space_id' => $this->space->id]);
-        $this->actingAs($this->userWithoutPermission)->delete(route('admin.webhooks.destroy', $w))->assertForbidden();
+        $this->actingAs($this->userWithoutPermission)->delete(route('admin.webhooks.destroy', $w))->assertNotFound() /* IDOR fix: cross-space returns 404 */;
     }
 
     public function test_destroy_deletes(): void
@@ -150,7 +150,7 @@ class WebhookAdminControllerTest extends TestCase
     public function test_rotate_forbidden(): void
     {
         $w = Webhook::factory()->create(['space_id' => $this->space->id]);
-        $this->actingAs($this->userWithoutPermission)->post(route('admin.webhooks.rotate-secret', $w))->assertForbidden();
+        $this->actingAs($this->userWithoutPermission)->post(route('admin.webhooks.rotate-secret', $w))->assertNotFound() /* IDOR fix: cross-space returns 404 */;
     }
 
     public function test_rotate_changes(): void
@@ -178,7 +178,7 @@ class WebhookAdminControllerTest extends TestCase
     public function test_deliveries_forbidden(): void
     {
         $w = Webhook::factory()->create(['space_id' => $this->space->id]);
-        $this->actingAs($this->userWithoutPermission)->get(route('admin.webhooks.deliveries', $w))->assertForbidden();
+        $this->actingAs($this->userWithoutPermission)->get(route('admin.webhooks.deliveries', $w))->assertNotFound() /* IDOR fix: cross-space returns 404 */;
     }
 
     public function test_deliveries_json(): void
@@ -216,7 +216,7 @@ class WebhookAdminControllerTest extends TestCase
     {
         $w = Webhook::factory()->create(['space_id' => $this->space->id]);
         $d = WebhookDelivery::factory()->create(['webhook_id' => $w->id]);
-        $this->actingAs($this->userWithoutPermission)->post(route('admin.webhooks.redeliver', ['id' => $w->id, 'deliveryId' => $d->id]))->assertForbidden();
+        $this->actingAs($this->userWithoutPermission)->post(route('admin.webhooks.redeliver', ['id' => $w->id, 'deliveryId' => $d->id]))->assertNotFound() /* IDOR fix: cross-space returns 404 */;
     }
 
     public function test_redeliver_queues(): void

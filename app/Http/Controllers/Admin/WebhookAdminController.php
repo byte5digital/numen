@@ -86,11 +86,12 @@ class WebhookAdminController extends Controller
         }
 
         $validated['space_id'] = $spaceId;
-        $validated['secret'] = Str::random(64);
+        $secret = Str::random(64);
+        $validated['secret'] = $secret;
 
         Webhook::create($validated);
 
-        return redirect()->route('admin.webhooks')->with('success', 'Webhook created.');
+        return redirect()->route('admin.webhooks')->with('success', 'Webhook created.')->with('newSecret', $secret);
     }
 
     /**
@@ -98,8 +99,9 @@ class WebhookAdminController extends Controller
      */
     public function update(Request $request, string $id): RedirectResponse
     {
-        $webhook = Webhook::findOrFail($id);
-        $this->authorizeSpaceAccess($request, $webhook);
+        $spaceId = $this->resolveSpaceId($request);
+        $webhook = Webhook::where('space_id', $spaceId)->findOrFail($id);
+        $this->authz->authorize($request->user(), 'webhooks.manage', $spaceId);
 
         $validated = $request->validate([
             'url' => ['sometimes', 'url', 'max:2048', new ExternalUrl, Rule::unique('webhooks')->where('space_id', $webhook->space_id)->ignore($webhook->id)],
@@ -127,8 +129,9 @@ class WebhookAdminController extends Controller
      */
     public function destroy(Request $request, string $id): RedirectResponse
     {
-        $webhook = Webhook::findOrFail($id);
-        $this->authorizeSpaceAccess($request, $webhook);
+        $spaceId = $this->resolveSpaceId($request);
+        $webhook = Webhook::where('space_id', $spaceId)->findOrFail($id);
+        $this->authz->authorize($request->user(), 'webhooks.manage', $spaceId);
 
         $webhook->delete();
 
@@ -140,8 +143,9 @@ class WebhookAdminController extends Controller
      */
     public function rotateSecret(Request $request, string $id): RedirectResponse
     {
-        $webhook = Webhook::findOrFail($id);
-        $this->authorizeSpaceAccess($request, $webhook);
+        $spaceId = $this->resolveSpaceId($request);
+        $webhook = Webhook::where('space_id', $spaceId)->findOrFail($id);
+        $this->authz->authorize($request->user(), 'webhooks.manage', $spaceId);
 
         $newSecret = Str::random(64);
         $webhook->update(['secret' => $newSecret]);
@@ -154,8 +158,9 @@ class WebhookAdminController extends Controller
      */
     public function deliveries(Request $request, string $id): JsonResponse
     {
-        $webhook = Webhook::findOrFail($id);
-        $this->authorizeSpaceAccess($request, $webhook);
+        $spaceId = $this->resolveSpaceId($request);
+        $webhook = Webhook::where('space_id', $spaceId)->findOrFail($id);
+        $this->authz->authorize($request->user(), 'webhooks.manage', $spaceId);
 
         $deliveries = WebhookDelivery::where('webhook_id', $id)
             ->orderByDesc('created_at')
@@ -178,8 +183,9 @@ class WebhookAdminController extends Controller
      */
     public function redeliver(Request $request, string $id, string $deliveryId): JsonResponse
     {
-        $webhook = Webhook::findOrFail($id);
-        $this->authorizeSpaceAccess($request, $webhook);
+        $spaceId = $this->resolveSpaceId($request);
+        $webhook = Webhook::where('space_id', $spaceId)->findOrFail($id);
+        $this->authz->authorize($request->user(), 'webhooks.manage', $spaceId);
 
         $delivery = WebhookDelivery::where('webhook_id', $id)
             ->where('id', $deliveryId)
@@ -195,11 +201,18 @@ class WebhookAdminController extends Controller
     }
 
     /**
-     * Verify the webhook belongs to a space the authenticated user is authorized to access.
+     * Resolve the first space ID accessible by the authenticated user.
      */
-    private function authorizeSpaceAccess(Request $request, Webhook $webhook): void
+    private function resolveSpaceId(Request $request): string
     {
-        $this->authz->authorize($request->user(), 'webhooks.manage', $webhook->space_id);
+        // @phpstan-ignore-next-line
+        $spaceId = $request->user()->roles()->first()?->pivot->space_id;
+
+        if (! $spaceId) {
+            abort(403, 'No accessible space found.');
+        }
+
+        return $spaceId;
     }
 
     /**
