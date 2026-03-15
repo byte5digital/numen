@@ -171,7 +171,7 @@ class MediaLibraryTest extends TestCase
             ['alt_text', 'caption', 'tags', 'file_size', 'width', 'height', 'duration', 'metadata', 'is_public', 'folder_id']
         );
 
-        $asset = new MediaAsset();
+        $asset = new MediaAsset;
         foreach ($fillable as $field) {
             $this->assertContains($field, $asset->getFillable());
         }
