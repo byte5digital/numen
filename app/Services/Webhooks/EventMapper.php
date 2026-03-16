@@ -22,6 +22,7 @@ class EventMapper
             'pipeline' => $this->mapPipelineEvent($eventType, $context),
             'media' => $this->mapMediaEvent($eventType, $context),
             'user' => $this->mapUserEvent($eventType, $context),
+            'quality' => $this->mapQualityEvent($eventType, $context),
             default => $context,
         };
 
@@ -75,6 +76,22 @@ class EventMapper
             'user_id' => $context['id'] ?? $context['user_id'] ?? null,
             'space_id' => $context['space_id'] ?? null,
             'action' => $context['action'] ?? $eventType,
+        ], fn ($v) => $v !== null);
+    }
+
+    private function mapQualityEvent(string $eventType, array $context): array
+    {
+        return array_filter([
+            'score_id' => $context['score_id'] ?? null,
+            'content_id' => $context['content_id'] ?? null,
+            'space_id' => $context['space_id'] ?? null,
+            'overall_score' => $context['overall_score'] ?? null,
+            'readability_score' => $context['readability_score'] ?? null,
+            'seo_score' => $context['seo_score'] ?? null,
+            'brand_score' => $context['brand_score'] ?? null,
+            'factual_score' => $context['factual_score'] ?? null,
+            'engagement_score' => $context['engagement_score'] ?? null,
+            'scored_at' => $context['scored_at'] ?? null,
         ], fn ($v) => $v !== null);
     }
 }
