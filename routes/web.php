@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\PageAdminController;
 use App\Http\Controllers\Admin\PersonaAdminController;
 use App\Http\Controllers\Admin\PipelineAdminController;
 use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\QualityDashboardController;
+use App\Http\Controllers\Admin\QualitySettingsController;
 use App\Http\Controllers\Admin\QueueMonitorController;
 use App\Http\Controllers\Admin\SearchWebController;
 use App\Http\Controllers\Admin\SettingsAdminController;
@@ -107,6 +109,7 @@ Route::prefix('admin')->middleware(['auth', 'admin', 'resolve-space'])->group(fu
     Route::get('/personas', [PersonaAdminController::class, 'index'])->name('admin.personas');
     Route::patch('/personas/{id}', [PersonaAdminController::class, 'update'])->name('admin.personas.update');
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('admin.analytics');
+    Route::get('/quality', [QualityDashboardController::class, 'index'])->name('admin.quality');
 
     // Search
     Route::get('/search', [SearchWebController::class, 'index'])->name('admin.search');
@@ -120,6 +123,7 @@ Route::prefix('admin')->middleware(['auth', 'admin', 'resolve-space'])->group(fu
     Route::post('/settings/models', [SettingsAdminController::class, 'updateModels'])->name('admin.settings.models');
     Route::post('/settings/images', [SettingsAdminController::class, 'updateImages'])->name('admin.settings.images');
     Route::post('/settings/costs', [SettingsAdminController::class, 'updateCosts'])->name('admin.settings.costs');
+    Route::get('/settings/quality', [QualitySettingsController::class, 'index'])->name('admin.settings.quality');
 
     // Queue Monitor
     Route::get('/queue', [QueueMonitorController::class, 'index'])->name('admin.queue');

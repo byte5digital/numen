@@ -48,6 +48,8 @@
     44 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
     45 => 'App\\Providers\\AppServiceProvider',
     46 => 'App\\Providers\\I18nServiceProvider',
+    47 => 'App\\Providers\\EventServiceProvider',
+    48 => 'Nuwave\\Lighthouse\\Subscriptions\\SubscriptionServiceProvider',
   ),
   'eager' => 
   array (
@@ -83,6 +85,8 @@
     29 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
     30 => 'App\\Providers\\AppServiceProvider',
     31 => 'App\\Providers\\I18nServiceProvider',
+    32 => 'App\\Providers\\EventServiceProvider',
+    33 => 'Nuwave\\Lighthouse\\Subscriptions\\SubscriptionServiceProvider',
   ),
   'deferred' => 
   array (

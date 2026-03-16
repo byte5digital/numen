@@ -26,6 +26,13 @@ use App\Services\AI\Providers\AzureOpenAIProvider;
 use App\Services\AI\Providers\OpenAIProvider;
 use App\Services\Authorization\PermissionRegistrar;
 use App\Services\AuthorizationService;
+use App\Services\Quality\Analyzers\BrandConsistencyAnalyzer;
+use App\Services\Quality\Analyzers\EngagementPredictionAnalyzer;
+use App\Services\Quality\Analyzers\FactualAccuracyAnalyzer;
+use App\Services\Quality\ContentQualityService;
+use App\Services\Quality\QualityTrendAggregator;
+use App\Services\Quality\ReadabilityAnalyzer;
+use App\Services\Quality\SeoAnalyzer;
 use App\Services\Search\ConversationalDriver;
 use App\Services\Search\EmbeddingService;
 use App\Services\Search\InstantSearchDriver;
@@ -112,6 +119,16 @@ class AppServiceProvider extends ServiceProvider
             $app->make(SearchAnalyticsRecorder::class),
             $app->make(SearchCapabilityDetector::class),
         ));
+
+        // ── Quality Scoring layer ─────────────────────────────────────────
+        $this->app->singleton(ContentQualityService::class, fn ($app) => new ContentQualityService(
+            $app->make(ReadabilityAnalyzer::class),
+            $app->make(SeoAnalyzer::class),
+            $app->make(BrandConsistencyAnalyzer::class),
+            $app->make(FactualAccuracyAnalyzer::class),
+            $app->make(EngagementPredictionAnalyzer::class),
+        ));
+        $this->app->singleton(QualityTrendAggregator::class);
     }
 
     public function boot(): void

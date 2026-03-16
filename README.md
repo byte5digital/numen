@@ -37,6 +37,17 @@ Each stage is a queued job. The pipeline is event-driven. Stages are defined in 
 
 ## Features
 
+### AI Content Quality Scoring
+**New in v0.10.0.** Automated multi-dimensional content quality analysis across five dimensions:
+- **Readability** — Flesch-Kincaid metrics, sentence and word complexity
+- **SEO** — Keyword density, heading structure, meta optimization
+- **Brand Consistency** — LLM-powered brand voice and tone analysis
+- **Factual Accuracy** — Cross-referenced claim validation
+- **Engagement Prediction** — AI-predicted engagement score
+
+Features: real-time score ring in the editor sidebar, quality dashboard with Chart.js trend visualization, space leaderboard, configurable pipeline quality gates, auto-score on publish, and a `quality.scored` webhook event.
+
+
 ### Content Generation Pipeline
 Submit a brief → AI agents generate, illustrate, optimize, and quality-gate content → auto-publish or human review.
 
