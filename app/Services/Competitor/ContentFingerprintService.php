@@ -42,7 +42,6 @@ class ContentFingerprintService
             $fingerprintable instanceof ContentBrief => $this->extractFromBrief($fingerprintable),
             $fingerprintable instanceof Content => $this->extractFromContent($fingerprintable),
             $fingerprintable instanceof CompetitorContentItem => $this->extractFromCompetitorItem($fingerprintable),
-            $fingerprintable instanceof ContentBrief => $this->extractFromBrief($fingerprintable),
             default => $this->extractFromText('', ''),
         };
 
@@ -140,17 +139,6 @@ class ContentFingerprintService
         $body = strip_tags($item->body ?? '');
 
         return $this->extractFromText($title, $body);
-    }
-
-    /** @return array{0: array<string>, 1: array<string>, 2: array<string, float>} */
-    private function extractFromBrief(ContentBrief $brief): array
-    {
-        $title = $brief->title ?? '';
-        $keywords = $brief->target_keywords ?? [];
-        $description = $brief->description ?? '';
-        $text = implode(' ', array_filter([$title, $description, implode(' ', $keywords)]));
-
-        return $this->extractFromText($title, $text);
     }
 
     /** @return array{0: array<string>, 1: array<string>, 2: array<string, float>} */

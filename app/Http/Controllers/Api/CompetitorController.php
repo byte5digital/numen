@@ -28,6 +28,9 @@ class CompetitorController extends Controller
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
+        $currentSpace = app()->bound('current_space') ? app('current_space') : null;
+        abort_if($currentSpace && $validated['space_id'] !== $currentSpace->id, 403);
+
         $query = CompetitorContentItem::query()
             ->whereHas('source', fn ($q) => $q->where('space_id', $validated['space_id']))
             ->with('source')
@@ -50,6 +53,9 @@ class CompetitorController extends Controller
     {
         $source = CompetitorSource::findOrFail($id);
 
+        $currentSpace = app()->bound('current_space') ? app('current_space') : null;
+        abort_if($currentSpace && $source->space_id !== $currentSpace->id, 403);
+
         CrawlCompetitorSourceJob::dispatch($source);
 
         return response()->json(['message' => 'Crawl job dispatched', 'source_id' => $source->id]);
@@ -64,6 +70,9 @@ class CompetitorController extends Controller
             'space_id' => ['required', 'string'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
+
+        $currentSpace = app()->bound('current_space') ? app('current_space') : null;
+        abort_if($currentSpace && $validated['space_id'] !== $currentSpace->id, 403);
 
         $alerts = CompetitorAlert::where('space_id', $validated['space_id'])
             ->orderByDesc('created_at')
@@ -88,6 +97,10 @@ class CompetitorController extends Controller
     public function destroyAlert(string $id): JsonResponse
     {
         $alert = CompetitorAlert::findOrFail($id);
+
+        $currentSpace = app()->bound('current_space') ? app('current_space') : null;
+        abort_if($currentSpace && $alert->space_id !== $currentSpace->id, 403);
+
         $alert->delete();
 
         return response()->json(null, 204);

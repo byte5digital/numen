@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\ExternalUrl;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateCompetitorSourceRequest extends FormRequest
@@ -16,8 +17,8 @@ class UpdateCompetitorSourceRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'string', 'max:255'],
-            'url' => ['sometimes', 'url', 'max:2048'],
-            'feed_url' => ['nullable', 'url', 'max:2048'],
+            'url' => ['sometimes', 'url', 'max:2048', new ExternalUrl],
+            'feed_url' => ['nullable', 'url', 'max:2048', new ExternalUrl],
             'crawler_type' => ['sometimes', 'in:rss,sitemap,scrape,api'],
             'config' => ['nullable', 'array'],
             'is_active' => ['sometimes', 'boolean'],

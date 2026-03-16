@@ -10,7 +10,13 @@ class DeleteCompetitorSource
     public function __invoke(mixed $root, array $args): ?CompetitorSource
     {
         $source = CompetitorSource::find($args['id']);
-        $source?->delete();
+
+        if ($source) {
+            $currentSpace = app()->bound('current_space') ? app('current_space') : null;
+            abort_if($currentSpace && $source->space_id !== $currentSpace->id, 403);
+
+            $source->delete();
+        }
 
         return $source;
     }

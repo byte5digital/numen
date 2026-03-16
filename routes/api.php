@@ -407,7 +407,7 @@ Route::prefix('v1/competitor')->middleware(['auth:sanctum', 'throttle:60,1'])->g
     Route::get('/sources/{id}', [CompetitorSourceController::class, 'show']);
     Route::patch('/sources/{id}', [CompetitorSourceController::class, 'update']);
     Route::delete('/sources/{id}', [CompetitorSourceController::class, 'destroy']);
-    Route::post('/sources/{id}/crawl', [CompetitorController::class, 'crawl']);
+    Route::post('/sources/{id}/crawl', [CompetitorController::class, 'crawl'])->middleware('throttle:5,1');
 
     // Content
     Route::get('/content', [CompetitorController::class, 'content']);

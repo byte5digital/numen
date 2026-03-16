@@ -25,6 +25,9 @@ class DifferentiationController extends Controller
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
+        $currentSpace = app()->bound('current_space') ? app('current_space') : null;
+        abort_if($currentSpace && $validated['space_id'] !== $currentSpace->id, 403);
+
         $query = DifferentiationAnalysis::where('space_id', $validated['space_id'])
             ->with('competitorContent')
             ->orderByDesc('analyzed_at');
@@ -54,6 +57,9 @@ class DifferentiationController extends Controller
     {
         $analysis = DifferentiationAnalysis::with('competitorContent')->findOrFail($id);
 
+        $currentSpace = app()->bound('current_space') ? app('current_space') : null;
+        abort_if($currentSpace && $analysis->space_id !== $currentSpace->id, 403);
+
         return response()->json(['data' => new DifferentiationAnalysisResource($analysis)]);
     }
 
@@ -66,6 +72,9 @@ class DifferentiationController extends Controller
         $validated = $request->validate([
             'space_id' => ['required', 'string'],
         ]);
+
+        $currentSpace = app()->bound('current_space') ? app('current_space') : null;
+        abort_if($currentSpace && $validated['space_id'] !== $currentSpace->id, 403);
 
         /** @var object{total_analyses: int|string, avg_differentiation_score: float|string|null, avg_similarity_score: float|string|null, max_differentiation_score: float|string|null, min_differentiation_score: float|string|null, last_analyzed_at: string|null}|null $summary */
         $summary = DifferentiationAnalysis::where('space_id', $validated['space_id'])

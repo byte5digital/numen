@@ -10,7 +10,13 @@ class DeleteCompetitorAlert
     public function __invoke(mixed $root, array $args): ?CompetitorAlert
     {
         $alert = CompetitorAlert::find($args['id']);
-        $alert?->delete();
+
+        if ($alert) {
+            $currentSpace = app()->bound('current_space') ? app('current_space') : null;
+            abort_if($currentSpace && $alert->space_id !== $currentSpace->id, 403);
+
+            $alert->delete();
+        }
 
         return $alert;
     }

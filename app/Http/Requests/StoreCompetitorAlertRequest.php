@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\ExternalUrl;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCompetitorAlertRequest extends FormRequest
@@ -27,8 +28,8 @@ class StoreCompetitorAlertRequest extends FormRequest
             'notify_channels' => ['nullable', 'array'],
             'notify_channels.email' => ['sometimes', 'array'],
             'notify_channels.email.*' => ['email'],
-            'notify_channels.slack_webhook' => ['sometimes', 'url', 'max:2048'],
-            'notify_channels.webhook_url' => ['sometimes', 'url', 'max:2048'],
+            'notify_channels.slack_webhook' => ['sometimes', 'url', 'max:2048', new ExternalUrl],
+            'notify_channels.webhook_url' => ['sometimes', 'url', 'max:2048', new ExternalUrl],
         ];
     }
 }
