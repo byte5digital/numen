@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -27,7 +28,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \Carbon\Carbon|null $deleted_at
  * @property-read Space|null $space
  * @property-read \Illuminate\Database\Eloquent\Collection<int, PipelineTemplateVersion> $versions
- * @property-read PipelineTemplateVersion|null $latestVersion
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, PipelineTemplateVersion>|PipelineTemplateVersion|null $latestVersion
  * @property-read \Illuminate\Database\Eloquent\Collection<int, PipelineTemplateInstall> $installs
  * @property-read \Illuminate\Database\Eloquent\Collection<int, PipelineTemplateRating> $ratings
  */
@@ -64,9 +65,9 @@ class PipelineTemplate extends Model
         return $this->hasMany(PipelineTemplateVersion::class, 'template_id');
     }
 
-    public function latestVersion(): HasMany
+    public function latestVersion(): HasOne
     {
-        return $this->hasMany(PipelineTemplateVersion::class, 'template_id')->where('is_latest', true);
+        return $this->hasOne(PipelineTemplateVersion::class, 'template_id')->where('is_latest', true);
     }
 
     public function installs(): HasMany

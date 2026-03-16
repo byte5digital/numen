@@ -26,10 +26,12 @@ class TemplateSchemaValidator
     {
         $errors = [];
         $warnings = [];
-        if (! isset($definition['version'])) {
+        // Accept both 'version' and 'schema_version' field names
+        $schemaVersion = $definition['version'] ?? $definition['schema_version'] ?? null;
+        if ($schemaVersion === null) {
             $errors[] = 'Missing required field: version';
-        } elseif (! in_array($definition['version'], self::SUPPORTED_VERSIONS, true)) {
-            $errors[] = "Unsupported schema version: \"{$definition['version']}\"";
+        } elseif (! in_array($schemaVersion, self::SUPPORTED_VERSIONS, true)) {
+            $errors[] = "Unsupported schema version: \"{$schemaVersion}\"";
         }
         if (! isset($definition['stages'])) {
             $errors[] = 'Missing required field: stages';
@@ -40,21 +42,21 @@ class TemplateSchemaValidator
         } else {
             $errors = array_merge($errors, $this->validateStages($definition['stages']));
         }
-        if (! isset($definition['personas'])) {
-            $errors[] = 'Missing required field: personas';
-        } elseif (! is_array($definition['personas'])) {
-            $errors[] = 'Field "personas" must be an array';
-        } else {
-            [$personaErrors, $personaWarnings] = $this->validatePersonas($definition['personas']);
-            $errors = array_merge($errors, $personaErrors);
-            $warnings = array_merge($warnings, $personaWarnings);
+        if (isset($definition['personas'])) {
+            if (! is_array($definition['personas'])) {
+                $errors[] = 'Field "personas" must be an array';
+            } else {
+                [$personaErrors, $personaWarnings] = $this->validatePersonas($definition['personas']);
+                $errors = array_merge($errors, $personaErrors);
+                $warnings = array_merge($warnings, $personaWarnings);
+            }
         }
-        if (! isset($definition['settings'])) {
-            $errors[] = 'Missing required field: settings';
-        } elseif (! is_array($definition['settings'])) {
-            $errors[] = 'Field "settings" must be an object/array';
-        } else {
-            $errors = array_merge($errors, $this->validateSettings($definition['settings']));
+        if (isset($definition['settings'])) {
+            if (! is_array($definition['settings'])) {
+                $errors[] = 'Field "settings" must be an object/array';
+            } else {
+                $errors = array_merge($errors, $this->validateSettings($definition['settings']));
+            }
         }
         if (isset($definition['variables'])) {
             if (! is_array($definition['variables'])) {
@@ -63,8 +65,8 @@ class TemplateSchemaValidator
                 $errors = array_merge($errors, $this->validateVariables($definition['variables']));
             }
         }
-        if (empty($errors)) {
-            $refs = $this->collectPersonaRefs($definition['personas'] ?? []);
+        if (empty($errors) && isset($definition['personas'])) {
+            $refs = $this->collectPersonaRefs($definition['personas']);
             $errors = array_merge($errors, $this->validatePersonaRefs($definition['stages'] ?? [], $refs));
         }
 
@@ -94,9 +96,7 @@ class TemplateSchemaValidator
             if (! isset($stage['name']) || ! is_string($stage['name']) || $stage['name'] === '') {
                 $errors[] = "{$p}: Missing required field \"name\"";
             }
-            if (! isset($stage['config'])) {
-                $errors[] = "{$p}: Missing required field \"config\"";
-            } elseif (! is_array($stage['config'])) {
+            if (isset($stage['config']) && ! is_array($stage['config'])) {
                 $errors[] = "{$p}: Field \"config\" must be an object/array";
             }
             if (isset($stage['persona_ref']) && ! is_string($stage['persona_ref'])) {

@@ -373,12 +373,12 @@ Route::prefix('v1/spaces/{space}/pipeline-templates')->middleware('auth:sanctum'
     Route::delete('/{template}', [PipelineTemplateController::class, 'destroy'])->name('api.pipeline-templates.destroy');
     Route::post('/{template}/publish', [PipelineTemplateController::class, 'publish'])->name('api.pipeline-templates.publish');
     Route::post('/{template}/unpublish', [PipelineTemplateController::class, 'unpublish'])->name('api.pipeline-templates.unpublish');
-    Route::get('/{template}/versions', [PipelineTemplateVersionController::class, 'index'])->name('api.pipeline-templates.versions.index');
-    Route::post('/{template}/versions', [PipelineTemplateVersionController::class, 'store'])->name('api.pipeline-templates.versions.store');
-    Route::get('/{template}/versions/{version}', [PipelineTemplateVersionController::class, 'show'])->name('api.pipeline-templates.versions.show');
-    Route::post('/installs/{version}', [PipelineTemplateInstallController::class, 'store'])->name('api.pipeline-templates.installs.store');
+    Route::get('/{template}/versions', [PipelineTemplateVersionController::class, 'index'])->name('api.pipeline-templates.versions.index')->withoutScopedBindings();
+    Route::post('/{template}/versions', [PipelineTemplateVersionController::class, 'store'])->name('api.pipeline-templates.versions.store')->withoutScopedBindings();
+    Route::get('/{template}/versions/{version}', [PipelineTemplateVersionController::class, 'show'])->name('api.pipeline-templates.versions.show')->withoutScopedBindings();
+    Route::post('/installs/{version}', [PipelineTemplateInstallController::class, 'store'])->name('api.pipeline-templates.installs.store')->withoutScopedBindings();
     Route::patch('/installs/{install}', [PipelineTemplateInstallController::class, 'update'])->name('api.pipeline-templates.installs.update');
     Route::delete('/installs/{install}', [PipelineTemplateInstallController::class, 'destroy'])->name('api.pipeline-templates.installs.destroy');
-    Route::get('/{template}/ratings', [PipelineTemplateRatingController::class, 'index'])->name('api.pipeline-templates.ratings.index');
-    Route::post('/{template}/ratings', [PipelineTemplateRatingController::class, 'store'])->name('api.pipeline-templates.ratings.store');
+    Route::get('/{template}/ratings', [PipelineTemplateRatingController::class, 'index'])->name('api.pipeline-templates.ratings.index')->withoutScopedBindings();
+    Route::post('/{template}/ratings', [PipelineTemplateRatingController::class, 'store'])->name('api.pipeline-templates.ratings.store')->withoutScopedBindings();
 });

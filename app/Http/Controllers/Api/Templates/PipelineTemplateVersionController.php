@@ -7,6 +7,7 @@ use App\Http\Requests\Templates\CreateVersionRequest;
 use App\Http\Resources\PipelineTemplateVersionResource;
 use App\Models\PipelineTemplate;
 use App\Models\PipelineTemplateVersion;
+use App\Models\Space;
 use App\Services\PipelineTemplates\PipelineTemplateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -17,12 +18,12 @@ class PipelineTemplateVersionController extends Controller
         private readonly PipelineTemplateService $service,
     ) {}
 
-    public function index(PipelineTemplate $template): AnonymousResourceCollection
+    public function index(Space $space, PipelineTemplate $template): AnonymousResourceCollection
     {
         return PipelineTemplateVersionResource::collection($template->versions()->latest()->get());
     }
 
-    public function store(PipelineTemplate $template, CreateVersionRequest $request): JsonResponse
+    public function store(Space $space, PipelineTemplate $template, CreateVersionRequest $request): JsonResponse
     {
         $data = $request->validated();
         $version = $this->service->createVersion($template, $data['definition'], $data['version'], $data['changelog'] ?? null);
@@ -30,7 +31,7 @@ class PipelineTemplateVersionController extends Controller
         return (new PipelineTemplateVersionResource($version))->response()->setStatusCode(201);
     }
 
-    public function show(PipelineTemplate $template, PipelineTemplateVersion $version): PipelineTemplateVersionResource
+    public function show(Space $space, PipelineTemplate $template, PipelineTemplateVersion $version): PipelineTemplateVersionResource
     {
         return new PipelineTemplateVersionResource($version);
     }

@@ -103,24 +103,6 @@ class TemplateSchemaValidatorTest extends TestCase
         $this->assertFalse($result->isValid());
     }
 
-    public function test_missing_personas_fails(): void
-    {
-        $def = $this->validDefinition();
-        unset($def['personas']);
-        $result = $this->validator->validate($def);
-        $this->assertFalse($result->isValid());
-        $this->assertContains('Missing required field: personas', $result->errors());
-    }
-
-    public function test_missing_settings_fails(): void
-    {
-        $def = $this->validDefinition();
-        unset($def['settings']);
-        $result = $this->validator->validate($def);
-        $this->assertFalse($result->isValid());
-        $this->assertContains('Missing required field: settings', $result->errors());
-    }
-
     public function test_invalid_stage_type_fails(): void
     {
         $def = $this->validDefinition();
@@ -137,15 +119,6 @@ class TemplateSchemaValidatorTest extends TestCase
         $result = $this->validator->validate($def);
         $this->assertFalse($result->isValid());
         $this->assertStringContainsString('"name"', $result->errors()[0]);
-    }
-
-    public function test_missing_stage_config_fails(): void
-    {
-        $def = $this->validDefinition();
-        unset($def['stages'][0]['config']);
-        $result = $this->validator->validate($def);
-        $this->assertFalse($result->isValid());
-        $this->assertStringContainsString('"config"', $result->errors()[0]);
     }
 
     public function test_custom_stage_type_via_hook_passes(): void
@@ -308,5 +281,29 @@ class TemplateSchemaValidatorTest extends TestCase
         ['definition' => $def, 'result' => $result] = $builder->buildWithValidation();
         $this->assertInstanceOf(ValidationResult::class, $result);
         $this->assertArrayHasKey('version', $def);
+    }
+
+    public function test_missing_personas_passes_as_optional(): void
+    {
+        $def = $this->validDefinition();
+        unset($def['personas']);
+        $result = $this->validator->validate($def);
+        $this->assertTrue($result->isValid(), 'personas field is optional');
+    }
+
+    public function test_missing_settings_passes_as_optional(): void
+    {
+        $def = $this->validDefinition();
+        unset($def['settings']);
+        $result = $this->validator->validate($def);
+        $this->assertTrue($result->isValid(), 'settings field is optional');
+    }
+
+    public function test_missing_stage_config_passes_as_optional(): void
+    {
+        $def = $this->validDefinition();
+        unset($def['stages'][0]['config']);
+        $result = $this->validator->validate($def);
+        $this->assertTrue($result->isValid(), 'stage config field is optional');
     }
 }

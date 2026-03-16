@@ -6,11 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Templates\RateTemplateRequest;
 use App\Models\PipelineTemplate;
 use App\Models\PipelineTemplateRating;
+use App\Models\Space;
 use Illuminate\Http\JsonResponse;
 
 class PipelineTemplateRatingController extends Controller
 {
-    public function index(PipelineTemplate $template): JsonResponse
+    public function index(Space $space, PipelineTemplate $template): JsonResponse
     {
         $ratings = $template->ratings()->with('user')->latest()->get();
         $average = $ratings->avg('rating');
@@ -30,7 +31,7 @@ class PipelineTemplateRatingController extends Controller
         ]);
     }
 
-    public function store(PipelineTemplate $template, RateTemplateRequest $request): JsonResponse
+    public function store(Space $space, PipelineTemplate $template, RateTemplateRequest $request): JsonResponse
     {
         $rating = PipelineTemplateRating::updateOrCreate(
             ['template_id' => $template->id, 'user_id' => $request->user()?->id],
