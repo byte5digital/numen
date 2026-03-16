@@ -472,3 +472,170 @@ type Subscription {
     pipelineRunCompleted(spaceId: ID!): PipelineRun
         @subscription(class: "App\\GraphQL\\Subscriptions\\PipelineRunCompleted")
 }
+
+# ─── Competitor-Aware Content Differentiation ────────────────────────────────
+
+type CompetitorSource {
+    id: ID!
+    space_id: ID!
+    name: String!
+    url: String!
+    feed_url: String
+    crawler_type: String!
+    config: JSON
+    is_active: Boolean!
+    crawl_interval_minutes: Int!
+    last_crawled_at: DateTime
+    error_count: Int!
+    created_at: DateTime!
+    updated_at: DateTime!
+    content_items: [CompetitorContentItem!]! @hasMany
+}
+
+type CompetitorContentItem {
+    id: ID!
+    source_id: ID!
+    external_url: String!
+    title: String
+    excerpt: String
+    published_at: DateTime
+    crawled_at: DateTime
+    content_hash: String
+    metadata: JSON
+    source: CompetitorSource! @belongsTo
+    differentiation_analyses: [DifferentiationAnalysis!]! @hasMany
+}
+
+type DifferentiationAnalysis {
+    id: ID!
+    space_id: ID!
+    content_id: ID
+    brief_id: ID
+    competitor_content_id: ID!
+    similarity_score: Float!
+    differentiation_score: Float!
+    angles: JSON
+    gaps: JSON
+    recommendations: JSON
+    analyzed_at: DateTime
+    competitor_content: CompetitorContentItem! @belongsTo(relation: "competitorContent")
+}
+
+type CompetitorAlert {
+    id: ID!
+    space_id: ID!
+    name: String!
+    type: String!
+    conditions: JSON
+    is_active: Boolean!
+    notify_channels: JSON
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+type DifferentiationSummary {
+    total_analyses: Int!
+    avg_differentiation_score: Float!
+    avg_similarity_score: Float!
+    max_differentiation_score: Float!
+    min_differentiation_score: Float!
+    last_analyzed_at: DateTime
+}
+
+extend type Query {
+    competitorSources(space_id: ID!, first: Int = 20, page: Int): CompetitorSourcePaginator!
+        @guard
+        @paginate(model: "App\\Models\\CompetitorSource", scopes: ["bySpace"])
+
+    competitorContent(space_id: ID!, source_id: ID, first: Int = 20, page: Int): CompetitorContentItemPaginator!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\CompetitorContent")
+
+    differentiationAnalyses(space_id: ID!, content_id: ID, brief_id: ID, first: Int = 20, page: Int): DifferentiationAnalysisPaginator!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\DifferentiationAnalyses")
+
+    differentiationSummary(space_id: ID!): DifferentiationSummary!
+        @guard
+        @field(resolver: "App\\GraphQL\\Queries\\DifferentiationSummary")
+
+    competitorAlerts(space_id: ID!, first: Int = 20, page: Int): CompetitorAlertPaginator!
+        @guard
+        @paginate(model: "App\\Models\\CompetitorAlert", scopes: ["bySpace"])
+}
+
+extend type Mutation {
+    createCompetitorSource(input: CreateCompetitorSourceInput!): CompetitorSource!
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\CreateCompetitorSource")
+
+    updateCompetitorSource(id: ID!, input: UpdateCompetitorSourceInput!): CompetitorSource!
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\UpdateCompetitorSource")
+
+    deleteCompetitorSource(id: ID!): CompetitorSource
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\DeleteCompetitorSource")
+
+    createCompetitorAlert(input: CreateCompetitorAlertInput!): CompetitorAlert!
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\CreateCompetitorAlert")
+
+    deleteCompetitorAlert(id: ID!): CompetitorAlert
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\DeleteCompetitorAlert")
+
+    triggerCompetitorCrawl(source_id: ID!): Boolean!
+        @guard
+        @field(resolver: "App\\GraphQL\\Mutations\\TriggerCompetitorCrawl")
+}
+
+input CreateCompetitorSourceInput {
+    space_id: ID!
+    name: String!
+    url: String!
+    feed_url: String
+    crawler_type: String!
+    config: JSON
+    is_active: Boolean = true
+    crawl_interval_minutes: Int = 60
+}
+
+input UpdateCompetitorSourceInput {
+    name: String
+    url: String
+    feed_url: String
+    crawler_type: String
+    config: JSON
+    is_active: Boolean
+    crawl_interval_minutes: Int
+}
+
+input CreateCompetitorAlertInput {
+    space_id: ID!
+    name: String!
+    type: String!
+    conditions: JSON
+    is_active: Boolean = true
+    notify_channels: JSON
+}
+
+type CompetitorSourcePaginator {
+    data: [CompetitorSource!]!
+    paginatorInfo: PaginatorInfo!
+}
+
+type CompetitorContentItemPaginator {
+    data: [CompetitorContentItem!]!
+    paginatorInfo: PaginatorInfo!
+}
+
+type DifferentiationAnalysisPaginator {
+    data: [DifferentiationAnalysis!]!
+    paginatorInfo: PaginatorInfo!
+}
+
+type CompetitorAlertPaginator {
+    data: [CompetitorAlert!]!
+    paginatorInfo: PaginatorInfo!
+}

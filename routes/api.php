@@ -368,6 +368,11 @@ use App\Http\Controllers\Api\Templates\PipelineTemplateVersionController;
 // Content Quality Scoring API
 use App\Http\Controllers\Api\ContentQualityController;
 
+// Competitor-Aware Content Differentiation API
+use App\Http\Controllers\Api\CompetitorController;
+use App\Http\Controllers\Api\CompetitorSourceController;
+use App\Http\Controllers\Api\DifferentiationController;
+
 Route::prefix('v1/spaces/{space}/pipeline-templates')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/', [PipelineTemplateController::class, 'index'])->name('api.pipeline-templates.index');
     Route::post('/', [PipelineTemplateController::class, 'store'])->name('api.pipeline-templates.store');
@@ -387,10 +392,33 @@ Route::prefix('v1/spaces/{space}/pipeline-templates')->middleware(['auth:sanctum
 });
 
 Route::prefix('v1/quality')->middleware('auth:sanctum')->group(function () {
-Route::get('/scores', [ContentQualityController::class, 'index']);
+    Route::get('/scores', [ContentQualityController::class, 'index']);
     Route::get('/scores/{score}', [ContentQualityController::class, 'show']);
     Route::post('/score', [ContentQualityController::class, 'score']);
     Route::get('/trends', [ContentQualityController::class, 'trends']);
     Route::get('/config', [ContentQualityController::class, 'getConfig']);
     Route::put('/config', [ContentQualityController::class, 'updateConfig']);
+});
+
+Route::prefix('v1/competitor')->middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+    // Sources
+    Route::get('/sources', [CompetitorSourceController::class, 'index']);
+    Route::post('/sources', [CompetitorSourceController::class, 'store']);
+    Route::get('/sources/{id}', [CompetitorSourceController::class, 'show']);
+    Route::patch('/sources/{id}', [CompetitorSourceController::class, 'update']);
+    Route::delete('/sources/{id}', [CompetitorSourceController::class, 'destroy']);
+    Route::post('/sources/{id}/crawl', [CompetitorController::class, 'crawl']);
+
+    // Content
+    Route::get('/content', [CompetitorController::class, 'content']);
+
+    // Alerts
+    Route::get('/alerts', [CompetitorController::class, 'alerts']);
+    Route::post('/alerts', [CompetitorController::class, 'storeAlert']);
+    Route::delete('/alerts/{id}', [CompetitorController::class, 'destroyAlert']);
+
+    // Differentiation
+    Route::get('/differentiation', [DifferentiationController::class, 'index']);
+    Route::get('/differentiation/summary', [DifferentiationController::class, 'summary']);
+    Route::get('/differentiation/{id}', [DifferentiationController::class, 'show']);
 });
