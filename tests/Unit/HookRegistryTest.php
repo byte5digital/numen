@@ -132,4 +132,106 @@ class HookRegistryTest extends TestCase
         $this->assertSame('@/v2/Widget.vue', $components['Widget']);
         $this->assertCount(1, $components);
     }
+    // ── Template categories ────────────────────────────────────────────────────
+
+    public function test_registers_template_category(): void
+    {
+        $this->registry->registerTemplateCategory([
+            'slug' => 'podcast',
+            'label' => 'Podcast',
+            'description' => 'Podcast show notes and transcripts',
+            'icon' => '🎙️',
+        ]);
+
+        $categories = $this->registry->getTemplateCategories();
+
+        $this->assertCount(1, $categories);
+        $this->assertSame('podcast', $categories[0]['slug']);
+        $this->assertSame('Podcast', $categories[0]['label']);
+        $this->assertSame('🎙️', $categories[0]['icon']);
+    }
+
+    public function test_registers_multiple_template_categories(): void
+    {
+        $this->registry->registerTemplateCategory(['slug' => 'video', 'label' => 'Video']);
+        $this->registry->registerTemplateCategory(['slug' => 'podcast', 'label' => 'Podcast']);
+
+        $slugs = $this->registry->getTemplateCategorySlugs();
+
+        $this->assertContains('video', $slugs);
+        $this->assertContains('podcast', $slugs);
+    }
+
+    public function test_template_category_defaults_null_optional_fields(): void
+    {
+        $this->registry->registerTemplateCategory([
+            'slug' => 'minimal',
+            'label' => 'Minimal',
+        ]);
+
+        $cat = $this->registry->getTemplateCategories()[0];
+
+        $this->assertNull($cat['description']);
+        $this->assertNull($cat['icon']);
+    }
+
+    // ── Template packs ─────────────────────────────────────────────────────────
+
+    public function test_registers_template_pack(): void
+    {
+        $this->registry->registerTemplatePack([
+            'id' => 'my-plugin-pack',
+            'name' => 'My Plugin Templates',
+            'author' => 'TestCo',
+            'templates' => [
+                ['name' => 'Quick Blog', 'definition' => ['schema_version' => '1.0', 'stages' => []]],
+            ],
+        ]);
+
+        $packs = $this->registry->getTemplatePacks();
+
+        $this->assertCount(1, $packs);
+        $this->assertSame('my-plugin-pack', $packs[0]['id']);
+        $this->assertSame('My Plugin Templates', $packs[0]['name']);
+        $this->assertSame('TestCo', $packs[0]['author']);
+    }
+
+    public function test_get_all_pack_templates_flattens_packs(): void
+    {
+        $this->registry->registerTemplatePack([
+            'id' => 'pack-a',
+            'name' => 'Pack A',
+            'templates' => [
+                ['name' => 'Template 1', 'definition' => []],
+                ['name' => 'Template 2', 'definition' => []],
+            ],
+        ]);
+        $this->registry->registerTemplatePack([
+            'id' => 'pack-b',
+            'name' => 'Pack B',
+            'templates' => [
+                ['name' => 'Template 3', 'definition' => []],
+            ],
+        ]);
+
+        $all = $this->registry->getAllPackTemplates();
+
+        $this->assertCount(3, $all);
+        $this->assertSame('pack-a', $all[0]['_pack_id']);
+        $this->assertSame('pack-b', $all[2]['_pack_id']);
+    }
+
+    public function test_template_pack_defaults_null_optional_fields(): void
+    {
+        $this->registry->registerTemplatePack([
+            'id' => 'bare-pack',
+            'name' => 'Bare Pack',
+            'templates' => [],
+        ]);
+
+        $pack = $this->registry->getTemplatePacks()[0];
+
+        $this->assertNull($pack['author']);
+        $this->assertNull($pack['url']);
+    }
 }
