@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\PersonaAdminController;
 use App\Http\Controllers\Admin\PipelineAdminController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\QueueMonitorController;
+use App\Http\Controllers\Admin\SearchWebController;
 use App\Http\Controllers\Admin\SettingsAdminController;
 use App\Http\Controllers\Admin\TaxonomyAdminController;
 use App\Http\Controllers\Admin\TokenAdminController;
@@ -97,6 +98,12 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/personas', [PersonaAdminController::class, 'index'])->name('admin.personas');
     Route::patch('/personas/{id}', [PersonaAdminController::class, 'update'])->name('admin.personas.update');
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('admin.analytics');
+
+    // Search
+    Route::get('/search', [SearchWebController::class, 'index'])->name('admin.search');
+    Route::get('/search/synonyms', [SearchWebController::class, 'synonyms'])->name('admin.search.synonyms');
+    Route::get('/search/promoted', [SearchWebController::class, 'promoted'])->name('admin.search.promoted');
+    Route::get('/search/analytics', [SearchWebController::class, 'analytics'])->name('admin.search.analytics');
 
     // Settings
     Route::get('/settings', [SettingsAdminController::class, 'index'])->name('admin.settings');
