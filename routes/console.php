@@ -28,3 +28,38 @@ Schedule::command('graph:prune')
     ->weekly()
     ->withoutOverlapping()
     ->runInBackground();
+
+// Competitor crawling: dispatch jobs for each active source based on their configured interval
+Schedule::call(function () {
+    \App\Models\CompetitorSource::where('is_active', true)
+        ->get()
+        ->each(function (\App\Models\CompetitorSource $source) {
+            // Only dispatch if enough time has passed since last crawl
+            $intervalMinutes = max(1, $source->crawl_interval_minutes);
+            $shouldCrawl = ! $source->last_crawled_at
+                || $source->last_crawled_at->addMinutes($intervalMinutes)->isPast();
+
+            if ($shouldCrawl) {
+                \App\Jobs\CrawlCompetitorSourceJob::dispatch($source);
+            }
+        });
+})
+    ->everyMinute()
+    ->name('competitor:dispatch-crawlers')
+    ->withoutOverlapping();
+
+// Competitor intelligence: health monitoring every hour
+Schedule::call(function () {
+    app(\App\Services\Competitor\CrawlerHealthMonitor::class)->check();
+})
+    ->hourly()
+    ->name('competitor:health-check')
+    ->withoutOverlapping();
+
+// Competitor intelligence: data retention pruning — weekly on Sunday at 02:00
+Schedule::call(function () {
+    app(\App\Services\Competitor\RetentionPolicyService::class)->run();
+})
+    ->weeklyOn(0, '02:00')
+    ->name('competitor:retention-prune')
+    ->withoutOverlapping();

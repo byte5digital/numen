@@ -11,8 +11,11 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /**
  * @property string $id
+ * @property string $space_id
  * @property string $source_id
  * @property string $external_url
+ * @property-read \App\Models\CompetitorSource|null $source
+ * @property-read \App\Models\Space|null $space
  * @property string|null $title
  * @property string|null $excerpt
  * @property string|null $body
@@ -29,6 +32,7 @@ class CompetitorContentItem extends Model
     use HasUlids;
 
     protected $fillable = [
+        'space_id',
         'source_id',
         'external_url',
         'title',
@@ -46,9 +50,16 @@ class CompetitorContentItem extends Model
         'metadata' => 'array',
     ];
 
+    /** @return BelongsTo<CompetitorSource, covariant self> */
     public function source(): BelongsTo
     {
         return $this->belongsTo(CompetitorSource::class, 'source_id');
+    }
+
+    /** @return BelongsTo<Space, covariant self> */
+    public function space(): BelongsTo
+    {
+        return $this->belongsTo(Space::class, 'space_id');
     }
 
     public function fingerprint(): MorphOne

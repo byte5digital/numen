@@ -1,0 +1,321 @@
+openapi: 3.1.0
+info:
+  title: Numen Competitor Differentiation API
+  version: 1.0.0
+  description: |
+    REST API for the Competitor-Aware Content Differentiation feature (#37).
+    
+    Endpoints for managing competitor sources, triggering crawls, reviewing
+    differentiation analyses, and configuring alert rules.
+  contact:
+    name: byte5.labs
+    url: https://byte5.de
+
+servers:
+  - url: /api/v1/competitor
+    description: Competitor Intelligence API
+
+security:
+  - sanctum: []
+
+paths:
+  /sources:
+    get:
+      summary: List competitor sources
+      tags: [Sources]
+      parameters:
+        - name: space_id
+          in: query
+          required: true
+          schema: { type: string }
+        - name: per_page
+          in: query
+          schema: { type: integer, default: 20, minimum: 1, maximum: 100 }
+      responses:
+        '200':
+          description: Paginated list of competitor sources
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/CompetitorSource' }
+    post:
+      summary: Create a competitor source
+      tags: [Sources]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateCompetitorSourceInput' }
+      responses:
+        '201':
+          description: Created source
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/CompetitorSource' }
+
+  /sources/{id}:
+    get:
+      summary: Get a competitor source
+      tags: [Sources]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Competitor source
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/CompetitorSource' }
+    patch:
+      summary: Update a competitor source
+      tags: [Sources]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateCompetitorSourceInput' }
+      responses:
+        '200':
+          description: Updated source
+    delete:
+      summary: Delete a competitor source
+      tags: [Sources]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Deleted
+
+  /sources/{id}/crawl:
+    post:
+      summary: Trigger an immediate crawl
+      tags: [Sources]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Job dispatched
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  source_id: { type: string }
+
+  /content:
+    get:
+      summary: List crawled competitor content
+      tags: [Content]
+      parameters:
+        - name: space_id
+          in: query
+          required: true
+          schema: { type: string }
+        - name: source_id
+          in: query
+          schema: { type: string }
+        - name: per_page
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: Paginated list of competitor content items
+
+  /alerts:
+    get:
+      summary: List competitor alerts
+      tags: [Alerts]
+      parameters:
+        - name: space_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Paginated list of alerts
+    post:
+      summary: Create a competitor alert
+      tags: [Alerts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateCompetitorAlertInput' }
+      responses:
+        '201':
+          description: Created alert
+
+  /alerts/{id}:
+    delete:
+      summary: Delete a competitor alert
+      tags: [Alerts]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Deleted
+
+  /differentiation:
+    get:
+      summary: List differentiation analyses
+      tags: [Differentiation]
+      parameters:
+        - name: space_id
+          in: query
+          required: true
+          schema: { type: string }
+        - name: content_id
+          in: query
+          schema: { type: string }
+        - name: brief_id
+          in: query
+          schema: { type: string }
+        - name: min_score
+          in: query
+          schema: { type: number, minimum: 0, maximum: 1 }
+        - name: per_page
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: Paginated list of analyses
+
+  /differentiation/summary:
+    get:
+      summary: Get differentiation score summary
+      tags: [Differentiation]
+      parameters:
+        - name: space_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Summary statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/DifferentiationSummary' }
+
+  /differentiation/{id}:
+    get:
+      summary: Get a single differentiation analysis
+      tags: [Differentiation]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Analysis detail
+
+components:
+  securitySchemes:
+    sanctum:
+      type: apiKey
+      in: cookie
+      name: laravel_session
+
+  schemas:
+    CompetitorSource:
+      type: object
+      properties:
+        id: { type: string }
+        space_id: { type: string }
+        name: { type: string }
+        url: { type: string, format: uri }
+        feed_url: { type: string, nullable: true }
+        crawler_type: { type: string, enum: [rss, sitemap, scrape, api] }
+        is_active: { type: boolean }
+        crawl_interval_minutes: { type: integer }
+        last_crawled_at: { type: string, format: date-time, nullable: true }
+        error_count: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CreateCompetitorSourceInput:
+      type: object
+      required: [space_id, name, url, crawler_type]
+      properties:
+        space_id: { type: string }
+        name: { type: string }
+        url: { type: string, format: uri }
+        feed_url: { type: string, nullable: true }
+        crawler_type: { type: string, enum: [rss, sitemap, scrape, api] }
+        config: { type: object, nullable: true }
+        is_active: { type: boolean, default: true }
+        crawl_interval_minutes: { type: integer, default: 60, minimum: 5, maximum: 10080 }
+
+    UpdateCompetitorSourceInput:
+      type: object
+      properties:
+        name: { type: string }
+        url: { type: string, format: uri }
+        feed_url: { type: string, nullable: true }
+        crawler_type: { type: string, enum: [rss, sitemap, scrape, api] }
+        config: { type: object, nullable: true }
+        is_active: { type: boolean }
+        crawl_interval_minutes: { type: integer, minimum: 5, maximum: 10080 }
+
+    CreateCompetitorAlertInput:
+      type: object
+      required: [space_id, name, type]
+      properties:
+        space_id: { type: string }
+        name: { type: string }
+        type: { type: string, enum: [new_content, keyword, high_similarity] }
+        conditions:
+          type: object
+          nullable: true
+          properties:
+            keywords: { type: array, items: { type: string } }
+            similarity_threshold: { type: number, minimum: 0, maximum: 1 }
+            source_id: { type: string }
+        is_active: { type: boolean, default: true }
+        notify_channels:
+          type: object
+          nullable: true
+          properties:
+            email: { type: array, items: { type: string, format: email } }
+            slack_webhook: { type: string, format: uri }
+            webhook_url: { type: string, format: uri }
+
+    DifferentiationSummary:
+      type: object
+      properties:
+        total_analyses: { type: integer }
+        avg_differentiation_score: { type: number }
+        avg_similarity_score: { type: number }
+        max_differentiation_score: { type: number }
+        min_differentiation_score: { type: number }
+        last_analyzed_at: { type: string, format: date-time, nullable: true }

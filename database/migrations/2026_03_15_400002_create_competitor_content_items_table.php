@@ -11,7 +11,9 @@ return new class extends Migration
         if (! Schema::hasTable('competitor_content_items')) {
             Schema::create('competitor_content_items', function (Blueprint $table) {
                 $table->ulid('id')->primary();
+                $table->string('space_id', 26)->index();
                 $table->string('source_id', 26)->index();
+                $table->string('space_id', 26)->index();
                 $table->string('external_url');
                 $table->string('title')->nullable();
                 $table->text('excerpt')->nullable();
