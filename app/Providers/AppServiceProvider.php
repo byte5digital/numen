@@ -35,6 +35,7 @@ use App\Services\Search\SearchCapabilityDetector;
 use App\Services\Search\SearchRanker;
 use App\Services\Search\SearchService;
 use App\Services\Search\SemanticSearchDriver;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -116,6 +117,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register content access policies
         Gate::policy(Content::class, ContentPolicy::class);
+
+        // Make $request->space() available in all controllers
+        Request::macro('space', fn () => $this->attributes->get('space'));
 
         // Load DB settings into config (overrides .env defaults)
         Setting::loadIntoConfig();
