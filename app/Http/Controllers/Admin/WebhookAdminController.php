@@ -25,12 +25,14 @@ class WebhookAdminController extends Controller
     public function __construct(private readonly AuthorizationService $authz) {}
 
     /**
-     * List all webhooks for the first space the user has access to.
+     * List all webhooks for the current space.
      */
     public function index(Request $request): Response
     {
-        // Webhooks are global — no space context required for listing.
-        $webhooks = Webhook::latest()
+        $spaceId = $this->resolveSpaceId($request);
+        $this->authz->authorize($request->user(), 'webhooks.manage', $spaceId);
+
+        $webhooks = Webhook::where('space_id', $spaceId)->latest()
             ->get()
             ->map(fn (Webhook $w) => [
                 'id' => $w->id,
