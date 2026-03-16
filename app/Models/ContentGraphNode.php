@@ -47,6 +47,12 @@ class ContentGraphNode extends Model
         'indexed_at' => 'datetime',
     ];
 
+    /** @var array<string, string> */
+    protected $attributes = [
+        'entity_labels' => '[]',
+        'node_metadata' => '{}',
+    ];
+
     public function content(): BelongsTo
     {
         return $this->belongsTo(Content::class, 'content_id');
