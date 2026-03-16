@@ -37,6 +37,12 @@ class HookRegistry
     /** @var array<string, string> */
     private array $vueComponents = [];
 
+    /** @var array<array{slug: string, label: string, description: string|null, icon: string|null}> */
+    private array $templateCategories = [];
+
+    /** @var array<array{id: string, name: string, templates: array<array<string, mixed>>, author: string|null, url: string|null}> */
+    private array $templatePacks = [];
+
     // ── Pipeline stages ────────────────────────────────────────────────────────
 
     public function registerPipelineStage(string $stageName, Closure $handler): void
@@ -250,5 +256,82 @@ class HookRegistry
     public function getVueComponents(): array
     {
         return $this->vueComponents;
+    }
+    // ── Template categories ────────────────────────────────────────────────────
+
+    /**
+     * Register a custom pipeline template category.
+     *
+     * @param  array{slug: string, label: string, description?: string|null, icon?: string|null}  $category
+     */
+    public function registerTemplateCategory(array $category): void
+    {
+        $this->templateCategories[] = [
+            'slug' => $category['slug'],
+            'label' => $category['label'],
+            'description' => $category['description'] ?? null,
+            'icon' => $category['icon'] ?? null,
+        ];
+    }
+
+    /**
+     * @return array<array{slug: string, label: string, description: string|null, icon: string|null}>
+     */
+    public function getTemplateCategories(): array
+    {
+        return $this->templateCategories;
+    }
+
+    /**
+     * Get all registered category slugs (built-in + plugin-registered).
+     *
+     * @return array<string>
+     */
+    public function getTemplateCategorySlugs(): array
+    {
+        return array_column($this->templateCategories, 'slug');
+    }
+
+    // ── Template packs ─────────────────────────────────────────────────────────
+
+    /**
+     * Register a pack of pipeline templates bundled with a plugin.
+     *
+     * @param  array{id: string, name: string, templates: array<array<string, mixed>>, author?: string|null, url?: string|null}  $pack
+     */
+    public function registerTemplatePack(array $pack): void
+    {
+        $this->templatePacks[] = [
+            'id' => $pack['id'],
+            'name' => $pack['name'],
+            'templates' => $pack['templates'],
+            'author' => $pack['author'] ?? null,
+            'url' => $pack['url'] ?? null,
+        ];
+    }
+
+    /**
+     * @return array<array{id: string, name: string, templates: array<array<string, mixed>>, author: string|null, url: string|null}>
+     */
+    public function getTemplatePacks(): array
+    {
+        return $this->templatePacks;
+    }
+
+    /**
+     * Retrieve all template definitions from all registered packs.
+     *
+     * @return array<array<string, mixed>>
+     */
+    public function getAllPackTemplates(): array
+    {
+        $result = [];
+        foreach ($this->templatePacks as $pack) {
+            foreach ($pack['templates'] as $template) {
+                $result[] = array_merge($template, ['_pack_id' => $pack['id']]);
+            }
+        }
+
+        return $result;
     }
 }

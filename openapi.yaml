@@ -2108,6 +2108,384 @@ paths:
         '200':
           description: List of supported formats
 
+  /spaces/{space}/pipeline-templates:
+    get:
+      operationId: listPipelineTemplates
+      summary: List pipeline templates
+      tags: [Pipeline Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated list of templates
+        '401':
+          description: Unauthenticated
+
+    post:
+      operationId: createPipelineTemplate
+      summary: Create pipeline template
+      tags: [Pipeline Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+      responses:
+        '201':
+          description: Template created
+        '401':
+          description: Unauthenticated
+
+  /spaces/{space}/pipeline-templates/{template}:
+    get:
+      operationId: getPipelineTemplate
+      summary: Get pipeline template
+      tags: [Pipeline Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: template
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Template details
+
+    patch:
+      operationId: updatePipelineTemplate
+      summary: Update pipeline template
+      tags: [Pipeline Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: template
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Template updated
+
+    delete:
+      operationId: deletePipelineTemplate
+      summary: Delete pipeline template
+      tags: [Pipeline Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: template
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Template deleted
+
+  /spaces/{space}/pipeline-templates/{template}/publish:
+    post:
+      operationId: publishPipelineTemplate
+      summary: Publish pipeline template
+      tags: [Pipeline Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: template
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Template published
+
+  /spaces/{space}/pipeline-templates/{template}/unpublish:
+    post:
+      operationId: unpublishPipelineTemplate
+      summary: Unpublish pipeline template
+      tags: [Pipeline Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: template
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Template unpublished
+
+  /spaces/{space}/pipeline-templates/{template}/versions:
+    get:
+      operationId: listVersions
+      summary: List template versions
+      tags: [Pipeline Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: template
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of versions
+
+    post:
+      operationId: createVersion
+      summary: Create template version
+      tags: [Pipeline Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: template
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                version:
+                  type: string
+                definition:
+                  type: object
+      responses:
+        '201':
+          description: Version created
+
+  /spaces/{space}/pipeline-templates/{template}/versions/{version}:
+    get:
+      operationId: getVersion
+      summary: Get template version
+      tags: [Pipeline Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: template
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Version details
+
+  /spaces/{space}/pipeline-templates/installs/{version}:
+    post:
+      operationId: installTemplate
+      summary: Install template version
+      tags: [Pipeline Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Template installed (rate-limited 5/min)
+        '429':
+          description: Rate limited
+
+  /spaces/{space}/pipeline-templates/installs/{install}:
+    patch:
+      operationId: updateInstall
+      summary: Update template install
+      tags: [Pipeline Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: install
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Install updated
+
+    delete:
+      operationId: deleteInstall
+      summary: Delete template install
+      tags: [Pipeline Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: install
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Install deleted
+
+  /spaces/{space}/pipeline-templates/{template}/ratings:
+    get:
+      operationId: listRatings
+      summary: List template ratings
+      tags: [Pipeline Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: template
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of ratings
+
+    post:
+      operationId: rateTemplate
+      summary: Rate pipeline template
+      tags: [Pipeline Templates]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: template
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                comment:
+                  type: string
+      responses:
+        '201':
+          description: Rating created
+
 tags:
   - name: Content
     description: Public content delivery endpoints (60 req/min)
@@ -2133,3 +2511,5 @@ tags:
     description: AI-powered content repurposing to 8 formats (authenticated)
   - name: Format Templates
     description: Custom format templates for content repurposing (authenticated)
+  - name: Pipeline Templates
+    description: Reusable AI pipeline templates for accelerated content workflows (authenticated, 5 req/min install)
