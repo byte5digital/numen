@@ -11,8 +11,8 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /**
  * @property string $id
- * @property string $source_id
  * @property string $space_id
+ * @property string $source_id
  * @property string $external_url
  * @property-read \App\Models\CompetitorSource|null $source
  * @property-read \App\Models\Space|null $space
@@ -32,8 +32,8 @@ class CompetitorContentItem extends Model
     use HasUlids;
 
     protected $fillable = [
-        'source_id',
         'space_id',
+        'source_id',
         'external_url',
         'title',
         'excerpt',
