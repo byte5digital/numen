@@ -27,6 +27,7 @@ const navigation = [
     { name: 'API Tokens', href: '/admin/tokens', icon: '🔑' },
     { name: 'Webhooks', href: '/admin/webhooks', icon: '🔗' },
     { name: 'Settings', href: '/admin/settings', icon: '⚙️' },
+    { name: 'Languages', href: '/admin/settings/locales', icon: '🌐' },
     { name: 'Plugins', href: '/admin/plugins', icon: '🧩' },
 ];
 </script>
