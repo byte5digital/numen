@@ -29,17 +29,8 @@ class WebhookAdminController extends Controller
      */
     public function index(Request $request): Response
     {
-        // @phpstan-ignore-next-line
-        $spaceId = $request->user()->roles()->first()?->pivot->space_id;
-
-        if (! $spaceId) {
-            abort(403, 'No accessible space found.');
-        }
-
-        $this->authz->authorize($request->user(), 'webhooks.manage', $spaceId);
-
-        $webhooks = Webhook::where('space_id', $spaceId)
-            ->latest()
+        // Webhooks are global — no space context required for listing.
+        $webhooks = Webhook::latest()
             ->get()
             ->map(fn (Webhook $w) => [
                 'id' => $w->id,

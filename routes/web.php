@@ -163,4 +163,13 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     // Knowledge Graph
     Route::get('/graph', [GraphController::class, 'index'])->name('graph.index');
+
+    // Plugins (Bug 2: was missing web route)
+    Route::get('/plugins', fn () => Inertia::render('Admin/Plugins/Index'))->name('admin.plugins');
+
+    // Media (Bug 3: was missing web route)
+    Route::get('/media', fn () => Inertia::render('Media/Index'))->name('admin.media');
+
+    // Locales / i18n settings (Bug 5: was missing web route)
+    Route::get('/settings/locales', fn () => Inertia::render('Settings/Locales'))->name('admin.settings.locales');
 });

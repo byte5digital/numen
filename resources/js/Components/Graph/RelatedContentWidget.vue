@@ -34,18 +34,27 @@ async function fetchRelated() {
     try {
         const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
         const token = match ? decodeURIComponent(match[1]) : '';
-        const res = await fetch(`/api/v1/graph/related/${props.contentId}?limit=${props.limit}`, {
+        const params = new URLSearchParams({ limit: String(props.limit) });
+        if (props.spaceId) params.set('space_id', props.spaceId);
+        const res = await fetch(`/api/v1/graph/related/${props.contentId}?${params}`, {
             credentials: 'include',
             headers: {
                 'Accept': 'application/json',
                 'X-XSRF-TOKEN': token,
             },
         });
+        // Gracefully handle 404 (graph not yet indexed) and other errors
+        if (res.status === 404 || res.status === 422) {
+            related.value = [];
+            return;
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         related.value = data.data ?? data ?? [];
     } catch (e) {
-        error.value = e.message;
+        // Show empty state instead of error — graph may not be set up yet
+        related.value = [];
+        console.warn('[RelatedContentWidget] Could not load related content:', e.message);
     } finally {
         loading.value = false;
     }
