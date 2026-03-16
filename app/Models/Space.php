@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $id
  * @property string $name
  * @property string $slug
+ * @property string|null $description
+ * @property string $default_locale
  * @property array|null $settings
  * @property array|null $api_config
  * @property \Carbon\Carbon $created_at
@@ -29,7 +31,7 @@ class Space extends Model
 {
     use HasFactory, HasUlids;
 
-    protected $fillable = ['name', 'slug', 'settings', 'api_config'];
+    protected $fillable = ['name', 'slug', 'description', 'default_locale', 'settings', 'api_config'];
 
     protected $casts = [
         'settings' => 'array',

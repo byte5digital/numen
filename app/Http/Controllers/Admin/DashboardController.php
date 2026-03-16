@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Content;
 use App\Models\PipelineRun;
-use App\Models\Space;
 use App\Services\AI\Providers\AnthropicProvider;
 use App\Services\AI\Providers\AzureOpenAIProvider;
 use App\Services\AI\Providers\OpenAIProvider;
@@ -19,6 +18,7 @@ class DashboardController extends Controller
         AnthropicProvider $anthropic,
         OpenAIProvider $openai,
         AzureOpenAIProvider $azure,
+        \Illuminate\Http\Request $request,
     ) {
         $defaultProvider = config('numen.default_provider', 'anthropic');
         $fallbackChain = config('numen.fallback_chain', ['anthropic', 'openai', 'azure']);
@@ -90,7 +90,7 @@ class DashboardController extends Controller
             'costToday' => $costTracker->getDailySpend(),
             'providers' => $providers,
             'fallbackChain' => $fallbackChain,
-            'defaultSpaceId' => (Space::first() !== null ? Space::first()->id : ''),
+            'defaultSpaceId' => ($request->space() !== null ? $request->space()->id : ''),
         ]);
     }
 }

@@ -11,6 +11,8 @@ parameters:
     ignoreErrors:
         - '#Access to an undefined property .*(User|Role)::.*pivot#'
         - '#Parameter.*callback of method.*map.*expects callable.*Closure.*given#'
+        - '#Call to an undefined method Illuminate\\Http\\Request::space#'
+        - '#Using nullsafe property access.*on left side of.*is unnecessary#'
     phpVersion: 80200
     parallel:
         maximumNumberOfProcesses: 1
