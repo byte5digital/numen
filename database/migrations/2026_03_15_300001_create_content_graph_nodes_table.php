@@ -14,9 +14,9 @@ return new class extends Migration
                 $table->string('content_id', 26)->unique();
                 $table->string('space_id', 26)->index();
                 $table->string('locale', 10)->default('en');
-                $table->json('entity_labels')->default('[]');
+                $table->json('entity_labels')->nullable();
                 $table->string('cluster_id', 26)->nullable()->index();
-                $table->json('node_metadata')->default('{}');
+                $table->json('node_metadata')->nullable();
                 $table->timestamp('indexed_at')->nullable();
                 $table->timestamps();
 
