@@ -3,17 +3,44 @@
  *
  * @example
  * ```ts
- * import { createNumenClient } from '@numen/sdk'
+ * import { NumenClient } from '@numen/sdk'
  *
- * const client = createNumenClient({
+ * const client = new NumenClient({
  *   baseUrl: 'https://api.numen.ai',
  *   apiKey: 'your-api-key',
  * })
  * ```
  */
 
+import { NumenClient } from './core/client.js'
+import type { NumenClientOptions } from './types/sdk.js'
+
+// Types
 export type { NumenClientOptions, CacheOptions } from './types/sdk.js'
 export type { ApiResponse, PaginatedResponse, ApiError } from './types/api.js'
+
+// Core client
+export { NumenClient } from './core/client.js'
+export type { RequestOptions, ContentResource, PagesResource, MediaResource, SearchResource } from './core/client.js'
+
+// Auth
+export { createAuthMiddleware } from './core/auth.js'
+export type { AuthMiddlewareOptions } from './core/auth.js'
+
+// Errors
+export {
+  NumenError,
+  NumenRateLimitError,
+  NumenValidationError,
+  NumenAuthError,
+  NumenNotFoundError,
+  NumenNetworkError,
+  mapResponseToError,
+} from './core/errors.js'
+
+// Cache
+export { SWRCache } from './core/cache.js'
+export type { CacheEntry, CacheListener } from './core/cache.js'
 
 /**
  * SDK version
@@ -22,16 +49,13 @@ export const SDK_VERSION = '0.1.0'
 
 /**
  * Creates a Numen API client instance.
- * Full implementation coming in subsequent chunks.
+ * Returns a NumenClient augmented with legacy properties for backward compatibility.
  */
-export function createNumenClient(options: import('./types/sdk.js').NumenClientOptions) {
-  if (!options.baseUrl) {
-    throw new Error('[numen/sdk] baseUrl is required')
-  }
-
-  // Placeholder — full client implementation in chunk 2
-  return {
+export function createNumenClient(options: NumenClientOptions) {
+  const client = new NumenClient(options)
+  // Backward-compat shape from chunk 1
+  return Object.assign(client, {
     _options: options,
     _version: SDK_VERSION,
-  } as const
+  })
 }
