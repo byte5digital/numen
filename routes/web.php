@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\SettingsAdminController;
 use App\Http\Controllers\Admin\SpaceAdminController;
 use App\Http\Controllers\Admin\SpaceSwitcherController;
 use App\Http\Controllers\Admin\TaxonomyAdminController;
+use App\Http\Controllers\Admin\TemplateLibraryController;
 use App\Http\Controllers\Admin\TokenAdminController;
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Admin\WebhookAdminController;
@@ -97,6 +98,10 @@ Route::prefix('admin')->middleware(['auth', 'admin', 'resolve-space'])->group(fu
     Route::get('/pipelines', [PipelineAdminController::class, 'index'])->name('admin.pipelines');
     Route::post('/pipeline-runs/{id}/approve', [PipelineAdminController::class, 'approveRun'])->name('admin.pipeline-runs.approve');
     Route::post('/pipeline-runs/{id}/reject', [PipelineAdminController::class, 'rejectRun'])->name('admin.pipeline-runs.reject');
+    Route::get('/pipeline-templates', [TemplateLibraryController::class, 'index'])->name('admin.pipeline-templates');
+    Route::get('/pipeline-templates/create', [TemplateLibraryController::class, 'create'])->name('admin.pipeline-templates.create');
+    Route::get('/pipeline-templates/{templateId}/edit', [TemplateLibraryController::class, 'edit'])->name('admin.pipeline-templates.edit');
+
     Route::get('/personas', [PersonaAdminController::class, 'index'])->name('admin.personas');
     Route::patch('/personas/{id}', [PersonaAdminController::class, 'update'])->name('admin.personas.update');
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('admin.analytics');
