@@ -78,6 +78,58 @@ One-click content repurposing to 8 formats with AI-powered tone preservation and
 
 ### Added
 
+**AI Pipeline Templates & Preset Library** ([Issue #36](https://github.com/byte5digital/numen/issues/36))
+
+Reusable AI pipeline templates for accelerated content creation workflows, featuring 8 built-in templates, community library, space-scoped templates, one-click install wizard, template versioning, and plugin registration hooks.
+
+**Features:**
+- **8 built-in templates:** Blog Post Pipeline, Social Media Campaign, Product Description, Email Newsletter, Press Release, Landing Page, Technical Documentation, Video Script
+- **Template library API:** Discover, rate, and install templates with metadata
+- **Space-scoped templates:** Custom templates per content space with full RBAC support
+- **Install wizard:** Auto-configures personas, stages, and input variables from template schema
+- **Template versioning:** Track changes, publish/unpublish versions, rollback support
+- **Template packs:** Plugin system for registering template collections
+- **Community ratings:** Rate and provide feedback on templates
+- **Metadata support:** Categories, icons, author info, and schema versioning
+- **Security:** Space-scoped installs, RBAC permission gates, audit logging
+
+**Endpoints:**
+- `GET /api/v1/spaces/{space}/pipeline-templates` — List templates (paginated)
+- `POST /api/v1/spaces/{space}/pipeline-templates` — Create custom template
+- `GET /api/v1/spaces/{space}/pipeline-templates/{template}` — Get template details
+- `PATCH /api/v1/spaces/{space}/pipeline-templates/{template}` — Update template
+- `DELETE /api/v1/spaces/{space}/pipeline-templates/{template}` — Delete template
+- `POST /api/v1/spaces/{space}/pipeline-templates/{template}/publish` — Publish template
+- `POST /api/v1/spaces/{space}/pipeline-templates/{template}/unpublish` — Unpublish template
+- `GET /api/v1/spaces/{space}/pipeline-templates/{template}/versions` — List versions
+- `POST /api/v1/spaces/{space}/pipeline-templates/{template}/versions` — Create version
+- `GET /api/v1/spaces/{space}/pipeline-templates/{template}/versions/{version}` — Get version
+- `POST /api/v1/spaces/{space}/pipeline-templates/installs/{version}` — Install template (rate-limited 5/min)
+- `PATCH /api/v1/spaces/{space}/pipeline-templates/installs/{install}` — Update install
+- `DELETE /api/v1/spaces/{space}/pipeline-templates/installs/{install}` — Remove install
+- `GET /api/v1/spaces/{space}/pipeline-templates/{template}/ratings` — List ratings
+- `POST /api/v1/spaces/{space}/pipeline-templates/{template}/ratings` — Rate template
+
+**Plugin Hooks:**
+- `registerTemplateCategory(array $category)` — Register custom template categories
+- `registerTemplatePack(array $pack)` — Register template collections from plugins
+
+**Models:**
+- `PipelineTemplate` — Template metadata (name, slug, category, icon, author)
+- `PipelineTemplateVersion` — Versioned template definitions with JSON schema
+- `PipelineTemplateInstall` — Track template usage per space
+- `PipelineTemplateRating` — Community feedback (1-5 stars)
+
+**New environment variables:**
+- `TEMPLATE_LIBRARY_ENABLED=true`
+- `TEMPLATE_INSTALL_RATE_LIMIT=5` (per minute)
+
+See [docs/pipeline-templates.md](docs/pipeline-templates.md) for complete documentation.
+
+
+
+### Added
+
 - Webhooks admin UI — manage webhook endpoints, event subscriptions, delivery logs, and secret rotation directly from the admin panel (Settings → Webhooks)
 
 ## [0.8.0] — 2026-03-15
