@@ -13,7 +13,6 @@ return new class extends Migration
                 $table->ulid('id')->primary();
                 $table->string('space_id', 26)->index();
                 $table->string('source_id', 26)->index();
-                $table->string('space_id', 26)->index();
                 $table->string('external_url');
                 $table->string('title')->nullable();
                 $table->text('excerpt')->nullable();
