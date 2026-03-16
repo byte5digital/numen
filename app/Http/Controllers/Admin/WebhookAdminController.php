@@ -51,7 +51,7 @@ class WebhookAdminController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $spaceId = $request->space()?->id ?? abort(403, 'No space context.');
+        $spaceId = $request->space()->id ?? abort(403, 'No space context.');
 
         $this->authz->authorize($request->user(), 'webhooks.manage', $spaceId);
 
@@ -191,7 +191,7 @@ class WebhookAdminController extends Controller
      */
     private function resolveSpaceId(Request $request): string
     {
-        return $request->space()?->id ?? abort(403, 'No space context.');
+        return $request->space()->id ?? abort(403, 'No space context.');
     }
 
     /**
