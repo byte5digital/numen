@@ -43,9 +43,9 @@ async function fetchGraph() {
         const url = props.contentId
             ? `/api/v1/graph/node/${props.contentId}`
             : `/api/v1/graph/space/${props.spaceId}`;
-        const xsrfToken = document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '';
+        const xsrfToken = decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '');
         const res = await fetch(url, {
-            credentials: 'same-origin',
+            credentials: 'include',
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',

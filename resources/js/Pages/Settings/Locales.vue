@@ -29,23 +29,63 @@ function openAddModal() {
 }
 function selectLocale(s) { addingLocale.value = s; }
 
-function confirmAdd() {
-    if (!addingLocale.value) return;
-    adding.value = true;
-    router.post("/api/v1/locales", {
-        locale: addingLocale.value.code,
-        label:  addingLocale.value.label,
-    }, {
-        onFinish: () => { adding.value = false; showAddModal.value = false; },
-        preserveScroll: true,
-    });
+function xsrfToken() {
+    return decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '');
 }
 
-function toggleActive(locale) {
-    router.patch("/api/v1/locales/" + locale.id, { is_active: !locale.is_active }, { preserveScroll: true });
+function authHeaders(withBody = false) {
+    const headers = {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-XSRF-TOKEN': xsrfToken(),
+    };
+    if (withBody) headers['Content-Type'] = 'application/json';
+    return headers;
 }
-function setDefault(locale) {
-    router.patch("/api/v1/locales/" + locale.id, { is_default: true }, { preserveScroll: true });
+
+async function confirmAdd() {
+    if (!addingLocale.value) return;
+    adding.value = true;
+    try {
+        const res = await fetch("/api/v1/locales", {
+            method: 'POST',
+            credentials: 'include',
+            headers: authHeaders(true),
+            body: JSON.stringify({
+                locale: addingLocale.value.code,
+                label:  addingLocale.value.label,
+            }),
+        });
+        if (res.ok) {
+            showAddModal.value = false;
+            router.reload({ only: ['locales'] });
+        } else {
+            const data = await res.json().catch(() => ({}));
+            console.error('Failed to add locale:', data);
+        }
+    } finally {
+        adding.value = false;
+    }
+}
+
+async function toggleActive(locale) {
+    const res = await fetch("/api/v1/locales/" + locale.id, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: authHeaders(true),
+        body: JSON.stringify({ is_active: !locale.is_active }),
+    });
+    if (res.ok) router.reload({ only: ['locales'] });
+}
+
+async function setDefault(locale) {
+    const res = await fetch("/api/v1/locales/" + locale.id, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: authHeaders(true),
+        body: JSON.stringify({ is_default: true }),
+    });
+    if (res.ok) router.reload({ only: ['locales'] });
 }
 
 const dragging     = ref(null);
@@ -58,29 +98,45 @@ function onDragStart(i) { dragging.value = i; }
 function onDragOver(i)  { dragOver.value  = i; }
 function onDragEnd()    { dragging.value  = null; dragOver.value = null; }
 
-function onDrop(index) {
+async function onDrop(index) {
     if (dragging.value === null || dragging.value === index) return;
     const arr = [...localLocales.value];
     const [moved] = arr.splice(dragging.value, 1);
     arr.splice(index, 0, moved);
     localLocales.value = arr;
     dragging.value = null; dragOver.value = null;
-    router.patch("/api/v1/locales/reorder", {
-        order: arr.map((l, i) => ({ id: l.id, sort_order: i + 1 })),
-    }, { preserveScroll: true });
+    const res = await fetch("/api/v1/locales/reorder", {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: authHeaders(true),
+        body: JSON.stringify({
+            order: arr.map((l, i) => ({ id: l.id, sort_order: i + 1 })),
+        }),
+    });
+    if (res.ok) router.reload({ only: ['locales'] });
 }
 
 const deleteError = ref(null);
 const deleting    = ref(null);
 
-function deleteLocale(locale) {
+async function deleteLocale(locale) {
     if (!confirm("Delete " + locale.label + " locale? This cannot be undone.")) return;
     deleting.value = locale.id;
-    router.delete("/api/v1/locales/" + locale.id, {
-        onError:  (e) => { deleteError.value = e.locale ?? "Cannot delete: content may exist in this locale."; },
-        onFinish: () => { deleting.value = null; },
-        preserveScroll: true,
-    });
+    try {
+        const res = await fetch("/api/v1/locales/" + locale.id, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: authHeaders(),
+        });
+        if (res.ok) {
+            router.reload({ only: ['locales'] });
+        } else {
+            const data = await res.json().catch(() => ({}));
+            deleteError.value = data.message ?? data.locale ?? "Cannot delete: content may exist in this locale.";
+        }
+    } finally {
+        deleting.value = null;
+    }
 }
 </script>
 
