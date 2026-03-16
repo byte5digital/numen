@@ -365,6 +365,9 @@ use App\Http\Controllers\Api\Templates\PipelineTemplateInstallController;
 use App\Http\Controllers\Api\Templates\PipelineTemplateRatingController;
 use App\Http\Controllers\Api\Templates\PipelineTemplateVersionController;
 
+// Content Quality Scoring API
+use App\Http\Controllers\Api\ContentQualityController;
+
 Route::prefix('v1/spaces/{space}/pipeline-templates')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/', [PipelineTemplateController::class, 'index'])->name('api.pipeline-templates.index');
     Route::post('/', [PipelineTemplateController::class, 'store'])->name('api.pipeline-templates.store');
@@ -381,4 +384,18 @@ Route::prefix('v1/spaces/{space}/pipeline-templates')->middleware(['auth:sanctum
     Route::delete('/installs/{install}', [PipelineTemplateInstallController::class, 'destroy'])->name('api.pipeline-templates.installs.destroy');
     Route::get('/{template}/ratings', [PipelineTemplateRatingController::class, 'index'])->name('api.pipeline-templates.ratings.index')->withoutScopedBindings();
     Route::post('/{template}/ratings', [PipelineTemplateRatingController::class, 'store'])->name('api.pipeline-templates.ratings.store')->withoutScopedBindings();
+});
+
+Route::prefix('v1/quality')->middleware('auth:sanctum')->group(function () {
+    Route::get('/scores', [ContentQualityController::class, 'index']);
+    Route::get('/scores/{score}', [ContentQualityController::class, 'show']);
+    Route::post('/score', [ContentQualityController::class, 'score']);
+    Route::get('/trends', [ContentQualityController::class, 'trends']);
+    Route::get('/config', [ContentQualityController::class, 'getConfig']);
+    Route::put('/config', [ContentQualityController::class, 'updateConfig']);
+});
+    Route::get('/trends', [ContentQualityController::class, 'trends']);
+    Route::get('/config', [ContentQualityController::class, 'getConfig']);
+    Route::put('/config', [ContentQualityController::class, 'updateConfig']);
+>>>>>>> 7d3c9db (feat(quality): REST API — ContentQualityController, 3 API resources, routes, quality.scored webhook event)
 });
