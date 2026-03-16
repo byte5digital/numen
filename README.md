@@ -37,6 +37,17 @@ Each stage is a queued job. The pipeline is event-driven. Stages are defined in 
 
 ## Features
 
+### AI Content Quality Scoring
+**New in v0.10.0.** Automated multi-dimensional content quality analysis across five dimensions:
+- **Readability** — Flesch-Kincaid metrics, sentence and word complexity
+- **SEO** — Keyword density, heading structure, meta optimization
+- **Brand Consistency** — LLM-powered brand voice and tone analysis
+- **Factual Accuracy** — Cross-referenced claim validation
+- **Engagement Prediction** — AI-predicted engagement score
+
+Features: real-time score ring in the editor sidebar, quality dashboard with Chart.js trend visualization, space leaderboard, configurable pipeline quality gates, auto-score on publish, and a `quality.scored` webhook event.
+
+
 ### Content Generation Pipeline
 Submit a brief → AI agents generate, illustrate, optimize, and quality-gate content → auto-publish or human review.
 
@@ -96,8 +107,28 @@ Manage webhook endpoints and event subscriptions directly from the admin panel (
 - See [docs/graphql-api.md](docs/graphql-api.md) for the full guide
 
 
-### Plugin & Extension System
-First-class plugin architecture. Extend pipelines, register custom LLM providers, add admin UI, and react to content events — all from a self-contained plugin package.
+### AI Pipeline Templates & Preset Library
+**New in v0.10.0.** Reusable AI pipeline templates for accelerated content creation workflows.
+
+**Features:**
+- **8 built-in templates:** Blog Post Pipeline, Social Media Campaign, Product Description, Email Newsletter, Press Release, Landing Page, Technical Documentation, Video Script
+- **Template library API:** Browse, rate, and install templates from community library
+- **Space-scoped templates:** Custom templates per content space with RBAC
+- **One-click install wizard:** Auto-configures personas, stages, and variables from template schema
+- **Template versioning:** Version management with changelog and rollback support
+- **Template packs:** Plugin-registered template collections with metadata
+- **Plugin hooks:** `registerTemplateCategory()` and `registerTemplatePack()` for extending the library
+- **Template ratings:** Community feedback and quality metrics
+
+**Endpoints:**
+- `GET /api/v1/spaces/{space}/pipeline-templates` — List templates
+- `POST /api/v1/spaces/{space}/pipeline-templates` — Create custom template
+- `POST /api/v1/spaces/{space}/pipeline-templates/{template}/publish` — Publish template
+- `POST /api/v1/spaces/{space}/pipeline-templates/{template}/versions` — Create new version
+- `POST /api/v1/spaces/{space}/pipeline-templates/installs/{version}` — Install template
+- `POST /api/v1/spaces/{space}/pipeline-templates/{template}/ratings` — Rate template
+
+See [docs/pipeline-templates.md](docs/pipeline-templates.md) for the complete feature guide.
 
 ### Plugin & Extension System
 First-class plugin architecture. Extend pipelines, register custom LLM providers, add admin UI, and react to content events — all from a self-contained plugin package.

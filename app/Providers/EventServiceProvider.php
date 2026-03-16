@@ -14,7 +14,14 @@ class EventServiceProvider extends ServiceProvider
      *
      * @var array<class-string, list<class-string>>
      */
-    protected $listen = [];
+    protected $listen = [
+        \App\Events\Content\ContentPublished::class => [
+            \App\Listeners\AutoScoreOnPublishListener::class,
+        ],
+        \App\Events\Quality\ContentQualityScored::class => [
+            \App\Listeners\QualityScoredWebhookListener::class,
+        ],
+    ];
 
     public function boot(): void
     {

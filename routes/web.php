@@ -9,11 +9,15 @@ use App\Http\Controllers\Admin\PageAdminController;
 use App\Http\Controllers\Admin\PersonaAdminController;
 use App\Http\Controllers\Admin\PipelineAdminController;
 use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\QualityDashboardController;
+use App\Http\Controllers\Admin\QualitySettingsController;
 use App\Http\Controllers\Admin\QueueMonitorController;
+use App\Http\Controllers\Admin\SearchWebController;
 use App\Http\Controllers\Admin\SettingsAdminController;
 use App\Http\Controllers\Admin\SpaceAdminController;
 use App\Http\Controllers\Admin\SpaceSwitcherController;
 use App\Http\Controllers\Admin\TaxonomyAdminController;
+use App\Http\Controllers\Admin\TemplateLibraryController;
 use App\Http\Controllers\Admin\TokenAdminController;
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Admin\WebhookAdminController;
@@ -96,9 +100,22 @@ Route::prefix('admin')->middleware(['auth', 'admin', 'resolve-space'])->group(fu
     Route::get('/pipelines', [PipelineAdminController::class, 'index'])->name('admin.pipelines');
     Route::post('/pipeline-runs/{id}/approve', [PipelineAdminController::class, 'approveRun'])->name('admin.pipeline-runs.approve');
     Route::post('/pipeline-runs/{id}/reject', [PipelineAdminController::class, 'rejectRun'])->name('admin.pipeline-runs.reject');
+    Route::get('/pipeline-templates', [TemplateLibraryController::class, 'index'])->name('admin.pipeline-templates');
+    Route::get('/pipeline-templates/create', [TemplateLibraryController::class, 'create'])->name('admin.pipeline-templates.create');
+    Route::get('/pipeline-templates/{templateId}/edit', [TemplateLibraryController::class, 'edit'])->name('admin.pipeline-templates.edit');
+    Route::get('/pipeline-templates/marketplace', [TemplateLibraryController::class, 'marketplace'])->name('admin.pipeline-templates.marketplace');
+    Route::get('/pipeline-templates/install', [TemplateLibraryController::class, 'install'])->name('admin.pipeline-templates.install');
+
     Route::get('/personas', [PersonaAdminController::class, 'index'])->name('admin.personas');
     Route::patch('/personas/{id}', [PersonaAdminController::class, 'update'])->name('admin.personas.update');
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('admin.analytics');
+    Route::get('/quality', [QualityDashboardController::class, 'index'])->name('admin.quality');
+
+    // Search
+    Route::get('/search', [SearchWebController::class, 'index'])->name('admin.search');
+    Route::get('/search/synonyms', [SearchWebController::class, 'synonyms'])->name('admin.search.synonyms');
+    Route::get('/search/promoted', [SearchWebController::class, 'promoted'])->name('admin.search.promoted');
+    Route::get('/search/analytics', [SearchWebController::class, 'analytics'])->name('admin.search.analytics');
 
     // Settings
     Route::get('/settings', [SettingsAdminController::class, 'index'])->name('admin.settings');
@@ -106,6 +123,7 @@ Route::prefix('admin')->middleware(['auth', 'admin', 'resolve-space'])->group(fu
     Route::post('/settings/models', [SettingsAdminController::class, 'updateModels'])->name('admin.settings.models');
     Route::post('/settings/images', [SettingsAdminController::class, 'updateImages'])->name('admin.settings.images');
     Route::post('/settings/costs', [SettingsAdminController::class, 'updateCosts'])->name('admin.settings.costs');
+    Route::get('/settings/quality', [QualitySettingsController::class, 'index'])->name('admin.settings.quality');
 
     // Queue Monitor
     Route::get('/queue', [QueueMonitorController::class, 'index'])->name('admin.queue');

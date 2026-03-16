@@ -324,7 +324,7 @@ Route::prefix('v1/public')->middleware('throttle:120,1')->group(function () {
 // Knowledge Graph API
 use App\Http\Controllers\Api\GraphController;
 
-Route::prefix('v1/graph')->middleware('auth:sanctum')->group(function () {
+Route::prefix('v1/graph')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/related/{contentId}', [GraphController::class, 'related']);
     Route::get('/clusters', [GraphController::class, 'clusters']);
     Route::get('/clusters/{clusterId}', [GraphController::class, 'clusterContents']);
@@ -357,4 +357,68 @@ Route::prefix('v1/chat')->middleware(['auth:sanctum', 'throttle:20,1'])->group(f
     Route::post('/conversations/{id}/confirm', [ChatController::class, 'confirmAction']);
     Route::delete('/conversations/{id}/confirm', [ChatController::class, 'cancelAction']);
     Route::get('/suggestions', [ChatController::class, 'suggestions']);
+});
+
+// --- #36 Pipeline Templates API ---
+use App\Http\Controllers\Api\Templates\PipelineTemplateController;
+use App\Http\Controllers\Api\Templates\PipelineTemplateInstallController;
+use App\Http\Controllers\Api\Templates\PipelineTemplateRatingController;
+use App\Http\Controllers\Api\Templates\PipelineTemplateVersionController;
+
+// Content Quality Scoring API
+use App\Http\Controllers\Api\ContentQualityController;
+
+// Competitor-Aware Content Differentiation API
+use App\Http\Controllers\Api\CompetitorController;
+use App\Http\Controllers\Api\CompetitorSourceController;
+use App\Http\Controllers\Api\DifferentiationController;
+
+Route::prefix('v1/spaces/{space}/pipeline-templates')->middleware(['auth:sanctum'])->group(function () {
+    Route::get('/', [PipelineTemplateController::class, 'index'])->name('api.pipeline-templates.index');
+    Route::post('/', [PipelineTemplateController::class, 'store'])->name('api.pipeline-templates.store');
+    Route::get('/{template}', [PipelineTemplateController::class, 'show'])->name('api.pipeline-templates.show');
+    Route::patch('/{template}', [PipelineTemplateController::class, 'update'])->name('api.pipeline-templates.update');
+    Route::delete('/{template}', [PipelineTemplateController::class, 'destroy'])->name('api.pipeline-templates.destroy');
+    Route::post('/{template}/publish', [PipelineTemplateController::class, 'publish'])->name('api.pipeline-templates.publish');
+    Route::post('/{template}/unpublish', [PipelineTemplateController::class, 'unpublish'])->name('api.pipeline-templates.unpublish');
+    Route::get('/{template}/versions', [PipelineTemplateVersionController::class, 'index'])->name('api.pipeline-templates.versions.index')->withoutScopedBindings();
+    Route::post('/{template}/versions', [PipelineTemplateVersionController::class, 'store'])->name('api.pipeline-templates.versions.store')->withoutScopedBindings();
+    Route::get('/{template}/versions/{version}', [PipelineTemplateVersionController::class, 'show'])->name('api.pipeline-templates.versions.show')->withoutScopedBindings();
+    Route::post('/installs/{version}', [PipelineTemplateInstallController::class, 'store'])->name('api.pipeline-templates.installs.store')->withoutScopedBindings()->middleware('throttle:5,1');
+    Route::patch('/installs/{install}', [PipelineTemplateInstallController::class, 'update'])->name('api.pipeline-templates.installs.update');
+    Route::delete('/installs/{install}', [PipelineTemplateInstallController::class, 'destroy'])->name('api.pipeline-templates.installs.destroy');
+    Route::get('/{template}/ratings', [PipelineTemplateRatingController::class, 'index'])->name('api.pipeline-templates.ratings.index')->withoutScopedBindings();
+    Route::post('/{template}/ratings', [PipelineTemplateRatingController::class, 'store'])->name('api.pipeline-templates.ratings.store')->withoutScopedBindings();
+});
+
+Route::prefix('v1/quality')->middleware('auth:sanctum')->group(function () {
+    Route::get('/scores', [ContentQualityController::class, 'index']);
+    Route::get('/scores/{score}', [ContentQualityController::class, 'show']);
+    Route::post('/score', [ContentQualityController::class, 'score']);
+    Route::get('/trends', [ContentQualityController::class, 'trends']);
+    Route::get('/config', [ContentQualityController::class, 'getConfig']);
+    Route::put('/config', [ContentQualityController::class, 'updateConfig']);
+});
+
+Route::prefix('v1/competitor')->middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+    // Sources
+    Route::get('/sources', [CompetitorSourceController::class, 'index']);
+    Route::post('/sources', [CompetitorSourceController::class, 'store']);
+    Route::get('/sources/{id}', [CompetitorSourceController::class, 'show']);
+    Route::patch('/sources/{id}', [CompetitorSourceController::class, 'update']);
+    Route::delete('/sources/{id}', [CompetitorSourceController::class, 'destroy']);
+    Route::post('/sources/{id}/crawl', [CompetitorController::class, 'crawl'])->middleware('throttle:5,1');
+
+    // Content
+    Route::get('/content', [CompetitorController::class, 'content']);
+
+    // Alerts
+    Route::get('/alerts', [CompetitorController::class, 'alerts']);
+    Route::post('/alerts', [CompetitorController::class, 'storeAlert']);
+    Route::delete('/alerts/{id}', [CompetitorController::class, 'destroyAlert']);
+
+    // Differentiation
+    Route::get('/differentiation', [DifferentiationController::class, 'index']);
+    Route::get('/differentiation/summary', [DifferentiationController::class, 'summary']);
+    Route::get('/differentiation/{id}', [DifferentiationController::class, 'show']);
 });

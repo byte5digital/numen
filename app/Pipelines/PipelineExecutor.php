@@ -119,9 +119,16 @@ class PipelineExecutor
             'ai_review' => config('numen.queues.review'),
             'ai_illustrate' => config('numen.queues.generation'),
             'auto_publish' => config('numen.queues.publishing'),
+            'quality_gate' => 'ai-pipeline',
             'human_gate' => null, // No job — pauses for human
             default => 'default',
         };
+
+        if ($stage['type'] === 'quality_gate') {
+            \App\Jobs\QualityGateStageJob::dispatch($run, $stage)->onQueue($queue);
+
+            return;
+        }
 
         if ($stage['type'] === 'human_gate') {
             $run->update(['status' => 'paused_for_review']);
