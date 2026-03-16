@@ -47,3 +47,19 @@ Schedule::call(function () {
     ->everyMinute()
     ->name('competitor:dispatch-crawlers')
     ->withoutOverlapping();
+
+// Competitor intelligence: health monitoring every hour
+Schedule::call(function () {
+    app(\App\Services\Competitor\CrawlerHealthMonitor::class)->check();
+})
+    ->hourly()
+    ->name('competitor:health-check')
+    ->withoutOverlapping();
+
+// Competitor intelligence: data retention pruning — weekly on Sunday at 02:00
+Schedule::call(function () {
+    app(\App\Services\Competitor\RetentionPolicyService::class)->run();
+})
+    ->weeklyOn(0, '02:00')
+    ->name('competitor:retention-prune')
+    ->withoutOverlapping();

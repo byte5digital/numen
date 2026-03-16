@@ -202,6 +202,10 @@ return [
         'similarity_threshold' => (float) env('COMPETITOR_SIMILARITY_THRESHOLD', 0.25),
         'max_competitors_to_analyze' => (int) env('COMPETITOR_MAX_ANALYZE', 5),
         'auto_enrich_briefs' => env('COMPETITOR_AUTO_ENRICH_BRIEFS', true),
+        // Retention settings (days)
+        'content_retention_days' => (int) env('COMPETITOR_CONTENT_RETENTION_DAYS', 90),
+        'analysis_retention_days' => (int) env('COMPETITOR_ANALYSIS_RETENTION_DAYS', 180),
+        'alert_event_retention_days' => (int) env('COMPETITOR_ALERT_EVENT_RETENTION_DAYS', 30),
     ],
 
 ];
