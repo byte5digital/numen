@@ -52,7 +52,7 @@ class QualityPipelineIntegrationTest extends TestCase
         $listener = app(AutoScoreOnPublishListener::class);
         $listener->handle(new ContentPublished($content));
 
-        Queue::assertPushed(ScoreContentQualityJob::class, fn ($job) => $job->content->id === $content->id);
+        Queue::assertPushed(ScoreContentQualityJob::class, fn ($job) => $job->contentId === $content->id);
     }
 
     public function test_auto_score_listener_does_not_dispatch_when_config_disabled(): void

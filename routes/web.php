@@ -1,8 +1,6 @@
 <?php
 
 use App\Http\Controllers\Admin\AnalyticsController;
-use App\Http\Controllers\Admin\QualityDashboardController;
-use App\Http\Controllers\Admin\QualitySettingsController;
 use App\Http\Controllers\Admin\BriefAdminController;
 use App\Http\Controllers\Admin\ContentAdminController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -11,6 +9,8 @@ use App\Http\Controllers\Admin\PageAdminController;
 use App\Http\Controllers\Admin\PersonaAdminController;
 use App\Http\Controllers\Admin\PipelineAdminController;
 use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\QualityDashboardController;
+use App\Http\Controllers\Admin\QualitySettingsController;
 use App\Http\Controllers\Admin\QueueMonitorController;
 use App\Http\Controllers\Admin\SettingsAdminController;
 use App\Http\Controllers\Admin\TaxonomyAdminController;

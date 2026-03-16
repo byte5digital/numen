@@ -21,7 +21,7 @@ class AutoScoreOnPublishListener implements ShouldQueue
 
         // Score if: no config (default on) OR config explicitly enables it
         if ($config === null || $config->auto_score_on_publish) {
-            ScoreContentQualityJob::dispatch($content);
+            ScoreContentQualityJob::dispatch($content->id);
         }
     }
 }

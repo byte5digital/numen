@@ -34,6 +34,80 @@ components:
       description: Sanctum personal access token
 
   schemas:
+    ContentQualityScore:
+      type: object
+      properties:
+        id:
+          type: string
+        space_id:
+          type: string
+        content_id:
+          type: string
+        content_version_id:
+          type: string
+          nullable: true
+        overall_score:
+          type: number
+          format: float
+        dimensions:
+          type: object
+          properties:
+            readability:
+              type: number
+              nullable: true
+            seo:
+              type: number
+              nullable: true
+            brand:
+              type: number
+              nullable: true
+            factual:
+              type: number
+              nullable: true
+            engagement:
+              type: number
+              nullable: true
+        scoring_model:
+          type: string
+        scoring_duration_ms:
+          type: integer
+        scored_at:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            type: object
+
+    ContentQualityConfig:
+      type: object
+      properties:
+        id:
+          type: string
+        space_id:
+          type: string
+        dimension_weights:
+          type: object
+        thresholds:
+          type: object
+        enabled_dimensions:
+          type: array
+          items:
+            type: string
+        auto_score_on_publish:
+          type: boolean
+        pipeline_gate_enabled:
+          type: boolean
+        pipeline_gate_min_score:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+
     Error:
       type: object
       properties:
@@ -2108,6 +2182,177 @@ paths:
         '200':
           description: List of supported formats
 
+
+  # ── Quality Scoring ─────────────────────────────────────────────────────────
+
+  /quality/scores:
+    get:
+      operationId: listQualityScores
+      summary: List quality scores for a space
+      tags: [Quality Scoring]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: content_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Paginated list of quality scores
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentQualityScore'
+
+  /quality/scores/{score}:
+    get:
+      operationId: getQualityScore
+      summary: Get a single quality score with items
+      tags: [Quality Scoring]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: score
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Quality score with dimension items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ContentQualityScore'
+
+  /quality/score:
+    post:
+      operationId: triggerQualityScore
+      summary: Trigger async quality scoring for a content item
+      tags: [Quality Scoring]
+      security:
+        - sanctumToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content_id]
+              properties:
+                content_id:
+                  type: string
+      responses:
+        '202':
+          description: Scoring job queued
+
+  /quality/trends:
+    get:
+      operationId: getQualityTrends
+      summary: Get daily trend data, leaderboard, and distributions for a space
+      tags: [Quality Scoring]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Trend data, leaderboard, and distribution
+
+  /quality/config:
+    get:
+      operationId: getQualityConfig
+      summary: Get quality configuration for a space
+      tags: [Quality Scoring]
+      security:
+        - sanctumToken: []
+      parameters:
+        - name: space_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Quality config (created with defaults if absent)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ContentQualityConfig'
+    put:
+      operationId: updateQualityConfig
+      summary: Update quality configuration for a space
+      tags: [Quality Scoring]
+      security:
+        - sanctumToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [space_id]
+              properties:
+                space_id:
+                  type: string
+                dimension_weights:
+                  type: object
+                thresholds:
+                  type: object
+                enabled_dimensions:
+                  type: array
+                  items:
+                    type: string
+                auto_score_on_publish:
+                  type: boolean
+                pipeline_gate_enabled:
+                  type: boolean
+                pipeline_gate_min_score:
+                  type: number
+      responses:
+        '200':
+          description: Updated quality config
+
 tags:
   - name: Content
     description: Public content delivery endpoints (60 req/min)
@@ -2133,3 +2378,5 @@ tags:
     description: AI-powered content repurposing to 8 formats (authenticated)
   - name: Format Templates
     description: Custom format templates for content repurposing (authenticated)
+  - name: Quality Scoring
+    description: AI-powered content quality scoring — scores, trends, config, and pipeline gates (authenticated)
