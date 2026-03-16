@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\QualityDashboardController;
+use App\Http\Controllers\Admin\QualitySettingsController;
 use App\Http\Controllers\Admin\BriefAdminController;
 use App\Http\Controllers\Admin\ContentAdminController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -106,6 +107,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/settings/models', [SettingsAdminController::class, 'updateModels'])->name('admin.settings.models');
     Route::post('/settings/images', [SettingsAdminController::class, 'updateImages'])->name('admin.settings.images');
     Route::post('/settings/costs', [SettingsAdminController::class, 'updateCosts'])->name('admin.settings.costs');
+    Route::get('/settings/quality', [QualitySettingsController::class, 'index'])->name('admin.settings.quality');
 
     // Queue Monitor
     Route::get('/queue', [QueueMonitorController::class, 'index'])->name('admin.queue');
