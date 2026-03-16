@@ -42,4 +42,27 @@ class TemplateLibraryController extends Controller
             'templateId' => $templateId,
         ]);
     }
+
+    public function marketplace(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+        $space = Space::where('owner_id', $user->id)->first();
+
+        return Inertia::render('Pipelines/Templates/Marketplace', [
+            'spaceId' => ($space !== null ? $space->id : ''),
+        ]);
+    }
+
+    public function install(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+        $space = Space::where('owner_id', $user->id)->first();
+
+        return Inertia::render('Pipelines/Templates/InstallWizard', [
+            'spaceId' => ($space !== null ? $space->id : ''),
+            'templateId' => $request->query('template'),
+        ]);
+    }
 }

@@ -101,6 +101,8 @@ Route::prefix('admin')->middleware(['auth', 'admin', 'resolve-space'])->group(fu
     Route::get('/pipeline-templates', [TemplateLibraryController::class, 'index'])->name('admin.pipeline-templates');
     Route::get('/pipeline-templates/create', [TemplateLibraryController::class, 'create'])->name('admin.pipeline-templates.create');
     Route::get('/pipeline-templates/{templateId}/edit', [TemplateLibraryController::class, 'edit'])->name('admin.pipeline-templates.edit');
+    Route::get('/pipeline-templates/marketplace', [TemplateLibraryController::class, 'marketplace'])->name('admin.pipeline-templates.marketplace');
+    Route::get('/pipeline-templates/install', [TemplateLibraryController::class, 'install'])->name('admin.pipeline-templates.install');
 
     Route::get('/personas', [PersonaAdminController::class, 'index'])->name('admin.personas');
     Route::patch('/personas/{id}', [PersonaAdminController::class, 'update'])->name('admin.personas.update');
