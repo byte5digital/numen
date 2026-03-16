@@ -36,6 +36,8 @@ class PipelineTemplateController extends Controller
 
     public function show(Space $space, PipelineTemplate $template): PipelineTemplateResource
     {
+        abort_if($template->space_id !== null && $template->space_id !== $space->id, 403);
+
         $template->load('latestVersion', 'versions');
 
         return new PipelineTemplateResource($template);
@@ -57,6 +59,8 @@ class PipelineTemplateController extends Controller
 
     public function update(Space $space, PipelineTemplate $template, UpdatePipelineTemplateRequest $request): PipelineTemplateResource
     {
+        abort_if($template->space_id !== null && $template->space_id !== $space->id, 403);
+
         $template = $this->service->update($template, $request->validated());
         $template->load('latestVersion');
 
@@ -65,6 +69,8 @@ class PipelineTemplateController extends Controller
 
     public function destroy(Space $space, PipelineTemplate $template): JsonResponse
     {
+        abort_if($template->space_id !== null && $template->space_id !== $space->id, 403);
+
         $this->service->delete($template);
 
         return response()->json(null, 204);
@@ -72,6 +78,8 @@ class PipelineTemplateController extends Controller
 
     public function publish(Space $space, PipelineTemplate $template): PipelineTemplateResource
     {
+        abort_if($template->space_id !== null && $template->space_id !== $space->id, 403);
+
         $this->service->publish($template);
 
         return new PipelineTemplateResource($template->refresh());
@@ -79,6 +87,8 @@ class PipelineTemplateController extends Controller
 
     public function unpublish(Space $space, PipelineTemplate $template): PipelineTemplateResource
     {
+        abort_if($template->space_id !== null && $template->space_id !== $space->id, 403);
+
         $this->service->unpublish($template);
 
         return new PipelineTemplateResource($template->refresh());

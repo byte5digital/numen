@@ -324,7 +324,7 @@ Route::prefix('v1/public')->middleware('throttle:120,1')->group(function () {
 // Knowledge Graph API
 use App\Http\Controllers\Api\GraphController;
 
-Route::prefix('v1/graph')->middleware('auth:sanctum')->group(function () {
+Route::prefix('v1/graph')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/related/{contentId}', [GraphController::class, 'related']);
     Route::get('/clusters', [GraphController::class, 'clusters']);
     Route::get('/clusters/{clusterId}', [GraphController::class, 'clusterContents']);
@@ -365,7 +365,7 @@ use App\Http\Controllers\Api\Templates\PipelineTemplateInstallController;
 use App\Http\Controllers\Api\Templates\PipelineTemplateRatingController;
 use App\Http\Controllers\Api\Templates\PipelineTemplateVersionController;
 
-Route::prefix('v1/spaces/{space}/pipeline-templates')->middleware('auth:sanctum')->group(function () {
+Route::prefix('v1/spaces/{space}/pipeline-templates')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/', [PipelineTemplateController::class, 'index'])->name('api.pipeline-templates.index');
     Route::post('/', [PipelineTemplateController::class, 'store'])->name('api.pipeline-templates.store');
     Route::get('/{template}', [PipelineTemplateController::class, 'show'])->name('api.pipeline-templates.show');
@@ -376,7 +376,7 @@ Route::prefix('v1/spaces/{space}/pipeline-templates')->middleware('auth:sanctum'
     Route::get('/{template}/versions', [PipelineTemplateVersionController::class, 'index'])->name('api.pipeline-templates.versions.index')->withoutScopedBindings();
     Route::post('/{template}/versions', [PipelineTemplateVersionController::class, 'store'])->name('api.pipeline-templates.versions.store')->withoutScopedBindings();
     Route::get('/{template}/versions/{version}', [PipelineTemplateVersionController::class, 'show'])->name('api.pipeline-templates.versions.show')->withoutScopedBindings();
-    Route::post('/installs/{version}', [PipelineTemplateInstallController::class, 'store'])->name('api.pipeline-templates.installs.store')->withoutScopedBindings();
+    Route::post('/installs/{version}', [PipelineTemplateInstallController::class, 'store'])->name('api.pipeline-templates.installs.store')->withoutScopedBindings()->middleware('throttle:5,1');
     Route::patch('/installs/{install}', [PipelineTemplateInstallController::class, 'update'])->name('api.pipeline-templates.installs.update');
     Route::delete('/installs/{install}', [PipelineTemplateInstallController::class, 'destroy'])->name('api.pipeline-templates.installs.destroy');
     Route::get('/{template}/ratings', [PipelineTemplateRatingController::class, 'index'])->name('api.pipeline-templates.ratings.index')->withoutScopedBindings();

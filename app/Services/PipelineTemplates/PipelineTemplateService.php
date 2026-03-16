@@ -26,7 +26,7 @@ class PipelineTemplateService
     {
         $slug = $data['slug'] ?? Str::slug($data['name'] ?? '');
 
-        return PipelineTemplate::create([
+        $template = (new PipelineTemplate)->forceFill([
             'space_id' => $space->id,
             'name' => $data['name'],
             'slug' => $this->uniqueSlug($slug),
@@ -38,6 +38,9 @@ class PipelineTemplateService
             'author_name' => $data['author_name'] ?? null,
             'author_url' => $data['author_url'] ?? null,
         ]);
+        $template->save();
+
+        return $template;
     }
 
     /** @param array<string, mixed> $data */
@@ -64,12 +67,12 @@ class PipelineTemplateService
 
     public function publish(PipelineTemplate $template): void
     {
-        $template->update(['is_published' => true, 'space_id' => null]);
+        $template->forceFill(['is_published' => true, 'space_id' => null])->save();
     }
 
     public function unpublish(PipelineTemplate $template): void
     {
-        $template->update(['is_published' => false]);
+        $template->forceFill(['is_published' => false])->save();
     }
 
     // -------------------------------------------------------------------------

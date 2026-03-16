@@ -26,15 +26,19 @@ class PipelineTemplateInstallController extends Controller
         return (new PipelineTemplateInstallResource($install))->response()->setStatusCode(201);
     }
 
-    public function destroy(PipelineTemplateInstall $install): JsonResponse
+    public function destroy(PipelineTemplateInstall $install, Space $space): JsonResponse
     {
+        abort_if($install->space_id !== $space->id, 403);
+
         $this->installService->uninstall($install);
 
         return response()->json(null, 204);
     }
 
-    public function update(PipelineTemplateInstall $install, InstallTemplateRequest $request): PipelineTemplateInstallResource
+    public function update(PipelineTemplateInstall $install, Space $space, InstallTemplateRequest $request): PipelineTemplateInstallResource
     {
+        abort_if($install->space_id !== $space->id, 403);
+
         $install->loadMissing('templateVersion.template');
         /** @var PipelineTemplateVersion $currentVersion */
         $currentVersion = $install->getRelation('templateVersion');

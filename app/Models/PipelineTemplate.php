@@ -44,7 +44,6 @@ class PipelineTemplate extends Model
         'category',
         'icon',
         'schema_version',
-        'is_published',
         'author_name',
         'author_url',
         'downloads_count',
