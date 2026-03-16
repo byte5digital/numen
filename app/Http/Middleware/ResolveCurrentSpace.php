@@ -12,6 +12,13 @@ class ResolveCurrentSpace
     /**
      * Handle an incoming request.
      *
+     * Resolution order:
+     *   1. Session-stored space ID
+     *   2. X-Space-Id header (admin users only — prevents IDOR)
+     *   3. First space (chronological fallback)
+     *
+     * Aborts with 503 if no space can be resolved at all.
+     *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
@@ -24,29 +31,27 @@ class ResolveCurrentSpace
             $space = Space::find($sessionSpaceId);
         }
 
-        // 2. X-Space-Id header
+        // 2. X-Space-Id header — admin users only (IDOR guard)
         if (! $space) {
             $spaceIdHeader = $request->header('X-Space-Id');
-            if ($spaceIdHeader) {
+            if ($spaceIdHeader && $request->user()?->isAdmin()) {
                 $space = Space::find($spaceIdHeader);
             }
         }
 
-        // 3. First accessible space (MVP: just first space)
+        // 3. First space fallback
         if (! $space) {
             $space = Space::first();
         }
 
-        // 4. Ultimate fallback
+        // Abort if still no space — no null allowed through
         if (! $space) {
-            $space = Space::first();
+            abort(503, 'No space configured. Please create a space first.');
         }
 
         // Bind to request attributes and persist in session
         $request->attributes->set('space', $space);
-        if ($space) {
-            session(['current_space_id' => $space->id]);
-        }
+        session(['current_space_id' => $space->id]);
 
         return $next($request);
     }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Space;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,9 +16,9 @@ class SpaceAdminController extends Controller
     /**
      * List all spaces, marking the current active space.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $currentSpace = app()->has('current_space') ? app('current_space') : null;
+        $currentSpace = $request->attributes->get('space');
 
         $spaces = Space::orderBy('created_at', 'asc')
             ->get()
@@ -64,9 +65,19 @@ class SpaceAdminController extends Controller
 
     /**
      * Show the form for editing the specified space.
+     *
+     * api_config values are masked (keys preserved, values replaced with '***')
+     * to prevent sensitive credentials from being exposed to the browser.
      */
     public function edit(Space $space): Response
     {
+        $apiConfig = $space->api_config;
+        $maskedApiConfig = null;
+
+        if (is_array($apiConfig)) {
+            $maskedApiConfig = array_map(fn () => '***', $apiConfig);
+        }
+
         return Inertia::render('Admin/Spaces/Edit', [
             'space' => [
                 'id' => $space->id,
@@ -75,7 +86,7 @@ class SpaceAdminController extends Controller
                 'description' => $space->description,
                 'default_locale' => $space->default_locale,
                 'settings' => $space->settings,
-                'api_config' => $space->api_config,
+                'api_config' => $maskedApiConfig,
             ],
         ]);
     }
@@ -94,6 +105,14 @@ class SpaceAdminController extends Controller
             'api_config' => ['nullable', 'array'],
         ]);
 
+        // If api_config was submitted as all-masked values (all '***'), don't overwrite stored secrets
+        if (isset($validated['api_config']) && is_array($validated['api_config'])) {
+            $allMasked = collect($validated['api_config'])->every(fn ($v) => $v === '***');
+            if ($allMasked) {
+                unset($validated['api_config']);
+            }
+        }
+
         $space->update($validated);
 
         return redirect()->route('admin.spaces.index')
@@ -102,17 +121,26 @@ class SpaceAdminController extends Controller
 
     /**
      * Delete the specified space, blocking if it is the last one.
+     * Uses a database transaction with a row lock to prevent TOCTOU race conditions.
      */
-    public function destroy(Space $space): RedirectResponse
+    public function destroy(string $id): RedirectResponse
     {
-        if (Space::count() <= 1) {
-            return redirect()->route('admin.spaces.index')
-                ->with('error', 'Cannot delete the last remaining space.');
-        }
+        $earlyReturn = null;
 
-        $space->delete();
+        DB::transaction(function () use ($id, &$earlyReturn): void {
+            $space = Space::lockForUpdate()->findOrFail($id);
 
-        return redirect()->route('admin.spaces.index')
+            if (Space::count() <= 1) {
+                $earlyReturn = redirect()->route('admin.spaces.index')
+                    ->with('error', 'Cannot delete the last space.');
+
+                return;
+            }
+
+            $space->delete();
+        });
+
+        return $earlyReturn ?? redirect()->route('admin.spaces.index')
             ->with('success', 'Space deleted successfully.');
     }
 }

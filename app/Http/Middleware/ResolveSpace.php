@@ -7,6 +7,11 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * @deprecated Use \App\Http\Middleware\ResolveCurrentSpace instead.
+ *             This class is kept to avoid breaking any external references but is no longer used
+ *             in bootstrap/app.php or the middleware pipeline.
+ */
 class ResolveSpace
 {
     /**

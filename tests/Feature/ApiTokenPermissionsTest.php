@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Role;
+use App\Models\Space;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,6 +19,9 @@ class ApiTokenPermissionsTest extends TestCase
     {
         parent::setUp();
         $this->seed(RoleSeeder::class);
+
+        // Ensure a space exists so ResolveCurrentSpace middleware passes
+        Space::factory()->create();
 
         // Create a user with editor role
         $this->user = User::factory()->create();

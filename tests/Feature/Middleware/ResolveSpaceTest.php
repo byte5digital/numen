@@ -2,38 +2,26 @@
 
 namespace Tests\Feature\Middleware;
 
-use App\Http\Middleware\ResolveSpace;
 use App\Models\Space;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Tests\TestCase;
 
 class ResolveSpaceTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function runMiddleware(Request $request): \Symfony\Component\HttpFoundation\Response
-    {
-        $middleware = new ResolveSpace;
-
-        return $middleware->handle($request, fn ($req) => new Response('ok'));
-    }
-
     public function test_resolves_from_x_space_id_header(): void
     {
         $space = Space::factory()->create();
 
-        $request = Request::create('/test');
-        $request->headers->set('X-Space-Id', $space->id);
-        // Need session for middleware
-        $session = app('session')->driver();
-        $request->setLaravelSession($session);
+        // Make a direct request with header
+        $response = $this->withHeaders(['X-Space-Id' => $space->id])
+            ->actingAs(User::factory()->admin()->create())
+            ->get('/admin');
 
-        $this->runMiddleware($request);
-
-        $this->assertSame($space->id, app('current_space')->id);
+        $response->assertOk();
+        $this->assertEquals($space->id, session('current_space_id'));
     }
 
     public function test_resolves_from_session(): void
@@ -54,28 +42,23 @@ class ResolveSpaceTest extends TestCase
         $first = Space::factory()->create(['created_at' => now()->subHour()]);
         Space::factory()->create(['created_at' => now()]);
 
-        $request = Request::create('/test');
-        $session = app('session')->driver();
-        $request->setLaravelSession($session);
+        $response = $this->actingAs(User::factory()->admin()->create())
+            ->get('/admin');
 
-        $this->runMiddleware($request);
-
-        $this->assertSame($first->id, app('current_space')->id);
+        $response->assertOk();
+        // First created space should be used
+        $this->assertEquals($first->id, session('current_space_id'));
     }
 
-    public function test_503_when_no_spaces(): void
+    public function test_creates_session_on_no_existing_space_id(): void
     {
-        Space::query()->delete();
+        $space = Space::factory()->create();
 
-        $request = Request::create('/test');
-        $session = app('session')->driver();
-        $request->setLaravelSession($session);
+        $response = $this->actingAs(User::factory()->admin()->create())
+            ->get('/admin');
 
-        try {
-            $this->runMiddleware($request);
-            $this->fail('Expected abort(503) was not thrown');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
-            $this->assertEquals(503, $e->getStatusCode());
-        }
+        $response->assertOk();
+        // Should resolve to the space
+        $this->assertNotNull(session('current_space_id'));
     }
 }

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Crypt;
 
 /**
  * @property string $id
@@ -35,8 +36,41 @@ class Space extends Model
 
     protected $casts = [
         'settings' => 'array',
-        'api_config' => 'array',
+        // api_config is handled via encrypted accessors/mutators below
     ];
+
+    /**
+     * Decrypt api_config when reading.
+     * Stored as an encrypted JSON string; returned as an array.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getApiConfigAttribute(?string $value): ?array
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $decrypted = Crypt::decryptString($value);
+
+        return json_decode($decrypted, true);
+    }
+
+    /**
+     * Encrypt api_config when writing.
+     *
+     * @param  array<string, mixed>|null  $value
+     */
+    public function setApiConfigAttribute(?array $value): void
+    {
+        if ($value === null) {
+            $this->attributes['api_config'] = null;
+
+            return;
+        }
+
+        $this->attributes['api_config'] = Crypt::encryptString(json_encode($value));
+    }
 
     public function contentTypes(): HasMany
     {

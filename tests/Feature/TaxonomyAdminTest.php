@@ -62,20 +62,14 @@ class TaxonomyAdminTest extends TestCase
             );
     }
 
-    public function test_taxonomy_index_shows_empty_vocabularies_when_no_space(): void
+    public function test_taxonomy_index_returns_503_when_no_space(): void
     {
-        // No space exists, so the controller should handle it gracefully
+        // No space exists — middleware should abort with 503
         Space::query()->delete();
 
-        $this->actingAs($this->admin);
+        $response = $this->actingAs($this->admin)->get('/admin/taxonomy');
 
-        $response = $this->get('/admin/taxonomy');
-
-        $response->assertOk()
-            ->assertInertia(fn ($page) => $page
-                ->component('Taxonomy/Index')
-                ->where('vocabularies', [])
-            );
+        $response->assertServiceUnavailable();
     }
 
     // ─── GET /admin/taxonomy/{id} ─────────────────────────────────────────────
