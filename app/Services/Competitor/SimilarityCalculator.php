@@ -89,9 +89,19 @@ class SimilarityCalculator
 
         $vector = [];
         foreach ($raw as $term => $score) {
-            $key = strtolower(trim((string) $term));
+            // Handle both formats:
+            // 1. Associative: ['machine learning' => 0.5, ...]  (term => score)
+            // 2. Numeric-indexed: ['machine learning', 'beginner', ...]  (plain list)
+            if (is_int($term)) {
+                $key = strtolower(trim((string) $score));
+                $val = 1.0;
+            } else {
+                $key = strtolower(trim((string) $term));
+                $val = (float) $score;
+            }
+
             if ($key !== '') {
-                $vector[$key] = (float) $score;
+                $vector[$key] = $val;
             }
         }
 

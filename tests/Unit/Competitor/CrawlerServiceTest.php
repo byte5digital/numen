@@ -7,12 +7,15 @@ use App\Models\CompetitorSource;
 use App\Services\Competitor\Crawlers\CrawlerContract;
 use App\Services\Competitor\CrawlerService;
 use Carbon\Carbon;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class CrawlerServiceTest extends TestCase
 {
+    use RefreshDatabase;
+
     private CrawlerService $service;
 
     protected function setUp(): void

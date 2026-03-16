@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\CompetitorContentItem;
 use App\Models\CompetitorSource;
+use App\Models\Space;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class CompetitorContentItemFactory extends Factory
@@ -14,6 +15,7 @@ class CompetitorContentItemFactory extends Factory
     {
         return [
             'source_id' => CompetitorSource::factory(),
+            'space_id' => Space::factory(),
             'external_url' => $this->faker->unique()->url(),
             'title' => $this->faker->sentence(),
             'excerpt' => $this->faker->paragraph(),

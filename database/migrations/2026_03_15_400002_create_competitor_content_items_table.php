@@ -12,6 +12,7 @@ return new class extends Migration
             Schema::create('competitor_content_items', function (Blueprint $table) {
                 $table->ulid('id')->primary();
                 $table->string('source_id', 26)->index();
+                $table->string('space_id', 26)->index();
                 $table->string('external_url');
                 $table->string('title')->nullable();
                 $table->text('excerpt')->nullable();

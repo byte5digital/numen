@@ -4,6 +4,7 @@ namespace App\Services\Competitor;
 
 use App\Models\CompetitorContentItem;
 use App\Models\Content;
+use App\Models\ContentBrief;
 use App\Models\ContentFingerprint;
 use App\Services\Graph\EntityExtractor;
 use Illuminate\Database\Eloquent\Model;
@@ -38,6 +39,7 @@ class ContentFingerprintService
     public function fingerprint(Model $fingerprintable): ContentFingerprint
     {
         [$topics, $entities, $keywords] = match (true) {
+            $fingerprintable instanceof ContentBrief => $this->extractFromBrief($fingerprintable),
             $fingerprintable instanceof Content => $this->extractFromContent($fingerprintable),
             $fingerprintable instanceof CompetitorContentItem => $this->extractFromCompetitorItem($fingerprintable),
             default => $this->extractFromText('', ''),
@@ -96,6 +98,38 @@ class ContentFingerprintService
         }
 
         return $this->extractFromText($title, $body);
+    }
+
+    /** @return array{0: array<string>, 1: array<string>, 2: array<string, float>} */
+    private function extractFromBrief(ContentBrief $brief): array
+    {
+        $title = $brief->title ?? '';
+        $description = $brief->description ?? '';
+        $targetKeywords = $brief->target_keywords ?? [];
+
+        [$topics, $entities, $extractedKeywords] = $this->extractFromText($title, $description);
+
+        // Use target_keywords as primary topics (they are explicit intent signals)
+        foreach ($targetKeywords as $kw) {
+            $kw = trim($kw);
+            if ($kw !== '' && ! in_array(strtolower($kw), array_map('strtolower', $topics), true)) {
+                array_unshift($topics, $kw);
+            }
+        }
+
+        $topics = array_slice($topics, 0, 15);
+
+        // Merge explicit target_keywords with extracted ones (target keywords take priority)
+        foreach ($targetKeywords as $kw) {
+            $kw = strtolower(trim($kw));
+            if ($kw !== '') {
+                $extractedKeywords[$kw] = 1.0; // highest weight for explicit keywords
+            }
+        }
+
+        arsort($extractedKeywords);
+
+        return [$topics, $entities, array_slice($extractedKeywords, 0, self::TOP_KEYWORDS, true)];
     }
 
     /** @return array{0: array<string>, 1: array<string>, 2: array<string, float>} */
