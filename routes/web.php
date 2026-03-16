@@ -11,6 +11,8 @@ use App\Http\Controllers\Admin\PipelineAdminController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\QueueMonitorController;
 use App\Http\Controllers\Admin\SettingsAdminController;
+use App\Http\Controllers\Admin\SpaceAdminController;
+use App\Http\Controllers\Admin\SpaceSwitcherController;
 use App\Http\Controllers\Admin\TaxonomyAdminController;
 use App\Http\Controllers\Admin\TokenAdminController;
 use App\Http\Controllers\Admin\UserAdminController;
@@ -70,7 +72,7 @@ Route::get('/chat', fn () => Inertia::render('Chat/Index'))->name('chat.index')-
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin')->middleware(['auth', 'admin', 'resolve-space'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/content', [ContentAdminController::class, 'index'])->name('admin.content');
     Route::get('/content/{id}', [ContentAdminController::class, 'show'])->name('admin.content.show');
@@ -160,6 +162,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::delete('/taxonomy/terms/{termId}', [TaxonomyAdminController::class, 'destroyTerm'])->name('admin.taxonomy.terms.destroy');
     Route::post('/taxonomy/terms/{termId}/move', [TaxonomyAdminController::class, 'moveTerm'])->name('admin.taxonomy.terms.move');
     Route::post('/taxonomy/terms/reorder', [TaxonomyAdminController::class, 'reorderTerms'])->name('admin.taxonomy.terms.reorder');
+
+    // Spaces
+    Route::post('/spaces/switch', [SpaceSwitcherController::class, 'store'])->name('admin.spaces.switch');
+    Route::resource('spaces', SpaceAdminController::class)->names('admin.spaces');
 
     // Knowledge Graph
     Route::get('/graph', [GraphController::class, 'index'])->name('graph.index');

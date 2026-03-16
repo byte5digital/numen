@@ -7,7 +7,6 @@ use App\Models\ContentBrief;
 use App\Models\ContentPipeline;
 use App\Models\ContentType;
 use App\Models\Persona;
-use App\Models\Space;
 use App\Pipelines\PipelineExecutor;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -25,9 +24,9 @@ class BriefAdminController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(\Illuminate\Http\Request $request)
     {
-        $space = Space::first();
+        $space = $request->space();
 
         return Inertia::render('Briefs/Create', [
             'contentTypes' => ContentType::where('space_id', $space?->id)->get(['name', 'slug']),

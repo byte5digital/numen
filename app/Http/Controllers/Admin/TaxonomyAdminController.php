@@ -21,9 +21,9 @@ class TaxonomyAdminController extends Controller
     /**
      * List all vocabularies for the default space.
      */
-    public function index(): Response
+    public function index(\Illuminate\Http\Request $request): Response
     {
-        $space = Space::first();
+        $space = $request->space();
 
         $vocabularies = $space
             ? Vocabulary::forSpace($space->id)->withCount('terms')->ordered()->get()
