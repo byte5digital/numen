@@ -47,6 +47,7 @@ class AppServiceProvider extends ServiceProvider
         // ── Authorization ──────────────────────────────────────────────────
         // ── Plugin system ──────────────────────────────────────────────────────
         $this->app->singleton(HookRegistry::class);
+        $this->app->singleton(\App\Services\PipelineTemplates\TemplateHookIntegrationService::class);
         $this->app->singleton(PluginLoader::class, fn ($app) => new PluginLoader($app));
 
         $this->app->singleton(AuthorizationService::class);
