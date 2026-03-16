@@ -99,6 +99,16 @@ Manage webhook endpoints and event subscriptions directly from the admin panel (
 ### Plugin & Extension System
 First-class plugin architecture. Extend pipelines, register custom LLM providers, add admin UI, and react to content events — all from a self-contained plugin package.
 
+### Space Management & Configuration
+**New in v0.10.0.** Multi-tenant space management with isolated configurations, settings, and API credentials per space.
+- **Multi-tenancy:** Each space is a separate instance with its own content, personas, pipelines, and users
+- **Encrypted API config:** Store provider credentials (API keys) per-space with transparent encryption at rest
+- **Space switching:** Admins can switch between spaces from the admin nav; sessions are scoped to the current space
+- **Isolated data:** Content, briefs, pipelines, and users belong to a single space; queries automatically filter by the active space
+- **Robust deletion:** Cannot delete the last space; uses database transactions + row-level locks to prevent TOCTOU race conditions
+- **Admin UI:** Full CRUD interface at `/admin/spaces` for managing spaces, their settings, and configurations
+- **Middleware hardening:** `EnsureUserIsAdmin` guards all `/admin/*` routes; `ResolveCurrentSpace` enforces space isolation in requests
+
 ### Plugin & Extension System
 First-class plugin architecture. Extend pipelines, register custom LLM providers, add admin UI, and react to content events — all from a self-contained plugin package.
 

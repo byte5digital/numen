@@ -9,7 +9,49 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.10.0] — 2026-03-16
 
+### Added
+
+**Space Management & Configuration** ([Issue #45](https://github.com/byte5digital/numen/issues/45))
+
+Multi-tenant space management enabling isolated configurations, settings, and API credentials per space. Each space is a completely isolated instance with separate content, personas, pipelines, users, and API configurations.
+
+**Features:**
+- **Multi-tenancy:** Each space is a standalone instance with complete data isolation
+- **Encrypted API config:** Store provider credentials (API keys, tokens) per-space with transparent encryption at rest using Laravel's `Crypt` facade
+- **Space switching:** Admins can switch between spaces from the admin navigation bar; current space is tracked via `X-Space-Id` header in admin requests
+- **Request-scoped space:** `ResolveCurrentSpace` middleware automatically determines active space from header (admins) or defaults to first/primary space (normal users)
+- **Data isolation:** All content, briefs, pipelines, personas, webhooks, and settings queries automatically scope to the current space
+- **Robust deletion:** Prevents deletion of the last space (blocking at DB level); uses database transactions + `lockForUpdate()` to prevent TOCTOU race conditions
+- **Admin UI:** Full CRUD interface at `/admin/spaces` with Create, Read, Update, Delete operations
+- **Security hardening:** `EnsureUserIsAdmin` middleware guards all `/admin/*` routes unconditionally; API config values are masked in edit forms (decrypted only on write)
+
+**Migration:**
+- New `spaces` table with ULID primary key, name, slug, description, default_locale, settings (JSON), api_config (encrypted), created_at, updated_at
+- All tenant-scoped tables (content, personas, pipelines, etc.) have `space_id` foreign key
+
+**Admin Routes:**
+- `GET /admin/spaces` — List all spaces
+- `GET /admin/spaces/create` — Show create form
+- `POST /admin/spaces` — Store new space
+- `GET /admin/spaces/{space}/edit` — Show edit form
+- `PATCH /admin/spaces/{space}` — Update space
+- `DELETE /admin/spaces/{space}` — Delete space (blocked if only one exists)
+- `POST /admin/spaces/switch` — Switch current space (header-based)
+
+**Environment variables:**
+- `SPACE_DEFAULT_LOCALE` — Default locale for new spaces (default: `en`)
+
+**Security notes:**
+- API config encrypted at rest; decryption happens only in accessor, never exposed in API responses
+- `X-Space-Id` header is admin-only; normal users cannot override their assigned space
+- Null space detection in middleware aborts with HTTP 503 (Service Unavailable)
+- Delete-last-space prevention uses database-level locking to prevent race conditions
+
+**Breaking changes:** None.
+
+---
 ## [0.9.0] — 2026-03-15
 
 ### Added
