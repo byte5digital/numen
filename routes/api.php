@@ -364,7 +364,7 @@ use App\Http\Controllers\Api\ContentQualityController;
 Route::prefix('v1/quality')->middleware('auth:sanctum')->group(function () {
     Route::get('/scores', [ContentQualityController::class, 'index']);
     Route::get('/scores/{score}', [ContentQualityController::class, 'show']);
-    Route::post('/score', [ContentQualityController::class, 'score']);
+    Route::post('/score', [ContentQualityController::class, 'score'])->middleware('throttle:10,1');
     Route::get('/trends', [ContentQualityController::class, 'trends']);
     Route::get('/config', [ContentQualityController::class, 'getConfig']);
     Route::put('/config', [ContentQualityController::class, 'updateConfig']);

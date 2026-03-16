@@ -83,7 +83,7 @@ class ContentQualityController extends Controller
         $user = $request->user();
         $this->authz->authorize($user, 'content.view', $content->space_id);
 
-        ScoreContentQualityJob::dispatch($content);
+        ScoreContentQualityJob::dispatch($content->id);
 
         return response()->json([
             'message' => 'Quality scoring job queued.',
@@ -111,6 +111,12 @@ class ContentQualityController extends Controller
 
         $from = isset($validated['from']) ? Carbon::parse($validated['from']) : now()->subDays(30);
         $to = isset($validated['to']) ? Carbon::parse($validated['to']) : now();
+
+        if ($from->diffInDays($to) > 365) {
+            return response()->json([
+                'message' => 'Date range must not exceed 365 days.',
+            ], 422);
+        }
 
         $trends = $this->trendAggregator->getSpaceTrends($space, $from, $to);
         $leaderboard = $this->trendAggregator->getSpaceLeaderboard($space, 10);

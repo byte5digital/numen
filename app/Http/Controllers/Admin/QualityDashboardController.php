@@ -17,7 +17,9 @@ class QualityDashboardController extends Controller
     public function index(Request $request): Response
     {
         /** @var Space|null $space */
-        $space = Space::first();
+        $space = app()->bound('current_space')
+            ? app('current_space')
+            : ($request->has('space_id') ? Space::find($request->input('space_id')) : null);
 
         if ($space === null) {
             return Inertia::render('Quality/Dashboard', [
@@ -40,13 +42,7 @@ class QualityDashboardController extends Controller
             'spaceId' => $space->id,
             'spaceName' => $space->name,
             'initialTrends' => $trends,
-            'initialLeaderboard' => $leaderboard->map(fn ($s) => [
-                'score_id' => $s->id,
-                'content_id' => $s->content_id,
-                'title' => $s->content->currentVersion?->title,
-                'overall_score' => $s->overall_score,
-                'scored_at' => $s->scored_at->toIso8601String(),
-            ]),
+            'initialLeaderboard' => $leaderboard,
             'initialDistribution' => $distribution,
         ]);
     }

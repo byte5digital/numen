@@ -24,8 +24,6 @@ class ContentQualityScoreResource extends JsonResource
                 'factual' => $this->factual_score,
                 'engagement' => $this->engagement_score,
             ],
-            'scoring_model' => $this->scoring_model,
-            'scoring_duration_ms' => $this->scoring_duration_ms,
             'scored_at' => $this->scored_at->toIso8601String(),
             'items' => $this->whenLoaded('items', fn () => ContentQualityScoreItemResource::collection($this->items)),
         ];
