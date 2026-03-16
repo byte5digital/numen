@@ -196,8 +196,8 @@ class GraphController extends Controller
             ->limit(2000)
             ->get()
             ->map(fn (\App\Models\ContentGraphEdge $e): array => [
-                'source_id' => $e->sourceNode?->content_id ?? $e->source_id,
-                'target_id' => $e->targetNode?->content_id ?? $e->target_id,
+                'source_id' => $e->sourceNode->content_id ?? $e->source_id,
+                'target_id' => $e->targetNode->content_id ?? $e->target_id,
                 'weight' => $e->weight,
                 'edge_type' => $e->edge_type,
             ]);
