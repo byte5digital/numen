@@ -76,7 +76,7 @@ async function uploadFile(file) {
             resolve({ ok: false });
         });
 
-        xhr.open('POST', '/v1/media');
+        xhr.open('POST', '/api/media');
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('X-XSRF-TOKEN', xsrfToken());
         xhr.withCredentials = true;

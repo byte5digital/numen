@@ -170,12 +170,26 @@ Route::prefix('admin')->middleware(['auth', 'admin', 'resolve-space'])->group(fu
     // Knowledge Graph
     Route::get('/graph', [GraphController::class, 'index'])->name('graph.index');
 
-    // Plugins (Bug 2: was missing web route)
-    Route::get('/plugins', fn () => Inertia::render('Admin/Plugins/Index'))->name('admin.plugins');
+    // Plugins
+    Route::get('/plugins', function () {
+        $plugins = \App\Models\Plugin::withTrashed()->with('settings')->orderBy('display_name')->get();
+
+        return Inertia::render('Admin/Plugins/Index', [
+            'plugins' => \App\Http\Resources\PluginResource::collection($plugins)->resolve(),
+        ]);
+    })->name('admin.plugins');
 
     // Media (Bug 3: was missing web route)
     Route::get('/media', fn () => Inertia::render('Media/Index'))->name('admin.media');
 
-    // Locales / i18n settings (Bug 5: was missing web route)
-    Route::get('/settings/locales', fn () => Inertia::render('Settings/Locales'))->name('admin.settings.locales');
+    // Locales / i18n settings
+    Route::get('/settings/locales', function () {
+        $localeService = app(\App\Services\LocaleService::class);
+        $space = app()->bound('current_space') ? app('current_space') : \App\Models\Space::first();
+        $locales = $space ? $space->locales()->get() : collect();
+        $rawSupported = $localeService->getSupportedLocales();
+        $supported = collect($rawSupported)->map(fn ($label, $code) => ['code' => $code, 'label' => $label])->values();
+
+        return Inertia::render('Settings/Locales', ['locales' => $locales, 'supported' => $supported]);
+    })->name('admin.settings.locales');
 });
