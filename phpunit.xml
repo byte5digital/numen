@@ -21,6 +21,7 @@
     <php>
         <ini name="memory_limit" value="512M"/>
         <env name="APP_ENV" value="testing"/>
+        <env name="APP_BASE_PATH" value="/tmp/quality-worktree"/>
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="QUEUE_CONNECTION" value="array"/>

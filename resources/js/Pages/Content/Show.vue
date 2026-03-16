@@ -10,6 +10,7 @@ import DiffViewer from '../../Components/Versioning/DiffViewer.vue';
 import SchedulePublish from '../../Components/Versioning/SchedulePublish.vue';
 import DraftEditor from '../../Components/Versioning/DraftEditor.vue';
 import RelatedContentWidget from '../../Components/Graph/RelatedContentWidget.vue';
+import QualityScorePanel from '../../Components/Quality/QualityScorePanel.vue';
 
 const props = defineProps({
     content:       { type: Object, required: true },
@@ -795,6 +796,9 @@ function selectedTermIds(vocabularyGroup) {
                     :content-id="content.id"
                     :space-id="content.space_id ?? ''"
                 />
+
+                <!-- Quality Score Panel -->
+                <QualityScorePanel :content-id="content.id" />
 
                 <!-- Version History (always visible) -->
                 <VersionHistory
