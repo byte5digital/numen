@@ -205,15 +205,12 @@ onMounted(async () => {
 
 <template>
     <button
+        v-show="!isOpen"
         class="fixed bottom-6 right-6 z-[60] flex items-center justify-center w-12 h-12 rounded-full bg-indigo-600 hover:bg-indigo-500 shadow-lg text-white text-xl transition-transform hover:scale-105"
-        :class="isOpen ? 'scale-95' : ''"
         title="Toggle AI Chat"
         @click="toggleSidebar"
     >
-        <span v-if="!isOpen">&#x1F4AC;</span>
-        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
+        <span>&#x1F4AC;</span>
     </button>
 
     <div

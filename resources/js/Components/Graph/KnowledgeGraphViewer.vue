@@ -43,8 +43,14 @@ async function fetchGraph() {
         const url = props.contentId
             ? `/api/v1/graph/node/${props.contentId}`
             : `/api/v1/graph/space/${props.spaceId}`;
+        const xsrfToken = document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '';
         const res = await fetch(url, {
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-XSRF-TOKEN': xsrfToken,
+            },
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
