@@ -26,7 +26,7 @@ async function fetchAssets(page = 1) {
         if (filters.type)   params.set('type',   filters.type);
         if (filters.tag)    params.set('tag',     filters.tag);
         await csrfCookie();
-        const res = await fetch(`/api/media?${params}`, {
+        const res = await fetch(`/api/v1/media?${params}`, {
             credentials: 'include',
             headers: { 'Accept': 'application/json', 'X-XSRF-TOKEN': xsrfToken() },
         });
@@ -72,7 +72,7 @@ function closeDetail()      { activeAsset.value = null; }
 async function deleteAsset(asset) {
     if (!confirm(`Delete "${asset.filename}"? This cannot be undone.`)) return;
     await csrfCookie();
-    const res = await fetch(`/api/media/${asset.id}`, {
+    const res = await fetch(`/api/v1/media/${asset.id}`, {
         method: 'DELETE', credentials: 'include',
         headers: { 'Accept': 'application/json', 'X-XSRF-TOKEN': xsrfToken() },
     });
