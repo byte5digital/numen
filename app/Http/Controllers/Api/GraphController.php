@@ -169,4 +169,42 @@ class GraphController extends Controller
             'indexed_at' => $node->indexed_at?->toIso8601String(),
         ]]);
     }
+
+    /**
+     * GET /api/v1/graph/space/{spaceId}
+     * Returns all nodes and edges for a space (for the knowledge graph visualiser).
+     */
+    public function space(Request $request, string $spaceId): JsonResponse
+    {
+        $nodes = ContentGraphNode::where('space_id', $spaceId)
+            ->limit(500)
+            ->get()
+            ->map(fn (ContentGraphNode $n): array => [
+                'id' => $n->content_id,
+                'title' => $n->node_metadata['title'] ?? 'Untitled',
+                'content_type' => $n->node_metadata['content_type'] ?? null,
+                'entity_labels' => $n->entity_labels ?? [],
+                'cluster_id' => $n->cluster_id ?? 0,
+                'cluster_label' => $n->cluster_id,
+                'edge_count' => 0,
+            ]);
+
+        $nodeIds = ContentGraphNode::where('space_id', $spaceId)->pluck('id');
+
+        $edges = \App\Models\ContentGraphEdge::where('space_id', $spaceId)
+            ->whereIn('source_id', $nodeIds)
+            ->limit(2000)
+            ->get()
+            ->map(fn (\App\Models\ContentGraphEdge $e): array => [
+                'source_id' => $e->sourceNode->content_id ?? $e->source_id,
+                'target_id' => $e->targetNode->content_id ?? $e->target_id,
+                'weight' => $e->weight,
+                'edge_type' => $e->edge_type,
+            ]);
+
+        return response()->json(['data' => [
+            'nodes' => $nodes->values(),
+            'edges' => $edges->values(),
+        ]]);
+    }
 }

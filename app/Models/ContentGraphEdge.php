@@ -42,6 +42,11 @@ class ContentGraphEdge extends Model
         'edge_metadata' => 'array',
     ];
 
+    /** @var array<string, string> */
+    protected $attributes = [
+        'edge_metadata' => '{}',
+    ];
+
     public function sourceNode(): BelongsTo
     {
         return $this->belongsTo(ContentGraphNode::class, 'source_id');

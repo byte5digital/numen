@@ -331,6 +331,7 @@ Route::prefix('v1/graph')->middleware('auth:sanctum')->group(function () {
     Route::get('/gaps', [GraphController::class, 'gaps']);
     Route::get('/path/{fromId}/{toId}', [GraphController::class, 'path']);
     Route::get('/node/{contentId}', [GraphController::class, 'node']);
+    Route::get('/space/{spaceId}', [GraphController::class, 'space']); // Bug 4: visualiser endpoint
     Route::post('/reindex/{contentId}', [GraphController::class, 'reindex']);
 });
 

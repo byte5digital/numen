@@ -1,14 +1,28 @@
 <script setup>
 import { Link, usePage, router } from '@inertiajs/vue3'
 import ChatSidebar from '../Components/Chat/ChatSidebar.vue';
+import SpaceSwitcher from '../Components/SpaceSwitcher.vue';
 import { ref, computed } from 'vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
 const sidebarOpen = ref(true);
+const spaceSwitcherOpen = ref(false);
+
+const currentSpace = computed(() => page.props.currentSpace);
+const spaces = computed(() => page.props.spaces ?? []);
 
 function logout() {
     router.post('/logout');
+}
+
+function switchSpace(spaceId) {
+    router.post('/admin/spaces/switch', { space_id: spaceId }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            spaceSwitcherOpen.value = false;
+        },
+    });
 }
 
 const navigation = [
@@ -27,7 +41,9 @@ const navigation = [
     { name: 'Users', href: '/admin/users', icon: '👥' },
     { name: 'API Tokens', href: '/admin/tokens', icon: '🔑' },
     { name: 'Webhooks', href: '/admin/webhooks', icon: '🔗' },
+    { name: 'Spaces', href: '/admin/spaces', icon: '🏢' },
     { name: 'Settings', href: '/admin/settings', icon: '⚙️' },
+    { name: 'Languages', href: '/admin/settings/locales', icon: '🌐' },
     { name: 'Plugins', href: '/admin/plugins', icon: '🧩' },
 ];
 </script>
@@ -48,8 +64,48 @@ const navigation = [
                 </div>
             </div>
 
+            <!-- Space Switcher -->
+            <div class="px-3 py-3 border-b border-gray-800">
+                <!-- Static label if only 1 space -->
+                <div v-if="spaces.length <= 1" class="flex items-center gap-2 px-3 py-2">
+                    <span class="text-sm">🏢</span>
+                    <span class="text-sm text-gray-300 truncate">{{ currentSpace?.name ?? 'Default' }}</span>
+                </div>
+
+                <!-- Dropdown if multiple spaces -->
+                <div v-else class="relative">
+                    <button
+                        @click="spaceSwitcherOpen = !spaceSwitcherOpen"
+                        class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm hover:bg-gray-800/60 transition-colors"
+                    >
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span>🏢</span>
+                            <span class="text-gray-200 truncate">{{ currentSpace?.name ?? 'Select Space' }}</span>
+                        </div>
+                        <span class="text-gray-500 flex-shrink-0">{{ spaceSwitcherOpen ? '▲' : '▼' }}</span>
+                    </button>
+
+                    <div
+                        v-if="spaceSwitcherOpen"
+                        class="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-10 overflow-hidden"
+                    >
+                        <button
+                            v-for="space in spaces"
+                            :key="space.id"
+                            @click="switchSpace(space.id)"
+                            class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left hover:bg-gray-700 transition-colors"
+                            :class="currentSpace?.id === space.id ? 'text-indigo-400' : 'text-gray-300'"
+                        >
+                            <span v-if="currentSpace?.id === space.id" class="text-xs">✓</span>
+                            <span v-else class="text-xs opacity-0">✓</span>
+                            {{ space.name }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Nav -->
-            <nav class="mt-4 px-3 space-y-1">
+            <nav class="mt-4 px-3 space-y-1 overflow-y-auto" style="max-height: calc(100vh - 260px)">
                 <Link
                     v-for="item in navigation"
                     :key="item.name"
@@ -90,6 +146,7 @@ const navigation = [
                     </svg>
                 </button>
                 <div class="flex items-center gap-4">
+                    <SpaceSwitcher />
                     <span class="text-xs text-gray-500">AI-First Content Management</span>
                 </div>
             </header>
@@ -99,8 +156,12 @@ const navigation = [
                 <slot />
             </main>
         </div>
-    </div>
 
-    <!-- AI Chat Sidebar -->
-    <ChatSidebar />
+        <!-- Close space switcher on outside click -->
+        <div
+            v-if="spaceSwitcherOpen"
+            class="fixed inset-0 z-40"
+            @click="spaceSwitcherOpen = false"
+        />
+    </div>
 </template>

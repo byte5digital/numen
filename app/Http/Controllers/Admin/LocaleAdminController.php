@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Space;
 use App\Services\LocaleService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -12,9 +12,9 @@ class LocaleAdminController extends Controller
 {
     public function __construct(private readonly LocaleService $localeService) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $space = Space::first();
+        $space = $request->space();
         $locales = $space ? $this->localeService->getLocalesForSpace($space) : collect();
 
         $supportedRaw = $this->localeService->getSupportedLocales();

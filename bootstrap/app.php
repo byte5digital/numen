@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
+            \App\Http\Middleware\ResolveCurrentSpace::class,
         ]);
 
         // Global API rate limiting: 60 requests per minute
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
             'permission' => \App\Http\Middleware\RequirePermission::class,
+            'resolve-space' => \App\Http\Middleware\ResolveCurrentSpace::class,
             'set-locale' => \App\Http\Middleware\SetLocaleFromRequest::class,
         ]);
     })

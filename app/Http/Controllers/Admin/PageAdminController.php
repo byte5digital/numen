@@ -7,7 +7,6 @@ use App\Models\ContentBrief;
 use App\Models\ContentPipeline;
 use App\Models\Page;
 use App\Models\PageComponent;
-use App\Models\Space;
 use App\Pipelines\PipelineExecutor;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -136,7 +135,7 @@ class PageAdminController extends Controller
     {
         $component = PageComponent::where('page_id', $id)->findOrFail($componentId);
         $page = $component->page;
-        $space = Space::first();
+        $space = $request->space();
 
         $validated = $request->validate([
             'brief_description' => 'required|string|max:2000',

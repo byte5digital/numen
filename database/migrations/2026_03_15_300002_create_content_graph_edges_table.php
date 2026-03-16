@@ -16,7 +16,7 @@ return new class extends Migration
                 $table->string('target_id', 26)->index();
                 $table->string('edge_type', 32)->index();
                 $table->float('weight')->default(0.0);
-                $table->json('edge_metadata')->default('{}');
+                $table->json('edge_metadata')->nullable();
                 $table->timestamps();
 
                 $table->unique(['source_id', 'target_id', 'edge_type']);
