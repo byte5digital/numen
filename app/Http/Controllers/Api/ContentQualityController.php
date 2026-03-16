@@ -199,13 +199,28 @@ class ContentQualityController extends Controller
         $user = $request->user();
         $this->authz->authorize($user, 'settings.manage', $validated['space_id']);
 
-        $config = ContentQualityConfig::firstOrNew(['space_id' => $validated['space_id']]);
-        $config->fill(array_filter($validated, fn ($v, $k) => $k !== 'space_id', ARRAY_FILTER_USE_BOTH));
+        $defaults = [
+            'dimension_weights' => [
+                'readability' => 0.25,
+                'seo' => 0.25,
+                'brand_consistency' => 0.20,
+                'factual_accuracy' => 0.15,
+                'engagement_prediction' => 0.15,
+            ],
+            'thresholds' => ['poor' => 40, 'fair' => 60, 'good' => 75, 'excellent' => 90],
+            'enabled_dimensions' => ['readability', 'seo', 'brand_consistency', 'factual_accuracy', 'engagement_prediction'],
+            'auto_score_on_publish' => true,
+            'pipeline_gate_enabled' => false,
+            'pipeline_gate_min_score' => 70.0,
+        ];
 
-        if (! $config->exists) {
-            $config->space_id = $validated['space_id'];
-        }
+        $config = ContentQualityConfig::firstOrNew(
+            ['space_id' => $validated['space_id']],
+            array_merge($defaults, ['space_id' => $validated['space_id']]),
+        );
 
+        $updates = array_filter($validated, fn ($v, $k) => $k !== 'space_id', ARRAY_FILTER_USE_BOTH);
+        $config->fill($updates);
         $config->save();
 
         return new ContentQualityConfigResource($config);

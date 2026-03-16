@@ -387,15 +387,10 @@ Route::prefix('v1/spaces/{space}/pipeline-templates')->middleware(['auth:sanctum
 });
 
 Route::prefix('v1/quality')->middleware('auth:sanctum')->group(function () {
-    Route::get('/scores', [ContentQualityController::class, 'index']);
+Route::get('/scores', [ContentQualityController::class, 'index']);
     Route::get('/scores/{score}', [ContentQualityController::class, 'show']);
     Route::post('/score', [ContentQualityController::class, 'score']);
     Route::get('/trends', [ContentQualityController::class, 'trends']);
     Route::get('/config', [ContentQualityController::class, 'getConfig']);
     Route::put('/config', [ContentQualityController::class, 'updateConfig']);
-});
-    Route::get('/trends', [ContentQualityController::class, 'trends']);
-    Route::get('/config', [ContentQualityController::class, 'getConfig']);
-    Route::put('/config', [ContentQualityController::class, 'updateConfig']);
->>>>>>> 7d3c9db (feat(quality): REST API — ContentQualityController, 3 API resources, routes, quality.scored webhook event)
 });

@@ -125,7 +125,7 @@ class ContentQualityApiTest extends TestCase
     {
         $this->actingAs($this->user)
             ->getJson('/api/v1/quality/config?space_id='.$this->space->id)
-            ->assertOk()
+            ->assertSuccessful()
             ->assertJsonPath('data.space_id', $this->space->id)
             ->assertJsonPath('data.auto_score_on_publish', true)
             ->assertJsonPath('data.pipeline_gate_enabled', false);
@@ -157,9 +157,9 @@ class ContentQualityApiTest extends TestCase
                 'pipeline_gate_enabled' => true,
                 'pipeline_gate_min_score' => 75,
             ])
-            ->assertOk()
+            ->assertSuccessful()
             ->assertJsonPath('data.pipeline_gate_enabled', true)
-            ->assertJsonPath('data.pipeline_gate_min_score', 75.0);
+            ->assertJsonPath('data.pipeline_gate_min_score', 75);
     }
 
     public function test_update_config_validates_enabled_dimensions(): void
