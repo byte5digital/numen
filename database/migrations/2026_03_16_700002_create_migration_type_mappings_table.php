@@ -19,7 +19,7 @@ return new class extends Migration
                 $table->string('numen_type_slug', 255)->nullable();
                 $table->json('field_map');
                 $table->json('ai_suggestions')->nullable();
-                $table->enum('status', ['pending', 'approved', 'skipped'])->default('pending');
+                $table->enum('status', ['pending', 'approved', 'confirmed', 'skipped'])->default('pending');
                 $table->timestamps();
             });
         }

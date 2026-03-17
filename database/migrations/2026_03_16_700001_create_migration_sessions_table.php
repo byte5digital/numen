@@ -19,7 +19,7 @@ return new class extends Migration
                 $table->string('source_version', 20)->nullable();
                 $table->text('credentials')->nullable();
                 $table->enum('status', [
-                    'pending', 'detecting', 'mapping', 'preview',
+                    'pending', 'detecting', 'mapping', 'mapped', 'preview',
                     'running', 'paused', 'completed', 'failed', 'rolled_back',
                 ])->default('pending');
                 $table->unsignedInteger('total_items')->default(0);

@@ -19,7 +19,7 @@ return new class extends Migration
                 $table->string('numen_content_id', 26)->nullable()->index();
                 $table->json('numen_media_ids')->nullable();
                 $table->enum('status', [
-                    'pending', 'processing', 'imported', 'failed', 'skipped', 'rolled_back',
+                    'pending', 'processing', 'transformed', 'importing', 'imported', 'completed', 'failed', 'skipped', 'rolled_back',
                 ])->default('pending');
                 $table->text('error_message')->nullable();
                 $table->unsignedTinyInteger('attempt')->default(0);

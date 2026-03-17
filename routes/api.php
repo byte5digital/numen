@@ -426,6 +426,7 @@ Route::prefix('v1/competitor')->middleware(['auth:sanctum', 'throttle:60,1'])->g
 */
 
 use App\Http\Controllers\Api\Migration\MigrationDetectController;
+use App\Http\Controllers\Api\Migration\MigrationExecuteController;
 use App\Http\Controllers\Api\Migration\MigrationMappingController;
 use App\Http\Controllers\Api\Migration\MigrationSchemaController;
 use App\Http\Controllers\Api\Migration\MigrationSessionController;
@@ -450,4 +451,10 @@ Route::prefix('v1/spaces/{space}/migrations')->middleware('auth:sanctum')->group
     Route::post('/{session}/mappings/suggest', [MigrationMappingController::class, 'suggest'])->name('api.migrations.mappings.suggest');
     Route::put('/{session}/mappings', [MigrationMappingController::class, 'store'])->name('api.migrations.mappings.store');
     Route::get('/{session}/mappings/preview', [MigrationMappingController::class, 'preview'])->name('api.migrations.mappings.preview');
+
+    // Execution
+    Route::post('/{session}/execute', [MigrationExecuteController::class, 'execute'])->name('api.migrations.execute');
+    Route::get('/{session}/progress', [MigrationExecuteController::class, 'progress'])->name('api.migrations.progress');
+    Route::post('/{session}/pause', [MigrationExecuteController::class, 'pause'])->name('api.migrations.pause');
+    Route::post('/{session}/resume', [MigrationExecuteController::class, 'resume'])->name('api.migrations.resume');
 });
