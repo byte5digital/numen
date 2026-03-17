@@ -26,3 +26,33 @@ export type {
   TermCreatePayload,
   TermUpdatePayload,
 } from './taxonomies.js'
+
+export { BriefsResource } from './briefs.js'
+export type { Brief, BriefListParams, BriefCreatePayload } from './briefs.js'
+
+export { PipelineResource } from './pipeline.js'
+export type { PipelineRun, PipelineRunListParams } from './pipeline.js'
+
+export { WebhooksResource } from './webhooks.js'
+export type { Webhook, WebhookDelivery, WebhookListParams, WebhookCreatePayload, WebhookUpdatePayload } from './webhooks.js'
+
+export { GraphResource } from './graph.js'
+export type { GraphNode, GraphRelationship, GraphCluster } from './graph.js'
+
+export { ChatResource } from './chat.js'
+export type { Conversation, ChatMessage, SendMessagePayload, CreateConversationPayload } from './chat.js'
+
+export { RepurposeResource } from './repurpose.js'
+export type { FormatTemplate } from './repurpose.js'
+
+export { TranslationsResource } from './translations.js'
+export type { Translation } from './translations.js'
+
+export { QualityResource } from './quality.js'
+export type { QualityScore, QualityScoreListParams, QualityConfig } from './quality.js'
+
+export { CompetitorResource } from './competitor.js'
+export type { CompetitorSource, CompetitorAlert, Differentiation, CompetitorSourceCreatePayload, CompetitorSourceUpdatePayload, CompetitorSourceListParams } from './competitor.js'
+
+export { AdminResource } from './admin.js'
+export type { Role, AuditLog, RoleCreatePayload, RoleUpdatePayload } from './admin.js'

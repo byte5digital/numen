@@ -13,6 +13,16 @@ import { MediaResource } from '../resources/media.js'
 import { SearchResource } from '../resources/search.js'
 import { VersionsResource } from '../resources/versions.js'
 import { TaxonomiesResource } from '../resources/taxonomies.js'
+import { BriefsResource } from '../resources/briefs.js'
+import { PipelineResource } from '../resources/pipeline.js'
+import { WebhooksResource } from '../resources/webhooks.js'
+import { GraphResource } from '../resources/graph.js'
+import { ChatResource } from '../resources/chat.js'
+import { RepurposeResource } from '../resources/repurpose.js'
+import { TranslationsResource } from '../resources/translations.js'
+import { QualityResource } from '../resources/quality.js'
+import { CompetitorResource } from '../resources/competitor.js'
+import { AdminResource } from '../resources/admin.js'
 
 export interface RequestOptions {
   /** Query parameters */
@@ -42,13 +52,25 @@ export class NumenClient {
   private fetchFn: typeof globalThis.fetch
   readonly cache: SWRCache
 
-  // Resource modules
+  // Resource modules (original)
   readonly content: ContentResource
   readonly pages: PagesResource
   readonly media: MediaResource
   readonly search: SearchResource
   readonly versions: VersionsResource
   readonly taxonomies: TaxonomiesResource
+
+  // Resource modules (extended — chunk 4)
+  readonly briefs: BriefsResource
+  readonly pipeline: PipelineResource
+  readonly webhooks: WebhooksResource
+  readonly graph: GraphResource
+  readonly chat: ChatResource
+  readonly repurpose: RepurposeResource
+  readonly translations: TranslationsResource
+  readonly quality: QualityResource
+  readonly competitor: CompetitorResource
+  readonly admin: AdminResource
 
   constructor(options: NumenClientOptions) {
     if (!options.baseUrl) {
@@ -78,13 +100,25 @@ export class NumenClient {
 
     this.fetchFn = authMiddleware(baseFetch)
 
-    // Initialize resource modules
+    // Initialize resource modules (original)
     this.content = new ContentResource(this)
     this.pages = new PagesResource(this)
     this.media = new MediaResource(this)
     this.search = new SearchResource(this)
     this.versions = new VersionsResource(this)
     this.taxonomies = new TaxonomiesResource(this)
+
+    // Initialize resource modules (extended — chunk 4)
+    this.briefs = new BriefsResource(this)
+    this.pipeline = new PipelineResource(this)
+    this.webhooks = new WebhooksResource(this)
+    this.graph = new GraphResource(this)
+    this.chat = new ChatResource(this)
+    this.repurpose = new RepurposeResource(this)
+    this.translations = new TranslationsResource(this)
+    this.quality = new QualityResource(this)
+    this.competitor = new CompetitorResource(this)
+    this.admin = new AdminResource(this)
   }
 
   /**
