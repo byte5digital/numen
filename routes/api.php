@@ -428,6 +428,7 @@ Route::prefix('v1/competitor')->middleware(['auth:sanctum', 'throttle:60,1'])->g
 use App\Http\Controllers\Api\Migration\MigrationDetectController;
 use App\Http\Controllers\Api\Migration\MigrationExecuteController;
 use App\Http\Controllers\Api\Migration\MigrationMappingController;
+use App\Http\Controllers\Api\Migration\MigrationMediaController;
 use App\Http\Controllers\Api\Migration\MigrationSchemaController;
 use App\Http\Controllers\Api\Migration\MigrationSessionController;
 
@@ -457,4 +458,8 @@ Route::prefix('v1/spaces/{space}/migrations')->middleware('auth:sanctum')->group
     Route::get('/{session}/progress', [MigrationExecuteController::class, 'progress'])->name('api.migrations.progress');
     Route::post('/{session}/pause', [MigrationExecuteController::class, 'pause'])->name('api.migrations.pause');
     Route::post('/{session}/resume', [MigrationExecuteController::class, 'resume'])->name('api.migrations.resume');
+
+    // Media import
+    Route::post('/{session}/media', [MigrationMediaController::class, 'start'])->name('api.migrations.media.start');
+    Route::get('/{session}/media/progress', [MigrationMediaController::class, 'progress'])->name('api.migrations.media.progress');
 });
