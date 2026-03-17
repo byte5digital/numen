@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\MediaEditController;
 use App\Http\Controllers\Api\MediaFolderController;
 use App\Http\Controllers\Api\PageController;
+use App\Http\Controllers\Api\PerformanceTrackingController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PluginAdminController;
 use App\Http\Controllers\Api\PublicMediaController;
@@ -418,3 +419,6 @@ Route::prefix('v1/competitor')->middleware(['auth:sanctum', 'throttle:60,1'])->g
     Route::get('/differentiation/summary', [DifferentiationController::class, 'summary']);
     Route::get('/differentiation/{id}', [DifferentiationController::class, 'show']);
 });
+
+// --- Performance Tracking (public, rate limited) ---
+Route::post('v1/track', [PerformanceTrackingController::class, 'track'])->middleware('throttle:120,1');
