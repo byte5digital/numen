@@ -129,6 +129,7 @@ realtime.subscribe('content.*', (event) => {
 - [Svelte Guide](./docs/svelte.md)
 - [Realtime](./docs/realtime.md)
 - [API Reference](./docs/api-reference.md)
+- [Security Guide](./docs/security.md)
 
 ## License
 
