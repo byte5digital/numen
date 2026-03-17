@@ -467,3 +467,32 @@ Route::prefix('v1/spaces/{space}/refresh-suggestions')->middleware(['auth:sanctu
     Route::post('/{suggestion}/accept', [App\Http\Controllers\Api\ContentRefreshController::class, 'accept']);
     Route::post('/{suggestion}/dismiss', [App\Http\Controllers\Api\ContentRefreshController::class, 'dismiss']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Performance Snapshots, Insights, Correlations & Overview
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/spaces/{space}/performance')->middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+    // Overview (dashboard)
+    Route::get('/overview', App\Http\Controllers\Api\PerformanceOverviewController::class);
+
+    // Snapshots
+    Route::get('/snapshots', [App\Http\Controllers\Api\PerformanceSnapshotController::class, 'index']);
+    Route::get('/snapshots/{snapshot}', [App\Http\Controllers\Api\PerformanceSnapshotController::class, 'show']);
+    Route::post('/aggregate', [App\Http\Controllers\Api\PerformanceSnapshotController::class, 'aggregate']);
+
+    // Insights
+    Route::get('/insights', [App\Http\Controllers\Api\PerformanceInsightsController::class, 'index']);
+    Route::get('/insights/{contentId}', [App\Http\Controllers\Api\PerformanceInsightsController::class, 'show']);
+
+    // Model
+    Route::get('/model', [App\Http\Controllers\Api\PerformanceInsightsController::class, 'model']);
+    Route::post('/model/rebuild', [App\Http\Controllers\Api\PerformanceInsightsController::class, 'rebuildModel']);
+
+    // Correlations
+    Route::get('/correlations', [App\Http\Controllers\Api\PerformanceCorrelationController::class, 'index']);
+    Route::get('/correlations/{contentId}', [App\Http\Controllers\Api\PerformanceCorrelationController::class, 'show']);
+    Route::post('/correlations/analyze', [App\Http\Controllers\Api\PerformanceCorrelationController::class, 'analyze']);
+});
