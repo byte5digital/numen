@@ -1,8 +1,9 @@
 <?php
+
 declare(strict_types=1);
+
 namespace Tests\Unit\Migration;
 
-use App\Models\Migration\MigrationItem;
 use App\Models\Migration\MigrationSession;
 use App\Models\Migration\MigrationTypeMapping;
 use App\Services\Migration\ContentTransformerService;
@@ -16,7 +17,9 @@ class EdgeCasesTest extends TestCase
     use RefreshDatabase;
 
     private ContentTransformerService $transformer;
+
     private RollbackService $rollbackService;
+
     private MigrationExecutorService $executorService;
 
     protected function setUp(): void
@@ -66,7 +69,7 @@ class EdgeCasesTest extends TestCase
                 'source_type' => 'richtext',
             ]],
         ]);
-        $nested = '<div>' . str_repeat('<div>', 50) . 'text' . str_repeat('</div>', 50);
+        $nested = '<div>'.str_repeat('<div>', 50).'text'.str_repeat('</div>', 50);
         $result = $this->transformer->transform(['content' => $nested], $mapping);
         $this->assertArrayHasKey('content', $result['fields']);
     }
