@@ -6,6 +6,22 @@ All notable changes to Numen are documented here.
 
 ### Added
 
+**Performance Feedback Loop** ([Issue #43](https://github.com/byte5digital/numen/issues/43))
+
+Closed-loop performance analytics that learns from every published piece of content and feeds insights back into the creation pipeline.
+
+**Key Capabilities:**
+- **Real-time event ingestion** — Tracking pixel, bulk SDK endpoint, GA4/Segment webhook intake
+- **Automated aggregation** — Daily, weekly, and monthly performance snapshots with composite scoring
+- **Attribute-metric correlation** — Discovers which content attributes (tone, length, format) drive results
+- **Predictive space model** — Builds a space-level model with feature weights and recommendations
+- **Actionable insights** — Human-readable insights from snapshots, correlations, and model predictions
+- **Brief enrichment** — Automatically injects top-performing attributes into new briefs
+- **A/B testing** — Controlled experiments with traffic splitting, conversion tracking, and statistical significance (z-test)
+- **Content refresh advisor** — Identifies declining content, scores urgency, suggests improvements, auto-generates refresh briefs
+- **Vue dashboard** — 6-component performance dashboard in Numen Studio (overview, detail, A/B manager, refresh advisor, correlations)
+- **30+ API endpoints** — Full REST API for tracking, analytics, A/B testing, and content refresh
+
 **AI Pipeline Templates & Preset Library** ([Issue #36](https://github.com/byte5digital/numen/issues/36))
 
 Reusable AI pipeline templates for accelerated content creation workflows, featuring 8 built-in templates, community library, space-scoped templates, one-click install wizard, template versioning, and plugin registration hooks.

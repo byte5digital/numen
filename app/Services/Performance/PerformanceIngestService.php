@@ -39,7 +39,7 @@ class PerformanceIngestService
             'content_id' => $data['content_id'],
             'event_type' => $data['event_type'],
             'source' => $data['source'],
-            'value' => $data['value'] ?? null,
+            'value' => $data['value'] ?? 1,
             'metadata' => $data['metadata'] ?? null,
             'session_id' => $data['session_id'],
             'visitor_id' => $data['visitor_id'] ?? null,

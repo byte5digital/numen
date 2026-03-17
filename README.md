@@ -48,6 +48,17 @@ Each stage is a queued job. The pipeline is event-driven. Stages are defined in 
 Features: real-time score ring in the editor sidebar, quality dashboard with Chart.js trend visualization, space leaderboard, configurable pipeline quality gates, auto-score on publish, and a `quality.scored` webhook event.
 
 
+### Performance Feedback Loop
+**New in v0.11.0.** Closed-loop analytics that learns from every published piece of content:
+- **Real-time tracking** — Pixel, SDK, and webhook (GA4/Segment) event ingestion
+- **Automated aggregation** — Daily/weekly/monthly snapshots with composite scoring
+- **Attribute-metric correlation** — Discovers which content attributes drive performance
+- **Predictive model** — Space-level model with feature weights and recommendations
+- **Brief enrichment** — Automatically injects learnings into new briefs
+- **A/B testing** — Controlled experiments with traffic splitting and statistical significance
+- **Content refresh advisor** — Identifies declining content, suggests improvements, auto-generates refresh briefs
+- **Vue dashboard** — 6-component performance dashboard in Numen Studio
+
 ### Content Generation Pipeline
 Submit a brief → AI agents generate, illustrate, optimize, and quality-gate content → auto-publish or human review.
 
