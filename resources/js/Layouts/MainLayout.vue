@@ -44,6 +44,7 @@ const navigation = [
     { name: 'Spaces', href: '/admin/spaces', icon: '🏢' },
     { name: 'Settings', href: '/admin/settings', icon: '⚙️' },
     { name: 'Languages', href: '/admin/settings/locales', icon: '🌐' },
+    { name: 'Migration', href: '/admin/migrations', icon: '🔄' },
     { name: 'Plugins', href: '/admin/plugins', icon: '🧩' },
 ];
 </script>

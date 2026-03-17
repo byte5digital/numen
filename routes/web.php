@@ -210,4 +210,9 @@ Route::prefix('admin')->middleware(['auth', 'admin', 'resolve-space'])->group(fu
 
         return Inertia::render('Settings/Locales', ['locales' => $locales, 'supported' => $supported]);
     })->name('admin.settings.locales');
+
+    // Migration Wizard
+    Route::get('/migrations', function () {
+        return Inertia::render('Migration/MigrationWizard');
+    })->name('admin.migrations');
 });
