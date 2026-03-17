@@ -20,7 +20,7 @@ return new class extends Migration
                 $table->text('credentials')->nullable();
                 $table->enum('status', [
                     'pending', 'detecting', 'mapping', 'mapped', 'preview',
-                    'running', 'paused', 'completed', 'failed', 'rolled_back',
+                    'running', 'paused', 'completed', 'failed', 'rolled_back', 'synced',
                 ])->default('pending');
                 $table->unsignedInteger('total_items')->default(0);
                 $table->unsignedInteger('processed_items')->default(0);

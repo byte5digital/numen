@@ -463,3 +463,11 @@ Route::prefix('v1/spaces/{space}/migrations')->middleware('auth:sanctum')->group
     Route::post('/{session}/media', [MigrationMediaController::class, 'start'])->name('api.migrations.media.start');
     Route::get('/{session}/media/progress', [MigrationMediaController::class, 'progress'])->name('api.migrations.media.progress');
 });
+
+use App\Http\Controllers\Api\Migration\MigrationRollbackController;
+
+Route::prefix('v1/spaces/{space}/migrations')->middleware('auth:sanctum')->group(function () {
+    // Rollback & Delta Sync
+    Route::post('/{session}/rollback', [MigrationRollbackController::class, 'rollback'])->name('api.migrations.rollback');
+    Route::post('/{session}/sync', [MigrationRollbackController::class, 'sync'])->name('api.migrations.sync');
+});
