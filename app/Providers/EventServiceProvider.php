@@ -15,6 +15,9 @@ class EventServiceProvider extends ServiceProvider
      * @var array<class-string, list<class-string>>
      */
     protected $listen = [
+        \App\Events\Pipeline\PipelineStarted::class => [
+            \App\Listeners\EnrichPipelineWithPerformanceData::class,
+        ],
         \App\Events\Content\ContentPublished::class => [
             \App\Listeners\AutoScoreOnPublishListener::class,
         ],
