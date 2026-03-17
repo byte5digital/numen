@@ -1,7 +1,37 @@
 {
   "name": "@numen/sdk",
   "version": "0.1.0",
+  "description": "Typed Frontend SDK for the Numen AI Content Platform — React, Vue 3, Svelte bindings with realtime SSE support",
   "type": "module",
+  "license": "MIT",
+  "author": "byte5digital <dev@byte5.de>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/byte5digital/numen.git",
+    "directory": "sdk/packages/sdk"
+  },
+  "homepage": "https://github.com/byte5digital/numen/tree/main/sdk",
+  "bugs": {
+    "url": "https://github.com/byte5digital/numen/issues"
+  },
+  "keywords": [
+    "numen",
+    "sdk",
+    "cms",
+    "headless",
+    "content",
+    "ai",
+    "react",
+    "vue",
+    "svelte",
+    "sse",
+    "realtime",
+    "typescript"
+  ],
+  "sideEffects": false,
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
@@ -18,10 +48,17 @@
     "./svelte": {
       "import": "./dist/svelte/index.mjs",
       "types": "./dist/svelte/index.d.ts"
+    },
+    "./realtime": {
+      "import": "./dist/realtime/index.mjs",
+      "types": "./dist/realtime/index.d.ts"
     }
   },
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "unbuild",
     "test": "vitest run",
