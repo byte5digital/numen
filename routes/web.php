@@ -109,6 +109,7 @@ Route::prefix('admin')->middleware(['auth', 'admin', 'resolve-space'])->group(fu
     Route::get('/personas', [PersonaAdminController::class, 'index'])->name('admin.personas');
     Route::patch('/personas/{id}', [PersonaAdminController::class, 'update'])->name('admin.personas.update');
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('admin.analytics');
+    Route::get('/performance', fn () => Inertia::render('Performance/PerformanceDashboard'))->name('admin.performance');
     Route::get('/quality', [QualityDashboardController::class, 'index'])->name('admin.quality');
 
     // Search

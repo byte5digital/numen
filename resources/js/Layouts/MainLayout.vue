@@ -35,6 +35,7 @@ const navigation = [
     { name: 'Taxonomy', href: '/admin/taxonomy', icon: '🏷️' },
     { name: 'Media', href: '/admin/media', icon: '🖼️' },
     { name: 'Analytics', href: '/admin/analytics', icon: '📈' },
+    { name: 'Performance', href: '/admin/performance', icon: '🚀' },
     { name: 'Knowledge Graph', href: '/admin/graph', icon: '🕸️' },
     { name: 'Search', href: '/admin/search', icon: '🔍' },
     { name: 'Queue', href: '/admin/queue', icon: '⚙️' },
