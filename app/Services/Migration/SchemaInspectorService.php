@@ -47,7 +47,7 @@ class SchemaInspectorService
     }
 
     /**
-     * @param  array<string, mixed>  $raw
+     * @param  array<array-key, mixed>  $raw
      * @return array<int, array{key: string, label: string, fields: array<int, array{name: string, type: string, required: bool}>}>
      */
     public function normalise(array $raw): array
@@ -78,7 +78,7 @@ class SchemaInspectorService
     {
         $result = [];
         foreach ($items as $item) {
-            if (!is_array($item)) {
+            if (! is_array($item)) {
                 continue;
             }
             $key = $item['apiID'] ?? (isset($item['uid']) ? (string) $item['uid'] : null);
@@ -101,7 +101,7 @@ class SchemaInspectorService
     {
         $result = [];
         foreach ($raw as $slug => $type) {
-            if (!is_array($type)) {
+            if (! is_array($type)) {
                 continue;
             }
             $result[] = [
@@ -118,7 +118,7 @@ class SchemaInspectorService
     {
         $result = [];
         foreach ($items as $ct) {
-            if (!is_array($ct)) {
+            if (! is_array($ct)) {
                 continue;
             }
             $key = $ct['sys']['id'] ?? null;
@@ -139,7 +139,7 @@ class SchemaInspectorService
     {
         $result = [];
         foreach ($collections as $col) {
-            if (!is_array($col)) {
+            if (! is_array($col)) {
                 continue;
             }
             $key = $col['collection'] ?? null;
@@ -160,7 +160,7 @@ class SchemaInspectorService
     {
         $result = [];
         foreach ($collections as $col) {
-            if (!is_array($col)) {
+            if (! is_array($col)) {
                 continue;
             }
             $key = $col['slug'] ?? null;
@@ -201,7 +201,7 @@ class SchemaInspectorService
     {
         $fields = [];
         foreach ($rawFields as $nameOrIndex => $fieldDef) {
-            if (!is_array($fieldDef)) {
+            if (! is_array($fieldDef)) {
                 continue;
             }
             $name = match ($cms) {

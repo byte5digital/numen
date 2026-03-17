@@ -9,7 +9,7 @@ interface CmsConnectorInterface
     /**
      * Retrieve content types from the external CMS.
      *
-     * @return array<int, array<string, mixed>>
+     * @return array<array-key, mixed>
      */
     public function getContentTypes(): array;
 }
