@@ -370,6 +370,11 @@ use App\Http\Controllers\Api\Templates\PipelineTemplateRatingController;
 use App\Http\Controllers\Api\Templates\PipelineTemplateVersionController;
 
 
+// Competitor-Aware Content Differentiation API
+use App\Http\Controllers\Api\CompetitorController;
+use App\Http\Controllers\Api\CompetitorSourceController;
+use App\Http\Controllers\Api\DifferentiationController;
+
 Route::prefix('v1/spaces/{space}/pipeline-templates')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/', [PipelineTemplateController::class, 'index'])->name('api.pipeline-templates.index');
     Route::post('/', [PipelineTemplateController::class, 'store'])->name('api.pipeline-templates.store');
