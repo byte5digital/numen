@@ -12,13 +12,12 @@ class MigrationTypeMappingFactory extends Factory
 
     public function definition(): array
     {
-        $session = MigrationSession::factory()->create();
         $sourceTypes = ['post', 'page', 'product', 'article', 'category', 'tag'];
         $sourceKey = $this->faker->randomElement($sourceTypes);
 
         return [
-            'migration_session_id' => $session->id,
-            'space_id' => $session->space_id,
+            'migration_session_id' => MigrationSession::factory(),
+            'space_id' => fn (array $attributes) => MigrationSession::find($attributes['migration_session_id'])?->space_id,
             'source_type_key' => $sourceKey,
             'source_type_label' => ucfirst($sourceKey),
             'numen_content_type_id' => null,

@@ -369,7 +369,6 @@ use App\Http\Controllers\Api\Templates\PipelineTemplateInstallController;
 use App\Http\Controllers\Api\Templates\PipelineTemplateRatingController;
 use App\Http\Controllers\Api\Templates\PipelineTemplateVersionController;
 
-
 Route::prefix('v1/spaces/{space}/pipeline-templates')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/', [PipelineTemplateController::class, 'index'])->name('api.pipeline-templates.index');
     Route::post('/', [PipelineTemplateController::class, 'store'])->name('api.pipeline-templates.store');
@@ -418,4 +417,37 @@ Route::prefix('v1/competitor')->middleware(['auth:sanctum', 'throttle:60,1'])->g
     Route::get('/differentiation', [DifferentiationController::class, 'index']);
     Route::get('/differentiation/summary', [DifferentiationController::class, 'summary']);
     Route::get('/differentiation/{id}', [DifferentiationController::class, 'show']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Migration Wizard Routes
+|--------------------------------------------------------------------------
+*/
+
+use App\Http\Controllers\Api\Migration\MigrationDetectController;
+use App\Http\Controllers\Api\Migration\MigrationMappingController;
+use App\Http\Controllers\Api\Migration\MigrationSchemaController;
+use App\Http\Controllers\Api\Migration\MigrationSessionController;
+
+Route::prefix('v1/spaces/{space}/migrations')->middleware('auth:sanctum')->group(function () {
+    // CMS detection
+    Route::post('/detect', [MigrationDetectController::class, 'detect'])->name('api.migrations.detect');
+
+    // Session CRUD
+    Route::get('/', [MigrationSessionController::class, 'index'])->name('api.migrations.index');
+    Route::post('/', [MigrationSessionController::class, 'store'])->name('api.migrations.store');
+    Route::get('/{session}', [MigrationSessionController::class, 'show'])->name('api.migrations.show');
+    Route::patch('/{session}', [MigrationSessionController::class, 'update'])->name('api.migrations.update');
+    Route::delete('/{session}', [MigrationSessionController::class, 'destroy'])->name('api.migrations.destroy');
+
+    // Schema
+    Route::get('/{session}/schema', [MigrationSchemaController::class, 'show'])->name('api.migrations.schema.show');
+    Route::get('/{session}/schema/compare', [MigrationSchemaController::class, 'compare'])->name('api.migrations.schema.compare');
+
+    // Mappings
+    Route::get('/{session}/mappings', [MigrationMappingController::class, 'index'])->name('api.migrations.mappings.index');
+    Route::post('/{session}/mappings/suggest', [MigrationMappingController::class, 'suggest'])->name('api.migrations.mappings.suggest');
+    Route::put('/{session}/mappings', [MigrationMappingController::class, 'store'])->name('api.migrations.mappings.store');
+    Route::get('/{session}/mappings/preview', [MigrationMappingController::class, 'preview'])->name('api.migrations.mappings.preview');
 });
