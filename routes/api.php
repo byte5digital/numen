@@ -364,12 +364,11 @@ use App\Http\Controllers\Api\CompetitorController;
 use App\Http\Controllers\Api\CompetitorSourceController;
 use App\Http\Controllers\Api\ContentQualityController;
 use App\Http\Controllers\Api\DifferentiationController;
-// Content Quality Scoring API
 use App\Http\Controllers\Api\Templates\PipelineTemplateController;
-// Competitor-Aware Content Differentiation API
 use App\Http\Controllers\Api\Templates\PipelineTemplateInstallController;
 use App\Http\Controllers\Api\Templates\PipelineTemplateRatingController;
 use App\Http\Controllers\Api\Templates\PipelineTemplateVersionController;
+
 
 Route::prefix('v1/spaces/{space}/pipeline-templates')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/', [PipelineTemplateController::class, 'index'])->name('api.pipeline-templates.index');
