@@ -1,7 +1,11 @@
 <?php
+
 declare(strict_types=1);
+
 namespace App\Services\Migration;
+
 use App\Services\Migration\Connectors\CmsConnectorInterface;
+
 /** Normalises CMS schema into a standard format. */
 class SchemaInspectorService
 {
