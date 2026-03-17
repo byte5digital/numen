@@ -369,7 +369,6 @@ use App\Http\Controllers\Api\Templates\PipelineTemplateInstallController;
 use App\Http\Controllers\Api\Templates\PipelineTemplateRatingController;
 use App\Http\Controllers\Api\Templates\PipelineTemplateVersionController;
 
-
 Route::prefix('v1/spaces/{space}/pipeline-templates')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/', [PipelineTemplateController::class, 'index'])->name('api.pipeline-templates.index');
     Route::post('/', [PipelineTemplateController::class, 'store'])->name('api.pipeline-templates.store');
@@ -419,3 +418,23 @@ Route::prefix('v1/competitor')->middleware(['auth:sanctum', 'throttle:60,1'])->g
     Route::get('/differentiation/summary', [DifferentiationController::class, 'summary']);
     Route::get('/differentiation/{id}', [DifferentiationController::class, 'show']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Performance Tracking (public — no auth required)
+|--------------------------------------------------------------------------
+*/
+
+// Legacy single-event endpoint (chunk 1 compat)
+Route::post('v1/track', [App\Http\Controllers\Api\PerformanceTrackingController::class, 'track'])
+    ->middleware('throttle:120,1');
+
+// Space-scoped tracking endpoints
+Route::prefix('v1/spaces/{space}/tracking')->middleware('throttle:100,1')->group(function () {
+    Route::get('/pixel.gif', [App\Http\Controllers\Api\PerformanceTrackingController::class, 'pixel']);
+    Route::post('/events', [App\Http\Controllers\Api\PerformanceTrackingController::class, 'events']);
+});
+
+// Performance webhook intake (external analytics push)
+Route::post('v1/performance/webhook', [App\Http\Controllers\Api\PerformanceWebhookController::class, 'handle'])
+    ->middleware('throttle:60,1');

@@ -28,7 +28,7 @@ class PerformanceIngestServiceTest extends TestCase
         return array_merge([
             'space_id' => 'SPACE01',
             'content_id' => 'CONTENT01',
-            'event_type' => 'view',
+            'event_type' => 'page_view',
             'source' => 'api',
             'session_id' => 'session-001',
             'visitor_id' => 'visitor-001',
@@ -46,7 +46,7 @@ class PerformanceIngestServiceTest extends TestCase
         $this->assertInstanceOf(ContentPerformanceEvent::class, $event);
         $this->assertDatabaseHas('content_performance_events', [
             'content_id' => 'CONTENT01',
-            'event_type' => 'view',
+            'event_type' => 'page_view',
             'source' => 'api',
         ]);
     }
@@ -90,8 +90,8 @@ class PerformanceIngestServiceTest extends TestCase
     {
         Event::fake([PerformanceEventIngested::class]);
 
-        $this->service->ingestEvent($this->validData(['event_type' => 'view']));
-        $this->service->ingestEvent($this->validData(['event_type' => 'engagement']));
+        $this->service->ingestEvent($this->validData(['event_type' => 'page_view']));
+        $this->service->ingestEvent($this->validData(['event_type' => 'conversion']));
 
         $this->assertDatabaseCount('content_performance_events', 2);
     }
@@ -107,7 +107,7 @@ class PerformanceIngestServiceTest extends TestCase
     {
         $this->expectException(ValidationException::class);
 
-        $this->service->ingestEvent(['event_type' => 'view']);
+        $this->service->ingestEvent(['event_type' => 'page_view']);
     }
 
     public function test_ingest_throws_on_invalid_source(): void
@@ -115,5 +115,68 @@ class PerformanceIngestServiceTest extends TestCase
         $this->expectException(ValidationException::class);
 
         $this->service->ingestEvent($this->validData(['source' => 'fax_machine']));
+    }
+
+    public function test_batch_ingest_creates_multiple_events(): void
+    {
+        Event::fake([PerformanceEventIngested::class]);
+
+        $events = [
+            $this->validData(['session_id' => 'batch-1', 'event_type' => 'page_view']),
+            $this->validData(['session_id' => 'batch-2', 'event_type' => 'click']),
+            $this->validData(['session_id' => 'batch-3', 'event_type' => 'conversion']),
+        ];
+
+        $result = $this->service->ingestBatch($events);
+
+        $this->assertCount(3, $result);
+        $this->assertDatabaseCount('content_performance_events', 3);
+        Event::assertDispatchedTimes(PerformanceEventIngested::class, 3);
+    }
+
+    public function test_batch_ingest_skips_invalid_events(): void
+    {
+        Event::fake([PerformanceEventIngested::class]);
+
+        $events = [
+            $this->validData(['session_id' => 'good-1']),
+            ['event_type' => 'bad_missing_fields'],  // invalid
+            $this->validData(['session_id' => 'good-2']),
+        ];
+
+        $result = $this->service->ingestBatch($events);
+
+        $this->assertCount(2, $result);
+        $this->assertDatabaseCount('content_performance_events', 2);
+    }
+
+    public function test_batch_ingest_deduplicates(): void
+    {
+        Event::fake([PerformanceEventIngested::class]);
+
+        $data = $this->validData();
+        $events = [$data, $data, $data];
+
+        $result = $this->service->ingestBatch($events);
+
+        $this->assertCount(3, $result); // returns existing on dedup
+        $this->assertDatabaseCount('content_performance_events', 1);
+        Event::assertDispatchedTimes(PerformanceEventIngested::class, 1);
+    }
+
+    public function test_accepts_all_event_types(): void
+    {
+        Event::fake([PerformanceEventIngested::class]);
+
+        $types = ['page_view', 'click', 'scroll_depth', 'time_on_page', 'bounce', 'conversion', 'social_share'];
+
+        foreach ($types as $i => $type) {
+            $this->service->ingestEvent($this->validData([
+                'event_type' => $type,
+                'session_id' => "sess-type-{$i}",
+            ]));
+        }
+
+        $this->assertDatabaseCount('content_performance_events', count($types));
     }
 }

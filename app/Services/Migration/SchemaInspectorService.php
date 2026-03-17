@@ -1,7 +1,11 @@
 <?php
+
 declare(strict_types=1);
+
 namespace App\Services\Migration;
+
 use App\Services\Migration\Connectors\CmsConnectorInterface;
+
 /** Normalises CMS schema into a standard format. */
 class SchemaInspectorService
 {
@@ -39,6 +43,7 @@ class SchemaInspectorService
         if (empty($raw)) {
             return [];
         }
+
         return $this->normalise($raw);
     }
 
@@ -66,6 +71,7 @@ class SchemaInspectorService
         if ($this->looksLikeWordPressTypes($raw)) {
             return $this->normaliseWordPress($raw);
         }
+
         return [];
     }
 
@@ -74,7 +80,7 @@ class SchemaInspectorService
     {
         $result = [];
         foreach ($items as $item) {
-            if (!is_array($item)) {
+            if (! is_array($item)) {
                 continue;
             }
             $key = $item['apiID'] ?? (isset($item['uid']) ? (string) $item['uid'] : null);
@@ -89,6 +95,7 @@ class SchemaInspectorService
                 'fields' => $this->normaliseFields($schema['attributes'] ?? [], 'strapi'),
             ];
         }
+
         return $result;
     }
 
@@ -97,7 +104,7 @@ class SchemaInspectorService
     {
         $result = [];
         foreach ($raw as $slug => $type) {
-            if (!is_array($type)) {
+            if (! is_array($type)) {
                 continue;
             }
             $result[] = [
@@ -106,6 +113,7 @@ class SchemaInspectorService
                 'fields' => $this->wordPressDefaultFields((string) $slug),
             ];
         }
+
         return $result;
     }
 
@@ -114,7 +122,7 @@ class SchemaInspectorService
     {
         $result = [];
         foreach ($items as $ct) {
-            if (!is_array($ct)) {
+            if (! is_array($ct)) {
                 continue;
             }
             $key = $ct['sys']['id'] ?? null;
@@ -127,6 +135,7 @@ class SchemaInspectorService
                 'fields' => $this->normaliseFields($ct['fields'] ?? [], 'contentful'),
             ];
         }
+
         return $result;
     }
 
@@ -135,7 +144,7 @@ class SchemaInspectorService
     {
         $result = [];
         foreach ($collections as $col) {
-            if (!is_array($col)) {
+            if (! is_array($col)) {
                 continue;
             }
             $key = $col['collection'] ?? null;
@@ -148,6 +157,7 @@ class SchemaInspectorService
                 'fields' => $this->normaliseFields($col['fields'] ?? [], 'directus'),
             ];
         }
+
         return $result;
     }
 
@@ -156,7 +166,7 @@ class SchemaInspectorService
     {
         $result = [];
         foreach ($collections as $col) {
-            if (!is_array($col)) {
+            if (! is_array($col)) {
                 continue;
             }
             $key = $col['slug'] ?? null;
@@ -169,6 +179,7 @@ class SchemaInspectorService
                 'fields' => $this->normaliseFields($col['fields'] ?? [], 'payload'),
             ];
         }
+
         return $result;
     }
 
@@ -186,6 +197,7 @@ class SchemaInspectorService
                 ];
             }
         }
+
         return $result;
     }
 
@@ -197,13 +209,13 @@ class SchemaInspectorService
     {
         $fields = [];
         foreach ($rawFields as $nameOrIndex => $fieldDef) {
-            if (!is_array($fieldDef)) {
+            if (! is_array($fieldDef)) {
                 continue;
             }
             $name = match ($cms) {
                 'contentful' => $fieldDef['apiName'] ?? $fieldDef['id'] ?? (is_string($nameOrIndex) ? $nameOrIndex : null),
-                'directus'   => $fieldDef['field'] ?? (is_string($nameOrIndex) ? $nameOrIndex : null),
-                default      => $fieldDef['name'] ?? (is_string($nameOrIndex) ? $nameOrIndex : null),
+                'directus' => $fieldDef['field'] ?? (is_string($nameOrIndex) ? $nameOrIndex : null),
+                default => $fieldDef['name'] ?? (is_string($nameOrIndex) ? $nameOrIndex : null),
             };
             if ($name === null) {
                 continue;
@@ -216,6 +228,7 @@ class SchemaInspectorService
                 'required' => $required,
             ];
         }
+
         return $fields;
     }
 
@@ -243,6 +256,7 @@ class SchemaInspectorService
             $base[] = ['name' => 'categories', 'type' => 'relation', 'required' => false];
             $base[] = ['name' => 'tags', 'type' => 'relation', 'required' => false];
         }
+
         return $base;
     }
 
@@ -268,6 +282,7 @@ class SchemaInspectorService
     private function looksLikeWordPressTypes(array $raw): bool
     {
         $first = reset($raw);
+
         return is_array($first) && (isset($first['slug']) || isset($first['name']));
     }
 
