@@ -23,6 +23,8 @@ import { TranslationsResource } from '../resources/translations.js'
 import { QualityResource } from '../resources/quality.js'
 import { CompetitorResource } from '../resources/competitor.js'
 import { AdminResource } from '../resources/admin.js'
+import { RealtimeManager } from '../realtime/manager.js'
+import type { RealtimeManagerOptions } from '../realtime/manager.js'
 
 export interface RequestOptions {
   /** Query parameters */
@@ -72,6 +74,9 @@ export class NumenClient {
   readonly competitor: CompetitorResource
   readonly admin: AdminResource
 
+  // Realtime
+  readonly realtime: RealtimeManager
+
   constructor(options: NumenClientOptions) {
     if (!options.baseUrl) {
       throw new Error('[numen/sdk] baseUrl is required')
@@ -119,6 +124,13 @@ export class NumenClient {
     this.quality = new QualityResource(this)
     this.competitor = new CompetitorResource(this)
     this.admin = new AdminResource(this)
+
+    // Initialize realtime manager
+    this.realtime = new RealtimeManager({
+      baseUrl: options.baseUrl,
+      token: this.token ?? undefined,
+      apiKey: options.apiKey,
+    })
   }
 
   /**
@@ -126,6 +138,7 @@ export class NumenClient {
    */
   setToken(token: string): void {
     this.token = token
+    this.realtime.setToken(token)
   }
 
   /**

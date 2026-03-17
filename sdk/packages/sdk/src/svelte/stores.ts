@@ -250,11 +250,8 @@ export function createPipelineRunStore(
 
 // ─── createRealtimeStore ─────────────────────────────────────
 
-export interface RealtimeEvent {
-  type: string
-  data: unknown
-  timestamp?: string
-}
+import type { RealtimeEvent } from '../realtime/client.js'
+export type { RealtimeEvent } from '../realtime/client.js'
 
 export interface RealtimeStoreState {
   events: RealtimeEvent[]
@@ -262,18 +259,53 @@ export interface RealtimeStoreState {
   error: Error | undefined
 }
 
-export type RealtimeStore = Readable<RealtimeStoreState>
+export type RealtimeStore = Readable<RealtimeStoreState> & {
+  disconnect: () => void
+}
 
 /**
- * Skeleton for real-time updates via SSE/polling.
- * Will be fully implemented in a later chunk.
+ * Create a Svelte store subscribed to a realtime channel.
+ *
+ * @param channel - Channel name (e.g., 'content.abc123', 'pipeline.xyz')
  */
-export function createRealtimeStore(_channel: string): RealtimeStore {
-  const { subscribe } = writable<RealtimeStoreState>({
+export function createRealtimeStore(channel: string): RealtimeStore {
+  const client = getNumenClient()
+
+  const internal = writable<RealtimeStoreState>({
     events: [],
     isConnected: false,
     error: undefined,
   })
 
-  return { subscribe }
+  const unsub = client.realtime.subscribe(channel, (event) => {
+    internal.update((s) => ({
+      ...s,
+      events: [...s.events, event],
+    }))
+  })
+
+  internal.update((s) => ({ ...s, isConnected: true }))
+
+  let subscriberCount = 0
+
+  const store: RealtimeStore = {
+    subscribe(run, invalidate?) {
+      subscriberCount++
+      const unsubStore = internal.subscribe(run, invalidate)
+      return () => {
+        subscriberCount--
+        unsubStore()
+        if (subscriberCount === 0) {
+          unsub()
+          internal.update((s) => ({ ...s, isConnected: false }))
+        }
+      }
+    },
+    disconnect() {
+      unsub()
+      internal.update((s) => ({ ...s, isConnected: false }))
+    },
+  }
+
+  return store
 }

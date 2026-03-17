@@ -21,6 +21,7 @@ function createMockClient(): NumenClient {
   c.search = { search: vi.fn(), suggest: vi.fn(), ask: vi.fn() }
   c.media = { get: vi.fn(), list: vi.fn(), update: vi.fn(), delete: vi.fn() }
   c.pipeline = { get: vi.fn(), list: vi.fn(), start: vi.fn(), cancel: vi.fn(), retryStep: vi.fn() }
+  c.realtime = { subscribe: vi.fn(() => vi.fn()), unsubscribe: vi.fn(), disconnectAll: vi.fn(), getChannelState: vi.fn(() => 'disconnected'), getActiveChannels: vi.fn(() => []), setToken: vi.fn() }
   return client
 }
 
@@ -268,11 +269,12 @@ describe('usePipelineRun', () => {
 // ─── useRealtime ─────────────────────────────────────────────
 
 describe('useRealtime', () => {
-  it('returns skeleton state', () => {
+  it('subscribes to realtime channel', () => {
     const client = createMockClient()
     const { result } = mountComposable(() => useRealtime('test-channel'), client)
     expect(result.events.value).toEqual([])
-    expect(result.isConnected.value).toBe(false)
+    expect(result.isConnected.value).toBe(true)
     expect(result.error.value).toBeNull()
+    expect((client as any).realtime.subscribe).toHaveBeenCalledWith('test-channel', expect.any(Function))
   })
 })

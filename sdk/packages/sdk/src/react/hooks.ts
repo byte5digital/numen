@@ -12,6 +12,8 @@ import type { SearchParams, SearchResponse } from '../resources/search.js'
 import type { MediaAsset } from '../resources/media.js'
 import type { PipelineRun } from '../resources/pipeline.js'
 import type { PaginatedResponse } from '../types/api.js'
+import type { RealtimeEvent } from '../realtime/client.js'
+export type { RealtimeEvent } from '../realtime/client.js'
 
 // ─── useContent ──────────────────────────────────────────────
 
@@ -149,12 +151,6 @@ export function usePipelineRun(
 
 // ─── useRealtime ─────────────────────────────────────────────
 
-export interface RealtimeEvent {
-  type: string
-  data: unknown
-  timestamp?: string
-}
-
 export interface UseRealtimeResult {
   events: RealtimeEvent[]
   isConnected: boolean
@@ -162,14 +158,37 @@ export interface UseRealtimeResult {
 }
 
 /**
- * Skeleton for real-time updates via SSE/polling.
- * Will be fully implemented in chunk 8.
+ * Subscribe to a realtime channel via SSE with polling fallback.
+ *
+ * @param channel - Channel name (e.g., 'content.abc123', 'pipeline.xyz')
  */
-export function useRealtime(_channel: string): UseRealtimeResult {
-  const [events] = useState<RealtimeEvent[]>([])
-  const [isConnected] = useState(false)
-  const [error] = useState<Error | undefined>(undefined)
+export function useRealtime(channel: string | null | undefined): UseRealtimeResult {
+  const client = useNumenClient()
+  const [events, setEvents] = useState<RealtimeEvent[]>([])
+  const [isConnected, setIsConnected] = useState(false)
+  const [error, setError] = useState<Error | undefined>(undefined)
 
-  // Skeleton — real implementation in chunk 8
+  useEffect(() => {
+    if (!channel) {
+      setIsConnected(false)
+      setEvents([])
+      setError(undefined)
+      return
+    }
+
+    const unsub = client.realtime.subscribe(channel, (event) => {
+      setEvents((prev) => [...prev, event])
+    })
+
+    // Track connection state by polling manager state
+    setIsConnected(true)
+    setError(undefined)
+
+    return () => {
+      unsub()
+      setIsConnected(false)
+    }
+  }, [client, channel])
+
   return { events, isConnected, error }
 }

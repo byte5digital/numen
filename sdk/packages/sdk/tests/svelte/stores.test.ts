@@ -22,6 +22,7 @@ function createMockClient(): NumenClient {
   c.search = { search: vi.fn(), suggest: vi.fn(), ask: vi.fn() }
   c.media = { get: vi.fn(), list: vi.fn(), update: vi.fn(), delete: vi.fn() }
   c.pipeline = { get: vi.fn(), list: vi.fn(), start: vi.fn(), cancel: vi.fn(), retryStep: vi.fn() }
+  c.realtime = { subscribe: vi.fn(() => vi.fn()), unsubscribe: vi.fn(), disconnectAll: vi.fn(), getChannelState: vi.fn(() => 'disconnected'), getActiveChannels: vi.fn(() => []), setToken: vi.fn() }
   return client
 }
 
@@ -279,11 +280,13 @@ describe('createRealtimeStore', () => {
     setNumenClient(createMockClient())
   })
 
-  it('skeleton state', () => {
+  it('subscribes to realtime channel', () => {
+    const client = getNumenClient() as any
     const store = createRealtimeStore('ch')
     const s = get(store)
     expect(s.events).toEqual([])
-    expect(s.isConnected).toBe(false)
+    expect(s.isConnected).toBe(true)
     expect(s.error).toBeUndefined()
+    expect(client.realtime.subscribe).toHaveBeenCalledWith('ch', expect.any(Function))
   })
 })

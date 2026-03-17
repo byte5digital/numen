@@ -99,3 +99,22 @@ export function createNumenClient(options: NumenClientOptions) {
     _version: SDK_VERSION,
   })
 }
+
+// Realtime
+export {
+  RealtimeClient,
+  PollingClient,
+  RealtimeManager,
+} from './realtime/index.js'
+
+export type {
+  RealtimeEvent,
+  RealtimeEventHandler,
+  ConnectionState,
+  ConnectionStateHandler,
+  ErrorHandler,
+  RealtimeClientOptions,
+  PollingClientOptions,
+  RealtimeManagerOptions,
+  SubscriptionCallback,
+} from './realtime/index.js'

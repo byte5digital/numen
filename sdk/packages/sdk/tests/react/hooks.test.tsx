@@ -20,6 +20,7 @@ function createMockClient() {
   client.search = { search: vi.fn(), suggest: vi.fn(), ask: vi.fn() } as any
   client.media = { get: vi.fn(), list: vi.fn(), update: vi.fn(), delete: vi.fn() } as any
   client.pipeline = { get: vi.fn(), list: vi.fn(), start: vi.fn(), cancel: vi.fn(), retryStep: vi.fn() } as any
+  ;(client as any).realtime = { subscribe: vi.fn(() => vi.fn()), unsubscribe: vi.fn(), disconnectAll: vi.fn(), getChannelState: vi.fn(() => 'disconnected'), getActiveChannels: vi.fn(() => []), setToken: vi.fn() }
   return client
 }
 
@@ -163,12 +164,13 @@ describe('usePipelineRun', () => {
 })
 
 describe('useRealtime', () => {
-  it('returns skeleton state', () => {
+  it('subscribes to realtime channel', () => {
     const client = createMockClient()
     const { result } = renderHook(() => useRealtime('content-updates'), { wrapper: wrapper(client) })
     expect(result.current.events).toEqual([])
-    expect(result.current.isConnected).toBe(false)
+    expect(result.current.isConnected).toBe(true)
     expect(result.current.error).toBeUndefined()
+    expect((client as any).realtime.subscribe).toHaveBeenCalledWith('content-updates', expect.any(Function))
   })
 })
 

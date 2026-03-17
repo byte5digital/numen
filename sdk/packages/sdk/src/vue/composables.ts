@@ -12,6 +12,7 @@ import type { SearchParams, SearchResponse } from '../resources/search.js'
 import type { MediaAsset } from '../resources/media.js'
 import type { PipelineRun } from '../resources/pipeline.js'
 import type { PaginatedResponse } from '../types/api.js'
+import type { RealtimeEvent } from '../realtime/client.js'
 
 // ─── useContent ──────────────────────────────────────────────
 
@@ -173,11 +174,7 @@ export function usePipelineRun(
 
 // ─── useRealtime ─────────────────────────────────────────────
 
-export interface RealtimeEvent {
-  type: string
-  data: unknown
-  timestamp?: string
-}
+export type { RealtimeEvent } from '../realtime/client.js'
 
 export interface UseRealtimeResult {
   events: Ref<RealtimeEvent[]>
@@ -186,14 +183,55 @@ export interface UseRealtimeResult {
 }
 
 /**
- * Skeleton for real-time updates via SSE/polling.
- * Will be fully implemented in chunk 8.
+ * Subscribe to a realtime channel via SSE with polling fallback.
+ *
+ * @param channel - Channel name (e.g., 'content.abc123', 'pipeline.xyz')
  */
-export function useRealtime(_channel: string): UseRealtimeResult {
+export function useRealtime(channel: Ref<string | null | undefined> | string | null | undefined): UseRealtimeResult {
+  const client = useNumenClient()
   const events = ref<RealtimeEvent[]>([])
   const isConnected = ref(false)
   const error = ref<Error | null>(null)
 
-  // Skeleton — real implementation in chunk 8
+  let unsub: (() => void) | null = null
+
+  const setupSubscription = (ch: string | null | undefined) => {
+    // Clean up previous subscription
+    if (unsub) {
+      unsub()
+      unsub = null
+    }
+
+    if (!ch) {
+      isConnected.value = false
+      events.value = []
+      error.value = null
+      return
+    }
+
+    unsub = client.realtime.subscribe(ch, (event) => {
+      events.value = [...events.value, event]
+    })
+    isConnected.value = true
+    error.value = null
+  }
+
+  // Watch for reactive channel changes
+  if (isRef(channel)) {
+    watch(channel, (newChannel) => {
+      setupSubscription(newChannel)
+    }, { immediate: true })
+  } else {
+    setupSubscription(channel)
+  }
+
+  onUnmounted(() => {
+    if (unsub) {
+      unsub()
+      unsub = null
+    }
+    isConnected.value = false
+  })
+
   return { events, isConnected, error }
 }
