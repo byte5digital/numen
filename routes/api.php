@@ -438,3 +438,18 @@ Route::prefix('v1/spaces/{space}/tracking')->middleware('throttle:100,1')->group
 // Performance webhook intake (external analytics push)
 Route::post('v1/performance/webhook', [App\Http\Controllers\Api\PerformanceWebhookController::class, 'handle'])
     ->middleware('throttle:60,1');
+
+/*
+|--------------------------------------------------------------------------
+| A/B Testing
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/spaces/{space}/ab-tests')->middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+    Route::post('/', [App\Http\Controllers\Api\ABTestController::class, 'store']);
+    Route::get('/', [App\Http\Controllers\Api\ABTestController::class, 'index']);
+    Route::get('/{test}', [App\Http\Controllers\Api\ABTestController::class, 'show']);
+    Route::post('/{test}/assign', [App\Http\Controllers\Api\ABTestController::class, 'assign']);
+    Route::post('/{test}/convert', [App\Http\Controllers\Api\ABTestController::class, 'convert']);
+    Route::post('/{test}/end', [App\Http\Controllers\Api\ABTestController::class, 'end']);
+});

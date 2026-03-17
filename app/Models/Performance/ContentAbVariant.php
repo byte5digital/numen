@@ -23,6 +23,7 @@ class ContentAbVariant extends Model
         'composite_score',
         'view_count',
         'conversion_rate',
+        'weight',
     ];
 
     protected $casts = [
@@ -31,6 +32,7 @@ class ContentAbVariant extends Model
         'composite_score' => 'decimal:2',
         'view_count' => 'integer',
         'conversion_rate' => 'decimal:4',
+        'weight' => 'decimal:4',
     ];
 
     public function test(): BelongsTo
