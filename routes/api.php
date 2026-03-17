@@ -453,3 +453,17 @@ Route::prefix('v1/spaces/{space}/ab-tests')->middleware(['auth:sanctum', 'thrott
     Route::post('/{test}/convert', [App\Http\Controllers\Api\ABTestController::class, 'convert']);
     Route::post('/{test}/end', [App\Http\Controllers\Api\ABTestController::class, 'end']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Content Refresh Suggestions
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/spaces/{space}/refresh-suggestions')->middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+    Route::get('/', [App\Http\Controllers\Api\ContentRefreshController::class, 'index']);
+    Route::post('/generate', [App\Http\Controllers\Api\ContentRefreshController::class, 'generate']);
+    Route::get('/{suggestion}', [App\Http\Controllers\Api\ContentRefreshController::class, 'show']);
+    Route::post('/{suggestion}/accept', [App\Http\Controllers\Api\ContentRefreshController::class, 'accept']);
+    Route::post('/{suggestion}/dismiss', [App\Http\Controllers\Api\ContentRefreshController::class, 'dismiss']);
+});
