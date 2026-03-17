@@ -43,6 +43,7 @@ class SchemaInspectorService
         if (empty($raw)) {
             return [];
         }
+
         return $this->normalise($raw);
     }
 
@@ -70,6 +71,7 @@ class SchemaInspectorService
         if ($this->looksLikeWordPressTypes($raw)) {
             return $this->normaliseWordPress($raw);
         }
+
         return [];
     }
 
@@ -93,6 +95,7 @@ class SchemaInspectorService
                 'fields' => $this->normaliseFields($schema['attributes'] ?? [], 'strapi'),
             ];
         }
+
         return $result;
     }
 
@@ -110,6 +113,7 @@ class SchemaInspectorService
                 'fields' => $this->wordPressDefaultFields((string) $slug),
             ];
         }
+
         return $result;
     }
 
@@ -131,6 +135,7 @@ class SchemaInspectorService
                 'fields' => $this->normaliseFields($ct['fields'] ?? [], 'contentful'),
             ];
         }
+
         return $result;
     }
 
@@ -152,6 +157,7 @@ class SchemaInspectorService
                 'fields' => $this->normaliseFields($col['fields'] ?? [], 'directus'),
             ];
         }
+
         return $result;
     }
 
@@ -173,6 +179,7 @@ class SchemaInspectorService
                 'fields' => $this->normaliseFields($col['fields'] ?? [], 'payload'),
             ];
         }
+
         return $result;
     }
 
@@ -190,6 +197,7 @@ class SchemaInspectorService
                 ];
             }
         }
+
         return $result;
     }
 
@@ -206,8 +214,8 @@ class SchemaInspectorService
             }
             $name = match ($cms) {
                 'contentful' => $fieldDef['apiName'] ?? $fieldDef['id'] ?? (is_string($nameOrIndex) ? $nameOrIndex : null),
-                'directus'   => $fieldDef['field'] ?? (is_string($nameOrIndex) ? $nameOrIndex : null),
-                default      => $fieldDef['name'] ?? (is_string($nameOrIndex) ? $nameOrIndex : null),
+                'directus' => $fieldDef['field'] ?? (is_string($nameOrIndex) ? $nameOrIndex : null),
+                default => $fieldDef['name'] ?? (is_string($nameOrIndex) ? $nameOrIndex : null),
             };
             if ($name === null) {
                 continue;
@@ -220,6 +228,7 @@ class SchemaInspectorService
                 'required' => $required,
             ];
         }
+
         return $fields;
     }
 
@@ -247,6 +256,7 @@ class SchemaInspectorService
             $base[] = ['name' => 'categories', 'type' => 'relation', 'required' => false];
             $base[] = ['name' => 'tags', 'type' => 'relation', 'required' => false];
         }
+
         return $base;
     }
 
@@ -272,6 +282,7 @@ class SchemaInspectorService
     private function looksLikeWordPressTypes(array $raw): bool
     {
         $first = reset($raw);
+
         return is_array($first) && (isset($first['slug']) || isset($first['name']));
     }
 
