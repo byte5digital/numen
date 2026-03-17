@@ -1,7 +1,12 @@
 <?php
+
 declare(strict_types=1);
+
 namespace App\Services\Migration;
+
+use App\Models\ContentType;
 use App\Services\Migration\Connectors\CmsConnectorInterface;
+
 /** Normalises CMS schema into a standard format. */
 class SchemaInspectorService
 {
@@ -39,6 +44,7 @@ class SchemaInspectorService
         if (empty($raw)) {
             return [];
         }
+
         return $this->normalise($raw);
     }
 
@@ -66,6 +72,7 @@ class SchemaInspectorService
         if ($this->looksLikeWordPressTypes($raw)) {
             return $this->normaliseWordPress($raw);
         }
+
         return [];
     }
 
@@ -74,7 +81,7 @@ class SchemaInspectorService
     {
         $result = [];
         foreach ($items as $item) {
-            if (!is_array($item)) {
+            if (! is_array($item)) {
                 continue;
             }
             $key = $item['apiID'] ?? (isset($item['uid']) ? (string) $item['uid'] : null);
@@ -89,6 +96,7 @@ class SchemaInspectorService
                 'fields' => $this->normaliseFields($schema['attributes'] ?? [], 'strapi'),
             ];
         }
+
         return $result;
     }
 
@@ -97,7 +105,7 @@ class SchemaInspectorService
     {
         $result = [];
         foreach ($raw as $slug => $type) {
-            if (!is_array($type)) {
+            if (! is_array($type)) {
                 continue;
             }
             $result[] = [
@@ -106,6 +114,7 @@ class SchemaInspectorService
                 'fields' => $this->wordPressDefaultFields((string) $slug),
             ];
         }
+
         return $result;
     }
 
@@ -114,7 +123,7 @@ class SchemaInspectorService
     {
         $result = [];
         foreach ($items as $ct) {
-            if (!is_array($ct)) {
+            if (! is_array($ct)) {
                 continue;
             }
             $key = $ct['sys']['id'] ?? null;
@@ -127,6 +136,7 @@ class SchemaInspectorService
                 'fields' => $this->normaliseFields($ct['fields'] ?? [], 'contentful'),
             ];
         }
+
         return $result;
     }
 
@@ -135,7 +145,7 @@ class SchemaInspectorService
     {
         $result = [];
         foreach ($collections as $col) {
-            if (!is_array($col)) {
+            if (! is_array($col)) {
                 continue;
             }
             $key = $col['collection'] ?? null;
@@ -148,6 +158,7 @@ class SchemaInspectorService
                 'fields' => $this->normaliseFields($col['fields'] ?? [], 'directus'),
             ];
         }
+
         return $result;
     }
 
@@ -156,7 +167,7 @@ class SchemaInspectorService
     {
         $result = [];
         foreach ($collections as $col) {
-            if (!is_array($col)) {
+            if (! is_array($col)) {
                 continue;
             }
             $key = $col['slug'] ?? null;
@@ -169,6 +180,7 @@ class SchemaInspectorService
                 'fields' => $this->normaliseFields($col['fields'] ?? [], 'payload'),
             ];
         }
+
         return $result;
     }
 
@@ -186,6 +198,7 @@ class SchemaInspectorService
                 ];
             }
         }
+
         return $result;
     }
 
@@ -197,13 +210,13 @@ class SchemaInspectorService
     {
         $fields = [];
         foreach ($rawFields as $nameOrIndex => $fieldDef) {
-            if (!is_array($fieldDef)) {
+            if (! is_array($fieldDef)) {
                 continue;
             }
             $name = match ($cms) {
                 'contentful' => $fieldDef['apiName'] ?? $fieldDef['id'] ?? (is_string($nameOrIndex) ? $nameOrIndex : null),
-                'directus'   => $fieldDef['field'] ?? (is_string($nameOrIndex) ? $nameOrIndex : null),
-                default      => $fieldDef['name'] ?? (is_string($nameOrIndex) ? $nameOrIndex : null),
+                'directus' => $fieldDef['field'] ?? (is_string($nameOrIndex) ? $nameOrIndex : null),
+                default => $fieldDef['name'] ?? (is_string($nameOrIndex) ? $nameOrIndex : null),
             };
             if ($name === null) {
                 continue;
@@ -216,6 +229,7 @@ class SchemaInspectorService
                 'required' => $required,
             ];
         }
+
         return $fields;
     }
 
@@ -243,6 +257,7 @@ class SchemaInspectorService
             $base[] = ['name' => 'categories', 'type' => 'relation', 'required' => false];
             $base[] = ['name' => 'tags', 'type' => 'relation', 'required' => false];
         }
+
         return $base;
     }
 
@@ -268,6 +283,7 @@ class SchemaInspectorService
     private function looksLikeWordPressTypes(array $raw): bool
     {
         $first = reset($raw);
+
         return is_array($first) && (isset($first['slug']) || isset($first['name']));
     }
 
@@ -275,5 +291,117 @@ class SchemaInspectorService
     private function looksLikeGhostTypes(array $raw): bool
     {
         return isset($raw['posts']) || isset($raw['pages']);
+    }
+
+    /**
+     * Introspect Numen's own content types into the same normalised format.
+     *
+     * @return list<array{key: string, label: string, fields: list<array{name: string, type: string, required: bool}>}>
+     */
+    public function inspectNumenSchema(?string $spaceId = null): array
+    {
+        $query = ContentType::query();
+        if ($spaceId !== null) {
+            $query->where('space_id', $spaceId);
+        }
+
+        $contentTypes = $query->get();
+        $result = [];
+
+        foreach ($contentTypes as $ct) {
+            $schema = $ct->schema ?? [];
+            $fields = [];
+
+            foreach ($schema as $fieldName => $fieldDef) {
+                if (! is_array($fieldDef)) {
+                    continue;
+                }
+
+                $rawType = (string) ($fieldDef['type'] ?? 'string');
+                $fields[] = [
+                    'name' => is_string($fieldName) ? $fieldName : (string) ($fieldDef['name'] ?? $fieldName),
+                    'type' => $this->mapFieldType($rawType),
+                    'required' => (bool) ($fieldDef['required'] ?? false),
+                ];
+            }
+
+            $result[] = [
+                'key' => $ct->slug,
+                'label' => $ct->name,
+                'fields' => $fields,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Compare source and Numen schemas to find overlaps and differences.
+     *
+     * @param  list<array{key: string, label: string, fields: list<array{name: string, type: string, required: bool}>}>  $source
+     * @param  list<array{key: string, label: string, fields: list<array{name: string, type: string, required: bool}>}>  $numen
+     * @return array{matched_types: list<array{source: string, numen: string, field_overlap: int, field_total: int}>, unmatched_source: list<string>, unmatched_numen: list<string>}
+     */
+    public function compareSchemas(array $source, array $numen): array
+    {
+        $numenByKey = [];
+        foreach ($numen as $nt) {
+            $numenByKey[strtolower($nt['key'])] = $nt;
+        }
+
+        $matched = [];
+        $matchedNumenKeys = [];
+        $unmatchedSource = [];
+
+        foreach ($source as $st) {
+            $sourceKey = strtolower($st['key']);
+            $bestMatch = null;
+            $bestScore = 0.0;
+
+            foreach ($numen as $nt) {
+                $numenKey = strtolower($nt['key']);
+                if ($sourceKey === $numenKey) {
+                    $bestMatch = $nt;
+                    $bestScore = 1.0;
+                    break;
+                }
+
+                similar_text($sourceKey, $numenKey, $percent);
+                $score = $percent / 100;
+                if ($score > $bestScore && $score >= 0.5) {
+                    $bestScore = $score;
+                    $bestMatch = $nt;
+                }
+            }
+
+            if ($bestMatch !== null) {
+                $sourceFieldNames = array_map('strtolower', array_column($st['fields'], 'name'));
+                $numenFieldNames = array_map('strtolower', array_column($bestMatch['fields'], 'name'));
+                $overlap = count(array_intersect($sourceFieldNames, $numenFieldNames));
+
+                $matched[] = [
+                    'source' => $st['key'],
+                    'numen' => $bestMatch['key'],
+                    'field_overlap' => $overlap,
+                    'field_total' => count($st['fields']),
+                ];
+                $matchedNumenKeys[] = strtolower($bestMatch['key']);
+            } else {
+                $unmatchedSource[] = $st['key'];
+            }
+        }
+
+        $unmatchedNumen = [];
+        foreach ($numen as $nt) {
+            if (! in_array(strtolower($nt['key']), $matchedNumenKeys, true)) {
+                $unmatchedNumen[] = $nt['key'];
+            }
+        }
+
+        return [
+            'matched_types' => $matched,
+            'unmatched_source' => $unmatchedSource,
+            'unmatched_numen' => $unmatchedNumen,
+        ];
     }
 }
