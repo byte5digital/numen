@@ -3,16 +3,22 @@
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\BriefController;
 use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\CompetitorController;
+use App\Http\Controllers\Api\CompetitorSourceController;
 use App\Http\Controllers\Api\ComponentDefinitionController;
 use App\Http\Controllers\Api\ContentController;
+use App\Http\Controllers\Api\ContentQualityController;
 use App\Http\Controllers\Api\ContentTaxonomyController;
+use App\Http\Controllers\Api\DifferentiationController;
 use App\Http\Controllers\Api\FormatTemplateController;
+use App\Http\Controllers\Api\GraphController;
 use App\Http\Controllers\Api\LocaleController;
 use App\Http\Controllers\Api\MediaCollectionController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\MediaEditController;
 use App\Http\Controllers\Api\MediaFolderController;
 use App\Http\Controllers\Api\PageController;
+use App\Http\Controllers\Api\PerformanceTrackingController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\PluginAdminController;
 use App\Http\Controllers\Api\PublicMediaController;
@@ -20,6 +26,10 @@ use App\Http\Controllers\Api\RepurposingController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TaxonomyController;
 use App\Http\Controllers\Api\TaxonomyTermController;
+use App\Http\Controllers\Api\Templates\PipelineTemplateController;
+use App\Http\Controllers\Api\Templates\PipelineTemplateInstallController;
+use App\Http\Controllers\Api\Templates\PipelineTemplateRatingController;
+use App\Http\Controllers\Api\Templates\PipelineTemplateVersionController;
 use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\UserRoleController;
 use App\Http\Controllers\Api\V1\Admin\SearchAdminController;
@@ -322,7 +332,6 @@ Route::prefix('v1/public')->middleware('throttle:120,1')->group(function () {
 });
 
 // Knowledge Graph API
-use App\Http\Controllers\Api\GraphController;
 
 Route::prefix('v1/graph')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/related/{contentId}', [GraphController::class, 'related']);
@@ -360,15 +369,6 @@ Route::prefix('v1/chat')->middleware(['auth:sanctum', 'throttle:20,1'])->group(f
 });
 
 // --- #36 Pipeline Templates API ---
-use App\Http\Controllers\Api\CompetitorController;
-use App\Http\Controllers\Api\CompetitorSourceController;
-use App\Http\Controllers\Api\ContentQualityController;
-use App\Http\Controllers\Api\DifferentiationController;
-use App\Http\Controllers\Api\Templates\PipelineTemplateController;
-use App\Http\Controllers\Api\Templates\PipelineTemplateInstallController;
-use App\Http\Controllers\Api\Templates\PipelineTemplateRatingController;
-use App\Http\Controllers\Api\Templates\PipelineTemplateVersionController;
-
 
 Route::prefix('v1/spaces/{space}/pipeline-templates')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/', [PipelineTemplateController::class, 'index'])->name('api.pipeline-templates.index');
@@ -419,3 +419,6 @@ Route::prefix('v1/competitor')->middleware(['auth:sanctum', 'throttle:60,1'])->g
     Route::get('/differentiation/summary', [DifferentiationController::class, 'summary']);
     Route::get('/differentiation/{id}', [DifferentiationController::class, 'show']);
 });
+
+// --- Performance Tracking (public, rate limited) ---
+Route::post('v1/track', [PerformanceTrackingController::class, 'track'])->middleware('throttle:120,1');

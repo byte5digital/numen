@@ -21,7 +21,7 @@ export type { ApiResponse, PaginatedResponse, ApiError } from './types/api.js'
 
 // Core client
 export { NumenClient } from './core/client.js'
-export type { RequestOptions, ContentResource, PagesResource, MediaResource, SearchResource } from './core/client.js'
+export type { RequestOptions } from './core/client.js'
 
 // Auth
 export { createAuthMiddleware } from './core/auth.js'
@@ -42,6 +42,46 @@ export {
 export { SWRCache } from './core/cache.js'
 export type { CacheEntry, CacheListener } from './core/cache.js'
 
+// Resources
+export {
+  ContentResource,
+  PagesResource,
+  MediaResource,
+  SearchResource,
+  VersionsResource,
+  TaxonomiesResource,
+} from './resources/index.js'
+
+export type {
+  ContentItem,
+  ContentListParams,
+  ContentCreatePayload,
+  ContentUpdatePayload,
+  Page,
+  PageListParams,
+  PageCreatePayload,
+  PageUpdatePayload,
+  PageReorderPayload,
+  MediaAsset,
+  MediaListParams,
+  MediaUpdatePayload,
+  SearchParams,
+  SearchResult,
+  SearchResponse,
+  SuggestResponse,
+  AskPayload,
+  AskResponse,
+  ContentVersion,
+  VersionListParams,
+  VersionDiff,
+  Taxonomy,
+  TaxonomyTerm,
+  TaxonomyCreatePayload,
+  TaxonomyUpdatePayload,
+  TermCreatePayload,
+  TermUpdatePayload,
+} from './resources/index.js'
+
 /**
  * SDK version
  */
@@ -59,3 +99,22 @@ export function createNumenClient(options: NumenClientOptions) {
     _version: SDK_VERSION,
   })
 }
+
+// Realtime
+export {
+  RealtimeClient,
+  PollingClient,
+  RealtimeManager,
+} from './realtime/index.js'
+
+export type {
+  RealtimeEvent,
+  RealtimeEventHandler,
+  ConnectionState,
+  ConnectionStateHandler,
+  ErrorHandler,
+  RealtimeClientOptions,
+  PollingClientOptions,
+  RealtimeManagerOptions,
+  SubscriptionCallback,
+} from './realtime/index.js'

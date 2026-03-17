@@ -1,0 +1,98 @@
+{
+  "name": "@numen/sdk",
+  "version": "0.1.0",
+  "description": "Typed Frontend SDK for the Numen AI Content Platform — React, Vue 3, Svelte bindings with realtime SSE support",
+  "type": "module",
+  "license": "MIT",
+  "author": "byte5digital <dev@byte5.de>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/byte5digital/numen.git",
+    "directory": "sdk/packages/sdk"
+  },
+  "homepage": "https://github.com/byte5digital/numen/tree/main/sdk",
+  "bugs": {
+    "url": "https://github.com/byte5digital/numen/issues"
+  },
+  "keywords": [
+    "numen",
+    "sdk",
+    "cms",
+    "headless",
+    "content",
+    "ai",
+    "react",
+    "vue",
+    "svelte",
+    "sse",
+    "realtime",
+    "typescript"
+  ],
+  "sideEffects": false,
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./react": {
+      "import": "./dist/react/index.mjs",
+      "types": "./dist/react/index.d.ts"
+    },
+    "./vue": {
+      "import": "./dist/vue/index.mjs",
+      "types": "./dist/vue/index.d.ts"
+    },
+    "./svelte": {
+      "import": "./dist/svelte/index.mjs",
+      "types": "./dist/svelte/index.d.ts"
+    },
+    "./realtime": {
+      "import": "./dist/realtime/index.mjs",
+      "types": "./dist/realtime/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "test": "vitest run",
+    "dev": "vitest"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "svelte": ">=4",
+    "vue": ">=3"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^29.0.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "svelte": "^4.2.20",
+    "typescript": "^5.4.0",
+    "unbuild": "^2.0.0",
+    "vitest": "^1.4.0",
+    "vue": "^3.5.30"
+  }
+}

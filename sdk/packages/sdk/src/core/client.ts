@@ -7,6 +7,24 @@ import type { NumenClientOptions } from '../types/sdk.js'
 import { mapResponseToError, NumenNetworkError } from './errors.js'
 import { createAuthMiddleware } from './auth.js'
 import { SWRCache } from './cache.js'
+import { ContentResource } from '../resources/content.js'
+import { PagesResource } from '../resources/pages.js'
+import { MediaResource } from '../resources/media.js'
+import { SearchResource } from '../resources/search.js'
+import { VersionsResource } from '../resources/versions.js'
+import { TaxonomiesResource } from '../resources/taxonomies.js'
+import { BriefsResource } from '../resources/briefs.js'
+import { PipelineResource } from '../resources/pipeline.js'
+import { WebhooksResource } from '../resources/webhooks.js'
+import { GraphResource } from '../resources/graph.js'
+import { ChatResource } from '../resources/chat.js'
+import { RepurposeResource } from '../resources/repurpose.js'
+import { TranslationsResource } from '../resources/translations.js'
+import { QualityResource } from '../resources/quality.js'
+import { CompetitorResource } from '../resources/competitor.js'
+import { AdminResource } from '../resources/admin.js'
+import { RealtimeManager } from '../realtime/manager.js'
+import type { RealtimeManagerOptions } from '../realtime/manager.js'
 
 export interface RequestOptions {
   /** Query parameters */
@@ -19,27 +37,6 @@ export interface RequestOptions {
   cacheTtl?: number
   /** Skip cache for this request */
   noCache?: boolean
-}
-
-/**
- * Typed stub interface for each resource module.
- * Implementations will be added in subsequent chunks.
- */
-export interface ContentResource {
-  // Populated in chunk 3+
-  [key: string]: unknown
-}
-
-export interface PagesResource {
-  [key: string]: unknown
-}
-
-export interface MediaResource {
-  [key: string]: unknown
-}
-
-export interface SearchResource {
-  [key: string]: unknown
 }
 
 /**
@@ -57,11 +54,28 @@ export class NumenClient {
   private fetchFn: typeof globalThis.fetch
   readonly cache: SWRCache
 
-  // Resource stubs — typed but not yet implemented
-  readonly content: ContentResource = {}
-  readonly pages: PagesResource = {}
-  readonly media: MediaResource = {}
-  readonly search: SearchResource = {}
+  // Resource modules (original)
+  readonly content: ContentResource
+  readonly pages: PagesResource
+  readonly media: MediaResource
+  readonly search: SearchResource
+  readonly versions: VersionsResource
+  readonly taxonomies: TaxonomiesResource
+
+  // Resource modules (extended — chunk 4)
+  readonly briefs: BriefsResource
+  readonly pipeline: PipelineResource
+  readonly webhooks: WebhooksResource
+  readonly graph: GraphResource
+  readonly chat: ChatResource
+  readonly repurpose: RepurposeResource
+  readonly translations: TranslationsResource
+  readonly quality: QualityResource
+  readonly competitor: CompetitorResource
+  readonly admin: AdminResource
+
+  // Realtime
+  readonly realtime: RealtimeManager
 
   constructor(options: NumenClientOptions) {
     if (!options.baseUrl) {
@@ -90,6 +104,33 @@ export class NumenClient {
     })
 
     this.fetchFn = authMiddleware(baseFetch)
+
+    // Initialize resource modules (original)
+    this.content = new ContentResource(this)
+    this.pages = new PagesResource(this)
+    this.media = new MediaResource(this)
+    this.search = new SearchResource(this)
+    this.versions = new VersionsResource(this)
+    this.taxonomies = new TaxonomiesResource(this)
+
+    // Initialize resource modules (extended — chunk 4)
+    this.briefs = new BriefsResource(this)
+    this.pipeline = new PipelineResource(this)
+    this.webhooks = new WebhooksResource(this)
+    this.graph = new GraphResource(this)
+    this.chat = new ChatResource(this)
+    this.repurpose = new RepurposeResource(this)
+    this.translations = new TranslationsResource(this)
+    this.quality = new QualityResource(this)
+    this.competitor = new CompetitorResource(this)
+    this.admin = new AdminResource(this)
+
+    // Initialize realtime manager
+    this.realtime = new RealtimeManager({
+      baseUrl: options.baseUrl,
+      token: this.token ?? undefined,
+      apiKey: options.apiKey,
+    })
   }
 
   /**
@@ -97,6 +138,7 @@ export class NumenClient {
    */
   setToken(token: string): void {
     this.token = token
+    this.realtime.setToken(token)
   }
 
   /**

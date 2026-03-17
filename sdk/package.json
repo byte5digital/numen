@@ -1,0 +1,13 @@
+{
+  "name": "numen-sdk-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test",
+    "codegen": "pnpm --filter @numen/sdk-codegen run generate"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
