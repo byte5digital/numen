@@ -7,6 +7,12 @@ import type { NumenClientOptions } from '../types/sdk.js'
 import { mapResponseToError, NumenNetworkError } from './errors.js'
 import { createAuthMiddleware } from './auth.js'
 import { SWRCache } from './cache.js'
+import { ContentResource } from '../resources/content.js'
+import { PagesResource } from '../resources/pages.js'
+import { MediaResource } from '../resources/media.js'
+import { SearchResource } from '../resources/search.js'
+import { VersionsResource } from '../resources/versions.js'
+import { TaxonomiesResource } from '../resources/taxonomies.js'
 
 export interface RequestOptions {
   /** Query parameters */
@@ -19,27 +25,6 @@ export interface RequestOptions {
   cacheTtl?: number
   /** Skip cache for this request */
   noCache?: boolean
-}
-
-/**
- * Typed stub interface for each resource module.
- * Implementations will be added in subsequent chunks.
- */
-export interface ContentResource {
-  // Populated in chunk 3+
-  [key: string]: unknown
-}
-
-export interface PagesResource {
-  [key: string]: unknown
-}
-
-export interface MediaResource {
-  [key: string]: unknown
-}
-
-export interface SearchResource {
-  [key: string]: unknown
 }
 
 /**
@@ -57,11 +42,13 @@ export class NumenClient {
   private fetchFn: typeof globalThis.fetch
   readonly cache: SWRCache
 
-  // Resource stubs — typed but not yet implemented
-  readonly content: ContentResource = {}
-  readonly pages: PagesResource = {}
-  readonly media: MediaResource = {}
-  readonly search: SearchResource = {}
+  // Resource modules
+  readonly content: ContentResource
+  readonly pages: PagesResource
+  readonly media: MediaResource
+  readonly search: SearchResource
+  readonly versions: VersionsResource
+  readonly taxonomies: TaxonomiesResource
 
   constructor(options: NumenClientOptions) {
     if (!options.baseUrl) {
@@ -90,6 +77,14 @@ export class NumenClient {
     })
 
     this.fetchFn = authMiddleware(baseFetch)
+
+    // Initialize resource modules
+    this.content = new ContentResource(this)
+    this.pages = new PagesResource(this)
+    this.media = new MediaResource(this)
+    this.search = new SearchResource(this)
+    this.versions = new VersionsResource(this)
+    this.taxonomies = new TaxonomiesResource(this)
   }
 
   /**
